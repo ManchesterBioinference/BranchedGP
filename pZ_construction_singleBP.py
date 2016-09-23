@@ -29,21 +29,21 @@ def make_matrix(X, BP, epsilon=1e-6):
 
         # 2-2*n = 2 ,n=0
         #        0 ,n=1
-        row.append(tf.zeros(2-2*(n-1), tf.float64) + epsilon)  # append zero
+        row.append(tf.zeros(2 - 2 * (n - 1), tf.float64) + epsilon)  # append zero
 
         count += 3  # TODO: change for number of latent fns
         row.append(tf.zeros(num_columns - count, tf.float64) + epsilon)
 
         # ensure things are correctly shaped
-        row = tf.concat(0, row,name='singleconcat')
+        row = tf.concat(0, row, name='singleconcat')
         row = tf.expand_dims(row, 0)
         rows.append(row)
-    return tf.concat(0, rows,name='multiconcant')
+    return tf.concat(0, rows, name='multiconcant')
 
 
 if __name__ == "__main__":
     #X = np.random.rand(10, 1)
-    X = np.linspace(0, 1, 4, dtype=float)[:,None]
+    X = np.linspace(0, 1, 4, dtype=float)[:, None]
     X = np.sort(X, 0)
     BP = tf.placeholder(tf.float64, shape=[])
     pZ = tf.Session().run(make_matrix(X, BP), feed_dict={BP: 0.5})

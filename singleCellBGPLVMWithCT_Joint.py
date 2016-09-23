@@ -35,9 +35,9 @@ stageN = np.zeros((N, 1))
 for i, l in enumerate(labels):
     stageN[i] = np.log2(int(l[:2])) + 1
 priormean = np.reshape(stageN, (N, Q))
-priorstd = 20*np.ones((N, Q))
+priorstd = 20 * np.ones((N, Q))
 np.random.seed(0)
-print 'Initialise from random'
+print('Initialise from random')
 Xinit = np.random.rand(N, Q)
 plotGene(Xinit, Yg, labels)
 plt.title('init with prior')
