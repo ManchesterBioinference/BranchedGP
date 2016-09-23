@@ -116,8 +116,6 @@ class AssignGP(GPflow.model.GPModel):
 
         self.ZExpanded = ZExpanded  # inducing points for sparse GP, optional. Same format as XExpanded
 
-        assert self.kern.branchkernelparam.Bv.fixed, 'Branching value should be fixed.'
-
     def GetPhi(self):
         ''' Shortcut function to get Phi matrix out. '''
         with self.tf_mode():
