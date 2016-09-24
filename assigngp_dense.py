@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 import pZ_construction_singleBP
 from matplotlib import pyplot as plt
+from GPflow.param import DataHolder
 
 # TODO S:
 # 1) create a parameter for breakpoints (in the kernel perhaps?) - done
@@ -112,58 +113,17 @@ class AssignGP(GPflow.model.GPModel):
                                       mean_function=GPflow.mean_functions.Zero())
         self.logPhi = GPflow.param.Param(np.random.randn(t.shape[0], t.shape[0] * 3))
 
-        self.t = t
+        self.t = t # could be DataHolder?
 
         self.ZExpanded = ZExpanded  # inducing points for sparse GP, optional. Same format as XExpanded
 
     def GetPhi(self):
-        ''' Shortcut function to get Phi matrix out. '''
+        ''' Shortcut function to get Phi matrix out. Could use autoflow?'''
         with self.tf_mode():
             Phi_s = tf.nn.softmax(self.logPhi)
         Phi = self._session.run(Phi_s, feed_dict={self._free_vars: self.get_free_state()})
 
         return Phi
-
-    def InitialisePhi(self, indices, bestAssignment, Bv, fSoftAssignment=False):
-        ''' Convert MAP assignments to Phi probabilities : soft or hard assignment
-        Soft assignment uses the Gibbs conditional probabilities at convergence
-        Hard assignment uses the MAP assignment setting Phi to 1 for that entry.
-        Initialises self.logPhi. Return phiInitial'''
-        N = len(bestAssignment)
-        if(fSoftAssignment):
-            phiInitial = np.zeros((N, 3 * N))
-            # large neg number makes exact zeros, make smaller for added jitter
-            phiInitial_invSoftmax = -9. * np.ones((N, 3 * N))
-            ct = 1
-            for i, n in reversed(list(enumerate(bestAssignment))):
-                # print '----------->' + str(i) + ','+str(n)
-                if(self.t[i] > Bv):
-                    # after branch point - we look at assignment probabilities
-                    ind = indices[i][1:]  # single branching point special case - just take second and third indics
-                    for indxi in ind:
-                        if(indxi == bestAssignment[i]):
-                            phiInitial[i, indxi] = 0.9  # 0.999
-                        else:
-                            phiInitial[i, indxi] = 0.1  # 0.001
-                        phiInitial_invSoftmax[i, indxi] = np.log(phiInitial[i, indxi])
-                    ct += 1
-                else:
-                    # before branch point - we know with certainty
-                    phiInitial[i, n] = 1
-                    phiInitial_invSoftmax[i, n] = 1  # 10
-                    # print str(i) + ' ' + str(n) + '=' + str(mCond[p])
-        else:
-            # hard assignment
-            # Set state for assignments
-            phiInitial = np.zeros((N, 3 * N))
-            # large neg number makes exact zeros, make smaller for added jitter
-            phiInitial_invSoftmax = np.zeros((N, 3 * N))
-            for i, n in enumerate(bestAssignment):
-                phiInitial[i, n] = 1
-                phiInitial_invSoftmax[i, n] = 10
-
-        self.logPhi = phiInitial_invSoftmax
-        return phiInitial
 
     def build_likelihood(self):
         N = tf.cast(tf.shape(self.Y)[0], tf.float64)
@@ -188,12 +148,12 @@ class AssignGP(GPflow.model.GPModel):
         RiLPhiY = tf.matrix_triangular_solve(R, LPhiY, lower=True)
 
         # compute KL
-        KL = 0 # self.build_KL(Phi)
+        KL = self.build_KL(Phi)
 
-        return -0.5 * N * D * tf.log(2. * np.pi / tau)#\
-#             - 0.5 * D * tf.reduce_sum(tf.log(tf.square(tf.diag_part(R))))\
-#             - 0.5 * tau * tf.reduce_sum(tf.square(self.Y))\
-#             + 0.5 * tf.reduce_sum(tf.square(tau * RiLPhiY)) - KL
+        return -0.5 * N * D * tf.log(2. * np.pi / tau)\
+            - 0.5 * D * tf.reduce_sum(tf.log(tf.square(tf.diag_part(R))))\
+            - 0.5 * tau * tf.reduce_sum(tf.square(self.Y))\
+            + 0.5 * tf.reduce_sum(tf.square(tau * RiLPhiY)) - KL
 
     def build_KL(self, Phi):
         Bv_s = tf.squeeze(self.kern.branchkernelparam.Bv, squeeze_dims=[1])

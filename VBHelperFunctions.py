@@ -87,7 +87,7 @@ def InitialisePhiFromOMGP(mV, phiOMGP, b, Y, pt):
 
     if(mV is not None):
         assert np.allclose(Y, mV.Y.value)
-        assert np.allclose(pt, mV.t.value)
+        assert np.allclose(pt, mV.t)
 
         mV.logPhi = phiInitial_invSoftmax
     return phiInitial, phiInitial_invSoftmax, XExpanded
@@ -116,7 +116,7 @@ def FlattenPhi(mV):
     phiFlattened = np.zeros((mV.Y.shape[0], 3))  # only single branching point
     Phi = np.round(np.exp(mV.logPhi._array), decimals=4)
     iterC = 0
-    for i, p in enumerate(mV. t):
+    for i, _ in enumerate(mV.t):
         phiFlattened[i, :] = Phi[i, iterC:iterC + 3]
         iterC += 3
     return phiFlattened

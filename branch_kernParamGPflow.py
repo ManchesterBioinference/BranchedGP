@@ -86,20 +86,22 @@ class BranchKernelParam(GPflow.kernels.Kern):
     def __init__(self, base_kern, branchPtTensor, BvInitial, fDebug=False):
         ''' branchPtTensor is tensor of branch points of size F X F X B where F the number of
         functions and B the number of branching points '''
-
-        GPflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
         self.kern = base_kern
         self.fm = branchPtTensor
         self.fDebug = fDebug
         assert self.fm.shape[0] == self.fm.shape[1]
         assert self.fm.shape[2] > 0
         assert BvInitial.dtype == np.float
-        self.Bv = DataHolder(BvInitial)
+        b = DataHolder(BvInitial)
+        self.Bv = b
+        GPflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
 
     def K(self, X, Y=None):
         if Y is None:
             Y = X  # hack to avoid duplicating code below
 
+        if(self.fDebug):
+            print('Compiling kernel')
         t1s = tf.expand_dims(X[:, 0], 1)  # N X 1
         t2s = tf.expand_dims(Y[:, 0], 1)
         i1s_r = tf.expand_dims(X[:, 1], 1)
@@ -146,9 +148,15 @@ class BranchKernelParam(GPflow.kernels.Kern):
 
                         # Get the actual values of the Bs = B[index of relevant branching points]
                         bint = bnan.astype(int)  # convert to int - set of indexes
-                        Bs = ((tf.concat(0, [tf.slice(self.Bv, [i - 1, 0], [1, 1]) for i in bint])))
+                        if(self.fDebug):
+                            Br = tf.Print(self.Bv, [tf.shape(self.Bv), self.Bv], message='Bv=', name='Bv', summarize=3)  # will print message
+                        else:
+                            Br = self.Bv
+                        Bs = ((tf.concat(0, [tf.slice(Br, [i - 1, 0], [1, 1]) for i in bint])))
 
                         kbb = self.kern.K(Bs) + tf.diag(tf.ones(tf.shape(Bs)[:1], dtype=tf.float64)) * 1e-6
+                        if(self.fDebug):
+                            kbb = tf.Print(kbb, [tf.shape(kbb), kbb], message='kbb=', name='kbb', summarize=10)  # will print message
                         Kbbs_inv = tf.matrix_inverse(kbb, name='invKbb')  # B X B
                         Kb1s = self.kern.K(t1s, Bs)  # N*m X B
                         Kb2s = self.kern.K(t2s, Bs)  # N*m X B

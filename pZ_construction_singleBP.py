@@ -3,7 +3,7 @@ import tensorflow as tf
 
 
 def make_matrix(X, BP, epsilon=1e-6):
-    num_columns = 3 * X.shape[0]  # for 3 latent fns
+    num_columns = 3 * tf.shape(X)[0]  # for 3 latent fns
     rows = []
     count = tf.zeros((1,), dtype=tf.int32)
     for x in X:
@@ -38,7 +38,7 @@ def make_matrix(X, BP, epsilon=1e-6):
         row = tf.concat(0, row, name='singleconcat')
         row = tf.expand_dims(row, 0)
         rows.append(row)
-    return tf.concat(0, rows, name='multiconcant')
+    return tf.concat(0, rows, name='multiconcat')
 
 
 if __name__ == "__main__":
