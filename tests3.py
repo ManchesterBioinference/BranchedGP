@@ -80,7 +80,7 @@ Kbranch.white.variance.fixed = True
 print('Kbranch matrix', Kbranch.compute_K(XExpanded, XExpanded))
 print('Branching K free parameters', Kbranch.branchkernelparam)
 print('Branching K branching parameter', Kbranch.branchkernelparam.Bv.value)
-mV = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch)
+mV = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices)
 mV.likelihood.variance = varianceLik
 
 # Initialise all model parameters using the OMGP model
@@ -103,31 +103,40 @@ print(mV)
 s = pickle.dumps(mV)
 VBHelperFunctions.plotVBCode(mV, fPlotPhi=True, figsizeIn=(5, 5), fPlotVar=True)
 plt.title('Initialisation')
+print('Initialisation')
+print('OMGP Phi matrix', np.round(mo.phi, 2))
+print('b=', mV.kern.branchkernelparam.Bv.value, 'Branch model Phi matrix', np.round(mV.GetPhi(), 2))
 mV.optimize()
 # Plot results - this will call predict
 VBHelperFunctions.plotVBCode(mV, fPlotPhi=True, figsizeIn=(5, 5), fPlotVar=True)
 objT = mV.compute_log_likelihood()
 plt.title('Fitted model')
+print('Fitted model')
+print('OMGP Phi matrix', np.round(mo.phi, 2))
+print('b=', mV.kern.branchkernelparam.Bv.value, 'Branch model Phi matrix', np.round(mV.GetPhi(), 2))
+
 
 # Plot lower bound surface
-n = 5
-cb = np.linspace(0, 1, n)
-obj = np.zeros(n)
-for ib, b in enumerate(cb):
-    mb = pickle.loads(s)
-    mb.kern.branchkernelparam.Bv = np.array([b])[:, None]
-    VBHelperFunctions.InitialisePhiFromOMGP(mb, phiOMGP=mo.phi, b=b, Y=Y, pt=t)
-    mb.optimize()
-    obj[ib] = mb.compute_log_likelihood()
-    print('B=', b, 'kernel branch point', mb.kern.branchkernelparam.Bv.value, 'loglig=', obj[ib])
-    VBHelperFunctions.plotVBCode(mb, fPlotPhi=True, figsizeIn=(5, 5), fPlotVar=True)
-    plt.title('B=%g ll=%.2f' % (b, obj[ib]))
-plt.figure()
-plt.plot(cb, obj)
-plt.plot(cb[np.argmin(obj)], obj[np.argmin(obj)], 'ro')
-v = plt.axis()
-plt.plot([Bvalue[0], Bvalue[0]], v[-2:], '--m', linewidth=2)
-plt.legend(['Objective', 'mininum', 'true branching point'], loc=2)
-plt.title('log likelihood surface for different branching points')
-
-# test Bayesian optimiser
+fModelSelection = False
+if(fModelSelection):
+    n = 5
+    cb = np.linspace(0, 1, n)
+    obj = np.zeros(n)
+    for ib, b in enumerate(cb):
+        mb = pickle.loads(s)
+        mb.kern.branchkernelparam.Bv = np.array([b])[:, None]
+        VBHelperFunctions.InitialisePhiFromOMGP(mb, phiOMGP=mo.phi, b=b, Y=Y, pt=t)
+        mb.optimize()
+        obj[ib] = mb.compute_log_likelihood()
+        print('B=', b, 'kernel branch point', mb.kern.branchkernelparam.Bv.value, 'loglig=', obj[ib])
+        VBHelperFunctions.plotVBCode(mb, fPlotPhi=True, figsizeIn=(5, 5), fPlotVar=True)
+        plt.title('B=%g ll=%.2f' % (b, obj[ib]))
+    plt.figure()
+    plt.plot(cb, obj)
+    plt.plot(cb[np.argmin(obj)], obj[np.argmin(obj)], 'ro')
+    v = plt.axis()
+    plt.plot([Bvalue[0], Bvalue[0]], v[-2:], '--m', linewidth=2)
+    plt.legend(['Objective', 'mininum', 'true branching point'], loc=2)
+    plt.title('log likelihood surface for different branching points')
+    
+    # test Bayesian optimiser

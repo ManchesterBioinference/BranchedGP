@@ -56,6 +56,7 @@ def plotVBCode(mV, figsizeIn=(20, 10), lw=3., fs=10, labels=None, fPlotPhi=True,
             plt.legend(loc='upper left')
     return fig
 
+
 def InitialisePhiFromOMGP(mV, phiOMGP, b, Y, pt):
     # branching location needed
     # create index
@@ -68,7 +69,7 @@ def InitialisePhiFromOMGP(mV, phiOMGP, b, Y, pt):
     phiInitial_invSoftmax = -9. * np.ones((N, 3 * N))
     XExpanded = np.zeros((3 * N, 2))
     XExpanded[:] = np.nan
-    #phiInitial[:] = np.nan
+    # phiInitial[:] = np.nan
     eps = 1e-12
     iterC = 0
     for i, p in enumerate(pt):

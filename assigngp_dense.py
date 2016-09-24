@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 import pZ_construction_singleBP
 from matplotlib import pyplot as plt
-from GPflow.param import DataHolder
+from GPflow.param import DataHolder, AutoFlow
 
 # TODO S:
 # 1) create a parameter for breakpoints (in the kernel perhaps?) - done
@@ -107,23 +107,36 @@ class AssignGP(GPflow.model.GPModel):
 
     """
 
-    def __init__(self, t, XExpanded, Y, kern, ZExpanded=None):
+    def __init__(self, t, XExpanded, Y, kern, indices, ZExpanded=None):
         GPflow.model.GPModel.__init__(self, XExpanded, Y, kern,
                                       likelihood=GPflow.likelihoods.Gaussian(),
                                       mean_function=GPflow.mean_functions.Zero())
         self.logPhi = GPflow.param.Param(np.random.randn(t.shape[0], t.shape[0] * 3))
-
-        self.t = t # could be DataHolder?
-
+        self.t = t  # could be DataHolder? advantages
         self.ZExpanded = ZExpanded  # inducing points for sparse GP, optional. Same format as XExpanded
+        self.indices = indices
+        assert len(indices) == t.size, 'indices must be size N'
+        assert len(t.shape) == 1, 'pseudotime should be 1D'
 
     def GetPhi(self):
-        ''' Shortcut function to get Phi matrix out. Could use autoflow?'''
-        with self.tf_mode():
-            Phi_s = tf.nn.softmax(self.logPhi)
-        Phi = self._session.run(Phi_s, feed_dict={self._free_vars: self.get_free_state()})
+        ''' Get Phi matrix, collapsed for each possible entry '''
+        phiExpanded = self.GetPhiExpanded()
+        l = [phiExpanded[i, self.indices[i]] for i in range(len(self.indices))]
+        phi = np.asarray(l)
+        assert np.all(phi.sum(1) < 1)
+        assert np.all(phi > 0)
+        assert np.all(phi < 1)
+        return phi
 
-        return Phi
+    @AutoFlow()
+    def GetPhiExpanded(self):
+        ''' Shortcut function to get Phi matrix out. Could use autoflow?'''
+        return tf.nn.softmax(self.logPhi)
+#         with self.tf_mode():
+#             Phi_s = tf.nn.softmax(self.logPhi)
+#         Phi = self._session.run(Phi_s, feed_dict={self._free_vars: self.get_free_state()})
+# 
+#         return Phi
 
     def build_likelihood(self):
         N = tf.cast(tf.shape(self.Y)[0], tf.float64)
