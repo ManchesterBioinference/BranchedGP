@@ -83,17 +83,16 @@ def SampleBranchGP(kern, X, M, D=1, lw=3., fs=10, tol=1e-5):
 
 class BranchKernelParam(GPflow.kernels.Kern):
 
-    def __init__(self, base_kern, branchPtTensor, BvInitial, fDebug=False):
+    def __init__(self, base_kern, branchPtTensor, b, fDebug=False):
         ''' branchPtTensor is tensor of branch points of size F X F X B where F the number of
         functions and B the number of branching points '''
         self.kern = base_kern
         self.fm = branchPtTensor
         self.fDebug = fDebug
+        assert isinstance(b, np.ndarray)
         assert self.fm.shape[0] == self.fm.shape[1]
         assert self.fm.shape[2] > 0
-        assert BvInitial.dtype == np.float
-        b = DataHolder(BvInitial)
-        self.Bv = b
+        self.Bv = DataHolder(b)
         GPflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
 
     def K(self, X, Y=None):
