@@ -106,7 +106,7 @@ class AssignGP(GPflow.model.GPModel):
 
     """
 
-    def __init__(self, t, XExpanded, Y, kern, indices, phiInitial, b, ZExpanded=None):
+    def __init__(self, t, XExpanded, Y, kern, indices, phiInitial, b, ZExpanded=None, fDebug=False):
         GPflow.model.GPModel.__init__(self, XExpanded, Y, kern,
                                       likelihood=GPflow.likelihoods.Gaussian(),
                                       mean_function=GPflow.mean_functions.Zero())
@@ -120,6 +120,7 @@ class AssignGP(GPflow.model.GPModel):
         self.phiInitial = phiInitial
         self.logPhi = GPflow.param.Param(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions
         self.UpdateBranchingPoint(b)
+        self.fDebug = fDebug
 
     def UpdateBranchingPoint(self, b):
         ''' Function to update branching point '''
@@ -167,7 +168,7 @@ class AssignGP(GPflow.model.GPModel):
 
     @AutoFlow()
     def GetPhiExpanded(self):
-        ''' Shortcut function to get Phi matrix out. Could use autoflow?'''
+        ''' Shortcut function to get Phi matrix out.'''
         return tf.nn.softmax(self.logPhi)
 
     def optimize(self, **kw):
@@ -175,6 +176,11 @@ class AssignGP(GPflow.model.GPModel):
         print('assigngp_dense intercepting optimize call to check model consistency')
         assert self.b == self.kern.branchkernelparam.Bv.value, 'Need to call UpdateBranchingPoint'
         return GPflow.model.GPModel.optimize(self, **kw)
+
+    def objectiveFun(self):
+        ''' Objective function to minimize - log likelihood -log prior.
+        Unlike _objective, no gradient calculation is performed.'''
+        return -self.compute_log_likelihood()-self.compute_log_prior()
 
     def build_likelihood(self):
         print('assignegp_dense compiling model (build_likelihood)')
@@ -192,6 +198,11 @@ class AssignGP(GPflow.model.GPModel):
         R = tf.cholesky(P)
         PhiY = tf.matmul(tf.transpose(Phi), self.Y)
         LPhiY = tf.matmul(tf.transpose(L), PhiY)
+        if(self.fDebug):
+            Phi = tf.Print(Phi, [tf.shape(P), P], message='P=', name='P', summarize=10)
+            Phi = tf.Print(Phi, [tf.shape(LPhiY), LPhiY], message='LPhiY=', name='LPhiY', summarize=10)
+            Phi = tf.Print(Phi, [tf.shape(K), K], message='K=', name='K', summarize=10)
+            Phi = tf.Print(Phi, [tau], message='tau=', name='tau', summarize=10)
         RiLPhiY = tf.matrix_triangular_solve(R, LPhiY, lower=True)
         # compute KL
         KL = self.build_KL(Phi)

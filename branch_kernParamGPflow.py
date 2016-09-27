@@ -155,7 +155,11 @@ class BranchKernelParam(GPflow.kernels.Kern):
 
                         kbb = self.kern.K(Bs) + tf.diag(tf.ones(tf.shape(Bs)[:1], dtype=tf.float64)) * 1e-6
                         if(self.fDebug):
-                            kbb = tf.Print(kbb, [tf.shape(kbb), kbb], message='kbb=', name='kbb', summarize=10)  # will print message
+                            kbb = tf.Print(kbb, [tf.shape(kbb), kbb], message='kbb=', name='kbb', summarize=10)
+                            kbb = tf.Print(kbb, [self.kern.lengthscales], message='lenscales=', name='lenscales', summarize=10)
+                            kbb = tf.Print(kbb, [self.kern.variance], message='variance=', name='lenscales', summarize=10)
+                            kbb = tf.Print(kbb, [Bs], message='Bs=', name='Bs', summarize=10)
+
                         Kbbs_inv = tf.matrix_inverse(kbb, name='invKbb')  # B X B
                         Kb1s = self.kern.K(t1s, Bs)  # N*m X B
                         Kb2s = self.kern.K(t2s, Bs)  # N*m X B
