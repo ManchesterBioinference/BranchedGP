@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from GPclust import OMGP
 import GPy
 import GPyOpt
-# import pickle
+import pickle
 import time
 # Branching files
 import VBHelperFunctions
@@ -25,11 +25,32 @@ def InitParams(m):
     m.kern.branchkernelparam.kern.variance = np.mean(
         np.array([mo.kern[0].variance.values, mo.kern[1].variance.values]))
 
+
+def LoadMouseQPCRData(subsetSelection=0):
+    # UNDONE should also return labels
+    # From manifold load pseudotime, Y and labels
+    dictData = pickle.load(open("data/guo_ssData.p", "rb"), encoding='latin1')
+    YGPLVM = dictData['YGPLVM']
+    ptFull = dictData['pt']
+    print('Loaded GPLVM data/guo_ssData.p with nrowsXncols = ' + str(YGPLVM.shape) + '.')
+    assert ptFull.ndim == 1
+    assert ptFull.size == YGPLVM.shape[0]
+    if(subsetSelection == 0):
+        pt = ptFull[:].copy()
+        Y = YGPLVM.copy()
+    else:
+        # subset selection
+        pt = ptFull[::subsetSelection].copy()
+        Y = YGPLVM[::subsetSelection, :].copy()
+    print('LoadMouseQPCRData output')
+    return pt, Y
+
+
 ########################################
 #         Test parameters
 ########################################
 fPlot = True  # do we do plots?
-fUsePriors = False  # Test priors on kernel hyperparameters
+fUsePriors = True  # Test priors on kernel hyperparameters
 fModelSelectionGrid = False
 fBO = True  # Bayesian optimisation
 fDebug = False  # Enable debugging output - tensorflow print ops
@@ -38,20 +59,17 @@ np.set_printoptions(precision=4)  # precision to print numpy array
 seed = 43
 np.random.seed(seed=seed)  # easy peasy reproducibeasy
 tf.set_random_seed(seed)
-# Data generation
-N = 20
-t = np.linspace(0, 1, N)
-print(t)
-trueB = np.ones((1, 1))*0.5
-Y = np.zeros((N, 1))
-idx = np.nonzero(t > 0.5)[0]
-idxA = idx[::2]
-idxB = idx[1::2]
-print(idx)
-print(idxA)
-print(idxB)
-Y[idxA, 0] = 2 * t[idxA]
-Y[idxB, 0] = -2 * t[idxB]
+# Data loading
+pt, Yall = LoadMouseQPCRData()
+t = pt/100.
+Y = Yall[:, 0:1]
+if(fPlot):
+    plt.ion()
+    fig = plt.figure(figsize=(10, 10))
+    plt.scatter(pt/100., Y[:, 0])
+    plt.title('Guo et al data Y_0 GPLVM')
+N = t.size
+trueB = np.ones((1, 1))*0.4  # not really the true one
 # Create tree structures
 tree = bt.BinaryBranchingTree(0, 1, fDebug=False)
 tree.add(None, 1, trueB)
@@ -189,4 +207,3 @@ if(fBO):
         objAtMin = BOobj.f(BOobj.x_opt[None, :])  # get solution, update mb
         VBHelperFunctions.plotVBCode(mb, fPlotPhi=True, figsizeIn=(5, 5), fPlotVar=True)
         plt.title('Bayesian Optimisation B=%g ll=%.2f' % (mb.kern.branchkernelparam.Bv.value, objAtMin))
-

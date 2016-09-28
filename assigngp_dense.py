@@ -161,9 +161,9 @@ class AssignGP(GPflow.model.GPModel):
         phiExpanded = self.GetPhiExpanded()
         l = [phiExpanded[i, self.indices[i]] for i in range(len(self.indices))]
         phi = np.asarray(l)
-        assert np.all(phi.sum(1) < 1)
-        assert np.all(phi > 0)
-        assert np.all(phi < 1)
+        assert np.all(phi.sum(1) <= 1)
+        assert np.all(phi >= 0)
+        assert np.all(phi <= 1)
         return phi
 
     @AutoFlow()
@@ -173,7 +173,8 @@ class AssignGP(GPflow.model.GPModel):
 
     def optimize(self, **kw):
         ''' Catch optimize call to make sure we have correct Phi '''
-        print('assigngp_dense intercepting optimize call to check model consistency')
+        if(self.fDebug):
+            print('assigngp_dense intercepting optimize call to check model consistency')
         assert self.b == self.kern.branchkernelparam.Bv.value, 'Need to call UpdateBranchingPoint'
         return GPflow.model.GPModel.optimize(self, **kw)
 
