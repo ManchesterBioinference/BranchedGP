@@ -74,6 +74,7 @@ tf.set_random_seed(seed)
 pt, Yall, Ygene, labels, labelLegend = LoadMouseQPCRData(subsetSel)
 t = pt/100.
 if(fPlot):
+    plt.close('all')
     plt.ion()
 # Run code
 N = t.size
@@ -132,9 +133,9 @@ myobj = BayesianOptimiser.objectiveBAndK(mb, fOptimizeLocal)
 print('Bounds used in optimisation: =', bounds)
 t0 = time.time()
 BOobj = GPyOpt.methods.BayesianOptimization(f=myobj.f, bounds=bounds)
-max_iter = 100
+max_iter = 2
 nrestart = 1
-n_cores = 2
+n_cores = 1
 BOobj.run_optimization(max_iter,                            # Number of iterations
                        acqu_optimize_method='fast_random',  # method to optimize the acq. function
                        acqu_optimize_restarts=nrestart,
@@ -144,10 +145,12 @@ BOobj.run_optimization(max_iter,                            # Number of iteratio
 print('Bayesian optimisation took %g secs. ' % (time.time() - t0))
 print('Solution found by BO x_opt =  ' + str(BOobj.x_opt) + 'fx_opt = ' + str(BOobj.fx_opt))
 if(fPlot):
+    strSavePath = '/home/mqbssaby/Dropbox/BranchedGP/figs'
     objAtMin = BOobj.f(BOobj.x_opt[None, :])  # get solution, update mb
     VBHelperFunctions.plotVBCode(mb, labels=labels, figsizeIn=(5, 5), fPlotVar=True)
     plt.title('%s B=%g ll=%.2f' % (ginter, mb.kern.branchkernelparam.Bv.value, objAtMin))
-    plt.savefig("figs/GuoBestfit_%s.png" % ginter, bbox_inches='tight')
-    pickle.dump(mb, open("figs/GuoBestfit_%s.p" % ginter, "wb"))
+    plt.savefig("%s/GuoBestfit_%s.png" % (strSavePath, ginter), bbox_inches='tight')
+    pickle.dump(mb, open("%s/GuoBestfit_%s.p" % (strSavePath, ginter), "wb"))
+    np.save("%s/GuoBestfitBO_%s" % (strSavePath, ginter), np.hstack([BOobj.X, BOobj.Y]))  # X is parameters, Y is bound
     #  read with pickle.load(open( "~/Dropbox/BranchedGP/figs/GuoBestfit_%s.p" % ginter, "rb" ))
-
+    # read with np.load(.npy)
