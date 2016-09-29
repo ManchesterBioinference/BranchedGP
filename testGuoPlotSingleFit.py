@@ -17,6 +17,45 @@ import BranchingTree as bt
 import branch_kernParamGPflow as bk
 import assigngp_dense
 import BayesianOptimiser
+import matplotlib.cm as cm
+
+
+def plotVBCode(mV, lw=3., fs=10, fPlotVar=False):
+    B = mV.kern.branchkernelparam.Bv.value.flatten()
+    assert B.size == 1, 'Code limited to one branch point, got ' + str(B.shape)
+    pt = mV.t
+    l = np.min(pt)
+    u = np.max(pt)
+    d = 0  # constraint code to be 1D for now
+    for f in range(1, 4):
+        if(f == 1):
+            ttest = np.linspace(l, B, 100)[:, None]  # root
+        else:
+            ttest = np.linspace(B, u, 100)[:, None]
+        Xtest = np.hstack((ttest, ttest * 0 + f))
+        mu, var = mV.predict_f(Xtest)
+        assert np.all(np.isfinite(mu)), 'All elements should be finite but are ' + str(mu)
+        assert np.all(np.isfinite(var)), 'All elements should be finite but are ' + str(var)
+        mean, = plt.plot(ttest, mu[:, d], linewidth=lw)
+        col = mean.get_color()
+        if(fPlotVar):
+            plt.plot(ttest.flatten(), mu[:, d] + 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
+            plt.plot(ttest, mu[:, d] - 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
+
+    v = plt.axis()
+    plt.plot([B, B], v[-2:], '-m', linewidth=lw)
+
+
+def plotGene(t,g):
+    with plt.style.context('seaborn-whitegrid'):
+        colors = cm.spectral(np.linspace(0, 1, len(labelLegend)))
+        plt.figure(figsize=(10, 10))
+        for lab, c in zip(labelLegend, colors):
+            y1 = t[labels == lab]
+            y2 = g[labels == lab]
+            plt.scatter(y1,y2,label=lab, c=c,s=80)
+            plt.text(np.median(y1),np.median(y2),lab, fontsize=45, color='blue')
+        plt.legend(loc='upper left')
 
 
 def InitParams(m):
@@ -126,28 +165,21 @@ else:
     bounds = [(t.min(), t.max()), (eps, 5 * Y.var()), (1, 10.*np.ptp(t)), (eps, 1 * Y.var())]
     # Branching point, kernel var, kernel len, lik vari
 
-print('Initialised mb', mb)
-mb.UpdateBranchingPoint(np.ones((1, 1))*0.2)
-myobj = BayesianOptimiser.objectiveBAndK(mb, fOptimizeLocal)
-print('Bounds used in optimisation: =', bounds)
-t0 = time.time()
-BOobj = GPyOpt.methods.BayesianOptimization(f=myobj.f, bounds=bounds)
-max_iter = 100
-nrestart = 1
-n_cores = 2
-BOobj.run_optimization(max_iter,                            # Number of iterations
-                       acqu_optimize_method='fast_random',  # method to optimize the acq. function
-                       acqu_optimize_restarts=nrestart,
-                       batch_method='lp',
-                       n_inbatch=n_cores,                   # size of the collected batches (= number of cores)
-                       eps=1e-6)                            # secondary stop criteria (on top of iters)
-print('Bayesian optimisation took %g secs. ' % (time.time() - t0))
-print('Solution found by BO x_opt =  ' + str(BOobj.x_opt) + 'fx_opt = ' + str(BOobj.fx_opt))
-if(fPlot):
-    objAtMin = BOobj.f(BOobj.x_opt[None, :])  # get solution, update mb
-    VBHelperFunctions.plotVBCode(mb, labels=labels, figsizeIn=(5, 5), fPlotVar=True)
-    plt.title('%s B=%g ll=%.2f' % (ginter, mb.kern.branchkernelparam.Bv.value, objAtMin))
-    plt.savefig("figs/GuoBestfit_%s.png" % ginter, bbox_inches='tight')
-    pickle.dump(mb, open("figs/GuoBestfit_%s.p" % ginter, "wb"))
-    #  read with pickle.load(open( "~/Dropbox/BranchedGP/figs/GuoBestfit_%s.p" % ginter, "rb" ))
+parametersTry = [0.35, 2.41, 1.04]  # Fgf4
 
+# parametersTry = [0.16, 4.85, 1.06]  # Pdgfra
+mb.UpdateBranchingPoint(np.ones((1, 1))*parametersTry[0])
+Kbranch.branchkernelparam.kern.variance = np.array(parametersTry[1])
+Kbranch.branchkernelparam.kern.lengthscales = np.array(parametersTry[2])
+print('Initialised mb', mb)
+VBHelperFunctions.plotVBCode(mb, labels=labels, figsizeIn=(5, 5), fPlotVar=True)
+plt.title('Init %s B=%g ll=%.2f' % (ginter, mb.kern.branchkernelparam.Bv.value, mb.objectiveFun()))
+
+plotGene(t, Y)
+plotVBCode(mb, lw=3., fs=10, fPlotVar=True)
+plt.title('%s B=%g' % (ginter, mb.kern.branchkernelparam.Bv.value))
+
+# 
+# mb.optimize()
+# VBHelperFunctions.plotVBCode(mb, labels=labels, figsizeIn=(5, 5), fPlotVar=True)
+# plt.title('Optimised %s B=%g ll=%.2f' % (ginter, mb.kern.branchkernelparam.Bv.value, mb.objectiveFun()))
