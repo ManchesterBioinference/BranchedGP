@@ -9,7 +9,7 @@ geneList = ['Actb', 'Ahcy', 'Aqp3', 'Atp12a', 'Bmp4', 'Cdx2', 'Creb312', 'Cebpa'
             'Tspan8']
 
 
-for g in geneList:
+for g in geneList[::-1]:
     runcmd = "ipython testGuoSingleArg.py %s" % g
     print('Running', runcmd)
     os.system(runcmd)

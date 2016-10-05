@@ -106,7 +106,7 @@ class AssignGP(GPflow.model.GPModel):
 
     """
 
-    def __init__(self, t, XExpanded, Y, kern, indices, phiInitial, b, ZExpanded=None, fDebug=False):
+    def __init__(self, t, XExpanded, Y, kern, indices, phiInitial, b, fDebug=False):
         GPflow.model.GPModel.__init__(self, XExpanded, Y, kern,
                                       likelihood=GPflow.likelihoods.Gaussian(),
                                       mean_function=GPflow.mean_functions.Zero())
@@ -115,7 +115,6 @@ class AssignGP(GPflow.model.GPModel):
         assert len(indices) == t.size, 'indices must be size N'
         assert len(t.shape) == 1, 'pseudotime should be 1D'
         self.t = t  # could be DataHolder? advantages
-        self.ZExpanded = ZExpanded  # inducing points for sparse GP, optional. Same format as XExpanded
         self.indices = indices
         self.phiInitial = phiInitial
         self.logPhi = GPflow.param.Param(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions

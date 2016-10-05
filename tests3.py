@@ -31,8 +31,8 @@ def InitParams(m):
 fPlot = True  # do we do plots?
 fUsePriors = False  # Test priors on kernel hyperparameters
 fModelSelectionGrid = False
-fBO = True  # Bayesian optimisation
-fDebug = False  # Enable debugging output - tensorflow print ops
+fBO = False  # Bayesian optimisation
+fDebug = True  # Enable debugging output - tensorflow print ops
 ########################################
 np.set_printoptions(precision=4)  # precision to print numpy array
 seed = 43
