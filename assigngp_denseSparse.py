@@ -77,7 +77,7 @@ class AssignGPSparse(assigngp_dense.AssignGP):
 
         return self.bound
 
-    def build_predict_sparse(self, Xnew, full_cov=False):
+    def build_predict(self, Xnew, full_cov=False):
         M = tf.shape(self.ZExpanded)[0]
 
         Phi = tf.nn.softmax(self.logPhi)
