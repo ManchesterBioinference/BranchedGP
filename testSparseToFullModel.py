@@ -29,10 +29,6 @@ def InitParams(m):
 ########################################
 #         Test parameters
 ########################################
-fPlot = True  # do we do plots?
-fUsePriors = False  # Test priors on kernel hyperparameters
-fModelSelectionGrid = False
-fBO = False  # Bayesian optimisation
 fDebug = True  # Enable debugging output - tensorflow print ops
 ########################################
 np.set_printoptions(precision=4)  # precision to print numpy array
@@ -67,12 +63,7 @@ mo = OMGP(t[:, None], Y, K=2, variance=0.01, kernels=[komgp1, komgp2],
           prior_Z='DP')  # use a truncated DP with K=2 UNDONE
 mo.kern[0].lengthscale = 5.*np.ptp(t)  # initialise length scale to range of data
 mo.kern[1].lengthscale = 5.*np.ptp(t)
-mo.optimize(step_length=0.01, maxiter=30)
-# plotting OMGP fit
-if(fPlot):
-    plt.ion()
-    fig = plt.figure(figsize=(10, 10))
-    mo.plot()
+mo.optimize(step_length=0.01, maxiter=5)
 # Create model
 Kbranch = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm, b=trueB.copy()) + GPflow.kernels.White(1)
 Kbranch.branchkernelparam.kern.variance = 1
@@ -85,9 +76,8 @@ print('Branching K branching parameter', Kbranch.branchkernelparam.Bv.value)
 # Note that the OMGP model has different kernel hyperparameters for each latent function whereas the branching model
 # has one common set.
 M = 5  # number of inducing pts
-ir = np.random.choice(XExpanded.shape[0], M)
-ZExpanded = XExpanded  # [ir, :]
-print('Random choice for Z', ZExpanded)
+# ir = np.random.choice(XExpanded.shape[0], M)
+ZExpanded = XExpanded  # [ir, :] Test on full data
 mV = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices, mo.phi,
                                          Kbranch.branchkernelparam.Bv.value, ZExpanded, fDebug=fDebug)
 InitParams(mV)
@@ -100,7 +90,19 @@ InitParams(mVFull)
 lsparse = mV.compute_log_likelihood()
 lfull = mVFull.compute_log_likelihood()
 print('Sparse Log lik', lsparse, 'Full Log luk', lfull)
-# put prior to penalise short length scales
-assert np.allclose(lsparse, lfull), 'Log likelihoods not close'
-# Prior to penalize small length scales
-# print('Initialised mv', mV)
+# assert np.allclose(lsparse, lfull), 'Log likelihoods not close'
+
+# check models identical
+assert np.all(mV.GetPhiExpanded() == mVFull.GetPhiExpanded())
+assert mV.likelihood.variance.value == mVFull.likelihood.variance.value
+assert mV.kern is mVFull.kern
+
+
+# Test prediction
+Xtest = np.array([[0.6, 2], [0.6, 3]])
+mu_f, var_f = mVFull.predict_f(Xtest)
+
+mu_s, var_s = mV.predict_f(Xtest)
+
+print('Sparse model mu=', mu_s, ' variance=', var_s)
+print('Full model mu=', mu_f, ' variance=', var_f)
