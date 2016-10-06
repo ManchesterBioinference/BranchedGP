@@ -59,7 +59,7 @@ class AssignGPSparse(assigngp_dense.AssignGP):
         traceTerm = -0.5 * tf.reduce_sum(Kdiag * p) / sigma2 + 0.5 * tf.reduce_sum(tf.square(W))
         R = tf.cholesky(P)
         tmp = tf.matmul(LiKuf, tf.matmul(tf.transpose(Phi), self.Y))
-        c = tf.matrix_triangular_solve(R, tmp, lower=True) / sigma
+        c = tf.matrix_triangular_solve(R, tmp, lower=True) / sigma2
 
         self.bound = traceTerm - 0.5*N*D*tf.log(2 * np.pi * sigma2)\
             - 0.5*D*tf.reduce_sum(tf.log(tf.square(tf.diag_part(R))))\
