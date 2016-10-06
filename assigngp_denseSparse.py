@@ -63,8 +63,9 @@ class AssignGPSparse(assigngp_dense.AssignGP):
         traceTerm = -0.5 * tau * (tf.reduce_sum(Kdiag*p) - tf.reduce_sum(tf.square(LTA)))
         R = tf.cholesky(P)
         PhiY = tf.matmul(Kuf, tf.matmul(tf.transpose(Phi), self.Y))
-        LPhiY = tf.matmul(tf.transpose(L), PhiY)
-        RiLPhiY = tf.matrix_triangular_solve(R, LPhiY, lower=True)
+        # LPhiY = tf.matmul(tf.transpose(L), PhiY)
+        LiPhiY = tf.matrix_triangular_solve(L, PhiY)
+        RiLPhiY = tf.matrix_triangular_solve(R, LiPhiY, lower=True)
         KL = self.build_KL(Phi)
         if(self.fDebug):
             traceTerm = tf.Print(traceTerm, [tf.shape(KL), KL], message='KL=', name='KL', summarize=10)
