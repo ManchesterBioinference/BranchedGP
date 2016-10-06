@@ -60,7 +60,8 @@ def PlotSample(D, X, M, samples, B=None, lw=3.,
 
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
-# PlotSample(D, m.XExpanded[bestAssignment, : ], 3, Y, Bcrap, lw=5., fs=30, mV=mV, figsizeIn=(D*10, D*7), title='Posterior B=%.1f -loglik= %.2f VB= %.2f'%(b, -chainState[-1], VBbound))
+# PlotSample(D, m.XExpanded[bestAssignment, : ], 3, Y, Bcrap, lw=5., fs=30, mV=mV, figsizeIn=(D*10, D*7),
+# title='Posterior B=%.1f -loglik= %.2f VB= %.2f'%(b, -chainState[-1], VBbound))
 
 
 def plotPosterior(pt, Bv, mV, figsizeIn=(12, 16)):
@@ -150,8 +151,8 @@ class AssignGP(GPflow.model.GPModel):
                 phiInitial[i, iterC:iterC + 3] = np.hstack([eps, self.phiInitial[i, :] - eps])
             phiInitial_invSoftmax[i, iterC:iterC + 3] = np.log(phiInitial[i, iterC:iterC + 3])
             iterC += 3
-        assert np.any(np.isnan(phiInitial)) == False, 'no nans please ' + str(np.nonzero(np.isnan(phiInitial)))
-        assert np.any(phiInitial < 0) == False, 'no negatives please ' + str(np.nonzero(np.isnan(phiInitial)))
+        assert not np.any(np.isnan(phiInitial)), 'no nans please ' + str(np.nonzero(np.isnan(phiInitial)))
+        assert not np.any(phiInitial < 0), 'no negatives please ' + str(np.nonzero(np.isnan(phiInitial)))
         self.logPhi = phiInitial_invSoftmax
 
     def GetPhi(self):
@@ -191,10 +192,11 @@ class AssignGP(GPflow.model.GPModel):
         Phi = tf.nn.softmax(self.logPhi)
         # try sqaushing Phi to avoid numerical errors
         Phi = (1 - 2e-6) * Phi + 1e-6
+        sigma2 = self.likelihood.variance
         tau = 1. / self.likelihood.variance
         L = tf.cholesky(K) + GPflow.tf_hacks.eye(M) * 1e-6
-        LTA = tf.transpose(L) * tf.sqrt(tf.reduce_sum(Phi, 0))
-        P = tf.matmul(LTA, tf.transpose(LTA)) * tau + GPflow.tf_hacks.eye(M)
+        W = tf.transpose(L) * tf.sqrt(tf.reduce_sum(Phi, 0)) / tf.sqrt(sigma2)
+        P = tf.matmul(W, tf.transpose(W)) + GPflow.tf_hacks.eye(M)
         R = tf.cholesky(P)
         PhiY = tf.matmul(tf.transpose(Phi), self.Y)
         LPhiY = tf.matmul(tf.transpose(L), PhiY)
@@ -203,20 +205,50 @@ class AssignGP(GPflow.model.GPModel):
             Phi = tf.Print(Phi, [tf.shape(LPhiY), LPhiY], message='LPhiY=', name='LPhiY', summarize=10)
             Phi = tf.Print(Phi, [tf.shape(K), K], message='K=', name='K', summarize=10)
             Phi = tf.Print(Phi, [tau], message='tau=', name='tau', summarize=10)
-        RiLPhiY = tf.matrix_triangular_solve(R, LPhiY, lower=True)
+        c = tf.matrix_triangular_solve(R, LPhiY, lower=True) / sigma2
         # compute KL
         KL = self.build_KL(Phi)
         return -0.5 * N * D * tf.log(2. * np.pi / tau)\
             - 0.5 * D * tf.reduce_sum(tf.log(tf.square(tf.diag_part(R))))\
-            - 0.5 * tau * tf.reduce_sum(tf.square(self.Y))\
-            + 0.5 * tf.reduce_sum(tf.square(tau * RiLPhiY)) - KL
+            - 0.5 * tf.reduce_sum(tf.square(self.Y)) / sigma2\
+            + 0.5 * tf.reduce_sum(tf.square(c)) - KL
+
+    def build_predict(self, Xnew, full_cov=False):
+        M = tf.shape(self.X)[0]
+        K = self.kern.K(self.X)
+        Phi = tf.nn.softmax(self.logPhi)
+        # try sqaushing Phi to avoid numerical errors
+        Phi = (1 - 2e-6) * Phi + 1e-6
+        sigma2 = self.likelihood.variance
+        L = tf.cholesky(K) + GPflow.tf_hacks.eye(M) * 1e-6
+        W = tf.transpose(L) * tf.sqrt(tf.reduce_sum(Phi, 0)) / tf.sqrt(sigma2)
+        P = tf.matmul(W, tf.transpose(W)) + GPflow.tf_hacks.eye(M)
+        R = tf.cholesky(P)
+        PhiY = tf.matmul(tf.transpose(Phi), self.Y)
+        LPhiY = tf.matmul(tf.transpose(L), PhiY)
+        c = tf.matrix_triangular_solve(R, LPhiY, lower=True) / sigma2
+        Kus = self.kern.K(self.X, Xnew)
+        tmp1 = tf.matrix_triangular_solve(L, Kus, lower=True)
+        tmp2 = tf.matrix_triangular_solve(R, tmp1, lower=True)
+        mean = tf.matmul(tf.transpose(tmp2), c)
+        if full_cov:
+            var = self.kern.K(Xnew) + tf.matmul(tf.transpose(tmp2), tmp2)\
+                - tf.matmul(tf.transpose(tmp1), tmp1)
+            shape = tf.pack([1, 1, tf.shape(self.Y)[1]])
+            var = tf.tile(tf.expand_dims(var, 2), shape)
+        else:
+            var = self.kern.Kdiag(Xnew) + tf.reduce_sum(tf.square(tmp2), 0)\
+                - tf.reduce_sum(tf.square(tmp1), 0)
+            shape = tf.pack([1, tf.shape(self.Y)[1]])
+            var = tf.tile(tf.expand_dims(var, 1), shape)
+        return mean, var
 
     def build_KL(self, Phi):
         Bv_s = tf.squeeze(self.kern.branchkernelparam.Bv, squeeze_dims=[1])
         pZ = pZ_construction_singleBP.make_matrix(self.t, Bv_s)
         return tf.reduce_sum(Phi * tf.log(Phi)) - tf.reduce_sum(Phi * tf.log(pZ))
 
-    def build_predict(self, Xnew):
+    def build_predict_old(self, Xnew):
         M = tf.shape(self.X)[0]
         K = self.kern.K(self.X)
         L = tf.cholesky(K)

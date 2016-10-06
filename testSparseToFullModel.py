@@ -89,7 +89,7 @@ InitParams(mVFull)
 
 lsparse = mV.compute_log_likelihood()
 lfull = mVFull.compute_log_likelihood()
-print('Sparse Log lik', lsparse, 'Full Log luk', lfull)
+print('Sparse Log lik', lsparse, 'Full Log lik', lfull)
 # assert np.allclose(lsparse, lfull), 'Log likelihoods not close'
 
 # check models identical

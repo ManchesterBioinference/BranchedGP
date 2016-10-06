@@ -88,12 +88,12 @@ class AssignGPSparse(assigngp_dense.AssignGP):
         P = tf.matmul(W, tf.transpose(W)) + GPflow.tf_hacks.eye(M)
         R = tf.cholesky(P)
         tmp = tf.matmul(LiKuf, tf.matmul(tf.transpose(Phi), self.Y))
-        c = tf.matrix_triangular_solve(R, tmp, lower=True) / sigma
+        c = tf.matrix_triangular_solve(R, tmp, lower=True) / sigma2
 
         Kus = self.kern.K(self.ZExpanded, Xnew)
         tmp1 = tf.matrix_triangular_solve(L, Kus, lower=True)
         tmp2 = tf.matrix_triangular_solve(R, tmp1, lower=True)
-        mean = tf.matmul(tf.transpose(tmp2), c) / sigma
+        mean = tf.matmul(tf.transpose(tmp2), c)
         if full_cov:
             var = self.kern.K(Xnew) + tf.matmul(tf.transpose(tmp2), tmp2)\
                 - tf.matmul(tf.transpose(tmp1), tmp1)
