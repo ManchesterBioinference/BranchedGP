@@ -97,8 +97,10 @@ mVFull = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices, mo.phi,
 
 InitParams(mVFull)
 
-print('Sparse Ll', mV.compute_log_likelihood(), 'Full Ll', mVFull.compute_log_likelihood())
+lsparse = mV.compute_log_likelihood()
+lfull = mVFull.compute_log_likelihood()
+print('Sparse Log lik', lsparse, 'Full Log luk', lfull)
 # put prior to penalise short length scales
-assert mV.compute_log_likelihood() == -mV.objectiveFun()
+assert np.allclose(lsparse, lfull), 'Log likelihoods not close'
 # Prior to penalize small length scales
 # print('Initialised mv', mV)
