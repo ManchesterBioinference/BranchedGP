@@ -83,16 +83,18 @@ print('Branching K branching parameter', Kbranch.branchkernelparam.Bv.value)
 # Initialise all model parameters using the OMGP model
 # Note that the OMGP model has different kernel hyperparameters for each latent function whereas the branching model
 # has one common set.
-M = 5  # number of inducing pts
-ir = np.random.choice(XExpanded.shape[0], M)
-ZExpanded = XExpanded[ir, :]
-print('Random choice for Z', ZExpanded)
-mV = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices, mo.phi, 
-                                          Kbranch.branchkernelparam.Bv.value, ZExpanded, fDebug=fDebug)
+M = 10  # number of inducing pts
+ir = np.random.choice(XExpanded.shape[0], M, replace=False)
+ZExpanded = XExpanded[ir, :].copy()
+mV = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices, mo.phi, Kbranch.branchkernelparam.Bv.value, ZExpanded)
 InitParams(mV)
 # put prior to penalise short length scales
 assert mV.compute_log_likelihood() == -mV.objectiveFun()
 # Prior to penalize small length scales
+if(fUsePriors):
+    mV.kern.branchkernelparam.kern.lengthscales.prior = GPflow.priors.Gaussian(np.ptp(t), np.square(np.ptp(t) / 3.))
+    assert mV.compute_log_likelihood() != -mV.objectiveFun()
+#     mV.kern.branchkernelparam.kern.variance.prior = GPflow.priors.Gaussian(10, np.square(3.))
 print('Initialised mv', mV)
 
 # Plot results - this will call predict
@@ -112,3 +114,82 @@ print('Fitted model')
 print('OMGP Phi matrix', np.round(mo.phi, 2))
 print('b=', mV.kern.branchkernelparam.Bv.value, 'Branch model Phi matrix', np.round(mV.GetPhi(), 2))
 print('Fitted mv', mV)
+
+# Plot lower bound surface
+if(fModelSelectionGrid):
+    print('================ Model selection by grid search ================')
+    timeStart = time.time()
+    cb = np.array([0.25, 0.75])  # np.linspace(0.25, 0.75, n)
+    obj = np.zeros(cb.size)
+    for ib, b in enumerate(cb):
+        mV.UpdateBranchingPoint(np.ones((1, 1))*b)
+        InitParams(mV)
+        mV.optimize()
+        obj[ib] = mV.objectiveFun()
+        print('B=', b, 'kernel branch point', mV.kern.branchkernelparam.Bv.value, 'loglig=', obj[ib])
+        print(mV)
+        if(fPlot):
+            VBHelperFunctions.plotVBCode(mV, fPlotPhi=True, figsizeIn=(5, 5), fPlotVar=True)
+            plt.title('B=%g ll=%.2f' % (b, obj[ib]))
+    if(fPlot):
+        plt.figure()
+        plt.plot(cb, obj)
+        plt.plot(cb[np.argmin(obj)], obj[np.argmin(obj)], 'ro')
+        v = plt.axis()
+        plt.plot([trueB[0], trueB[0]], v[-2:], '--m', linewidth=2)
+        plt.legend(['Objective', 'mininum', 'true branching point'], loc=2)
+        plt.title('log likelihood surface for different branching points')
+    print('Model selection took %g secs.' % (time.time()-timeStart))
+
+if(fBO):
+    # Bayesian optimiser
+    # Create model
+    Kbranch = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm, b=trueB.copy(), fDebug=fDebug) + GPflow.kernels.White(1)
+    Kbranch.branchkernelparam.kern.variance = 1
+    Kbranch.white.variance = 1e-4  # controls the discontinuity magnitude, the gap at the branching point
+    Kbranch.white.variance.fixed = True  # jitter for numerics
+    Kbranch.branchkernelparam.kern.variance.fixed = True
+    print('Kbranch matrix', Kbranch.compute_K(XExpanded, XExpanded))
+    print('Branching K free parameters', Kbranch.branchkernelparam)
+    print('Branching K branching parameter', Kbranch.branchkernelparam.Bv.value)
+    # Initialise all model parameters using the OMGP model
+    # Note that the OMGP model has different kernel hyperparameters for each latent function whereas the branching model
+    # has one common set.
+    mb = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices, mo.phi, Kbranch.branchkernelparam.Bv.value, ZExpanded, fDebug=fDebug)
+    InitParams(mb)
+    if(fUsePriors):
+        mb.kern.branchkernelparam.kern.lengthscales.prior = GPflow.priors.Gaussian(np.ptp(t), np.square(np.ptp(t) / 3.))
+        print('Warning: Must not use prior for lengthscale if it is a fixed parameter.')
+        Kbranch.branchkernelparam.kern.lengthscales.fixed = False
+    else:
+        Kbranch.branchkernelparam.kern.lengthscales.fixed = True
+
+    print('Initialised mb', mb)
+    mb.UpdateBranchingPoint(np.ones((1, 1))*0.2)
+    myobj = BayesianOptimiser.objectiveBAndK(mb)
+    eps = 1e-5
+    if(Kbranch.branchkernelparam.kern.lengthscales.fixed):
+        bounds = [(t.min(), t.max()), (eps, 5 * Y.var()), (1, 10.*np.ptp(t))]
+        # Branching point, kernel var, kernel len
+    else:
+        bounds = [(t.min(), t.max()), (eps, 5 * Y.var())]
+        # Branching point, kernel var
+    print('Bounds used in optimisation: =', bounds)
+    t0 = time.time()
+    BOobj = GPyOpt.methods.BayesianOptimization(f=myobj.f, bounds=bounds)
+    max_iter = 40
+    nrestart = 1
+    n_cores = 6
+    BOobj.run_optimization(max_iter,                            # Number of iterations
+                           acqu_optimize_method='fast_random',  # method to optimize the acq. function
+                           acqu_optimize_restarts=nrestart,
+                           batch_method='lp',
+                           n_inbatch=n_cores,                   # size of the collected batches (= number of cores)
+                           eps=1e-6)                            # secondary stop criteria (on top of iters)
+    print('Bayesian optimisation took %g secs. ' % (time.time() - t0))
+    print('Solution found by BO x_opt =  ' + str(BOobj.x_opt) + 'fx_opt = ' + str(BOobj.fx_opt))
+    if(fPlot):
+        objAtMin = BOobj.f(BOobj.x_opt[None, :])  # get solution, update mb
+        VBHelperFunctions.plotVBCode(mb, fPlotPhi=True, figsizeIn=(5, 5), fPlotVar=True)
+        plt.title('Bayesian Optimisation B=%g ll=%.2f' % (mb.kern.branchkernelparam.Bv.value, objAtMin))
+
