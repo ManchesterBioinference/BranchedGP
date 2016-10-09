@@ -6,7 +6,7 @@ import tensorflow as tf
 # import pZ_construction_singleBP
 # from matplotlib import pyplot as plt
 # from GPflow.param import AutoFlow
-import assigngp_dense
+from . import assigngp_dense
 
 
 class AssignGPSparse(assigngp_dense.AssignGP):

@@ -3,7 +3,7 @@
 import GPflow
 import numpy as np
 import tensorflow as tf
-import pZ_construction_singleBP
+from . import pZ_construction_singleBP
 from matplotlib import pyplot as plt
 from GPflow.param import AutoFlow
 # TODO S:

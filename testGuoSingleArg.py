@@ -12,11 +12,11 @@ import pickle
 import time
 import pods
 # Branching files
-import VBHelperFunctions
-import BranchingTree as bt
-import branch_kernParamGPflow as bk
-import assigngp_dense
-import BayesianOptimiser
+from BranchedGP import VBHelperFunctions
+from BranchedGP import BranchingTree as bt
+from BranchedGP import branch_kernParamGPflow as bk
+from BranchedGP import assigngp_dense
+from BranchedGP import BayesianOptimiser
 
 
 def InitParams(m):

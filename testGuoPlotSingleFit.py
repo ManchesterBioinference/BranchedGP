@@ -12,12 +12,10 @@ import pickle
 import time
 import pods
 # Branching files
-import VBHelperFunctions
-import BranchingTree as bt
-import branch_kernParamGPflow as bk
-import assigngp_dense
-import BayesianOptimiser
-import matplotlib.cm as cm
+from BranchedGP import VBHelperFunctions
+from BranchedGP import BranchingTree as bt
+from BranchedGP import branch_kernParamGPflow as bk
+from BranchedGP import assigngp_dense
 
 
 def plotVBCode(mV, lw=3., fs=10, fPlotVar=False):

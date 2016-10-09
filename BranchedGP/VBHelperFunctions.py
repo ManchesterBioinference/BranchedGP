@@ -2,9 +2,9 @@ import GPflow
 import numpy as np
 import time
 import pickle as pickle
-import assigngp_dense
-import branch_kernParamGPflow as bk
-import BranchingTree as bt
+from . import assigngp_dense
+from . import branch_kernParamGPflow as bk
+from . import BranchingTree as bt
 import pods
 import GPyOpt
 from matplotlib import pyplot as plt

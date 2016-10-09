@@ -9,11 +9,11 @@ import GPyOpt
 # import pickle
 import time
 # Branching files
-import VBHelperFunctions
-import BranchingTree as bt
-import branch_kernParamGPflow as bk
-import assigngp_denseSparse
-import BayesianOptimiser
+from BranchedGP import VBHelperFunctions
+from BranchedGP import BranchingTree as bt
+from BranchedGP import branch_kernParamGPflow as bk
+from BranchedGP import assigngp_denseSparse
+from BranchedGP import BayesianOptimiser
 
 
 def InitParams(m):
