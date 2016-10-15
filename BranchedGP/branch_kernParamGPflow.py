@@ -1,16 +1,18 @@
 ''' Module to replace branch_kern with parameterised version'''
-
+from . import VBHelperFunctions
 import GPflow
 from GPflow.param import DataHolder
-
 import tensorflow as tf
 import numpy as np
 from matplotlib import pyplot as plt
 
 
-def PlotSample(D, X, M, samples, B=None, lw=3., fs=10, figsizeIn=(12, 16), title=None, mV=None):
-    f, ax = plt.subplots(D, 1, figsize=figsizeIn, sharex=True, sharey=True)
-    nb = len(B)  # number of branch points
+def PlotSample(X, samples, B=None, lw=3., fs=10, figsizeIn=(5, 5)):
+    D = samples.shape[1]  # number of outputs
+    assert X.shape[0] == samples.shape[0]
+    M = 3  # number of functions
+    assert B is None or B.size == 1, 'Limited to one branch point'
+    _, ax = plt.subplots(D, 1, figsize=figsizeIn, sharex=True, sharey=True)
     for d in range(D):
         for i in range(1, M + 1):
             t = X[X[:, 1] == i, 0]
@@ -21,64 +23,25 @@ def PlotSample(D, X, M, samples, B=None, lw=3., fs=10, figsizeIn=(12, 16), title
                 p = ax.flatten()[d]
             else:
                 p = ax
-
-            p.plot(t, y, '.', label=i, markersize=2 * lw)
+            p.plot(t, y, '-+', label=i, markersize=2 * lw)
             p.text(t[t.size / 2], y[t.size / 2], str(i), fontsize=fs)
         # Add vertical lines for branch points
-        if(title is not None):
-            p.set_title(title + ' Dim=' + str(d), fontsize=fs)
-
         if(B is not None):
             v = p.axis()
-            for i in range(nb):
+            p.set_title('Branching kernel at B=%g' % B)
+            for i in range(B.size):
                 p.plot([B[i], B[i]], v[-2:], '--r')
-        if(mV is not None):
-            assert B.size == 1, 'Code limited to one branch point, got ' + str(B.shape)
-
-            pt = mV.t
-            l = np.min(pt)
-            u = np.max(pt)
-            for f in range(1, 4):
-                if(f == 1):
-                    ttest = np.linspace(l, B.flatten(), 100)[:, None]  # root
-                else:
-                    ttest = np.linspace(B.flatten(), u, 100)[:, None]
-                Xtest = np.hstack((ttest, ttest * 0 + f))
-                mu, var = mV.predict_f(Xtest)
-                assert np.all(np.isfinite(mu)), 'All elements should be finite but are ' + str(mu)
-                assert np.all(np.isfinite(var)), 'All elements should be finite but are ' + str(var)
-                mean, = p.plot(ttest, mu[:, d], linewidth=lw)
-                col = mean.get_color()
-                # print 'd='+str(d)+ ' f='+str(f) + '================'
-                # variance is common for all outputs!
-                p.plot(ttest.flatten(), mu[:, d] + 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
-                p.plot(ttest, mu[:, d] - 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
-
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-
-#PlotSample(D,m.XExpanded[bestAssignment, : ],3,Y,Bcrap,lw=5.,fs=30, mV=mV, figsizeIn=(D*10,D*7),title='Posterior B=%.1f -loglik= %.2f VB= %.2f'%(b,-chainState[-1],VBbound))
 
 
-def SampleBranchGP(kern, X, M, D=1, lw=3., fs=10, tol=1e-5):
-    ''' Sample kernel on X. Can generate D independent samples
-    X input
-    M number of functions
-    tol tolerance to add such that matrix is invertible
-    lw line width
-    fs font size
-    kern has the branching point specified along with the other GP hyperparameters
-    '''
-    x_free = tf.placeholder(tf.float64)
-    kern.make_tf_array(x_free)
-    with kern.tf_mode():
-        K = kern.K(X)
-    with tf.Session() as sess:
-        K = sess.run(K, feed_dict={x_free: kern.get_free_state()})
-
+def SampleKernel(kern, X, D=1, tol=1e-6, retChol=False):
+    ''' Sample GP, D is number of independent output dimensions '''
+    K = kern.compute_K(X, X)  # NxM
     L = np.linalg.cholesky(K + np.eye(K.shape[0]) * tol)
     samples = L.dot(np.random.randn(L.shape[0], D))
-
-    return (samples, L, K)
+    if(retChol):
+        return samples, L, K
+    else:
+        return samples
 
 
 class BranchKernelParam(GPflow.kernels.Kern):
@@ -94,6 +57,12 @@ class BranchKernelParam(GPflow.kernels.Kern):
         assert self.fm.shape[2] > 0
         self.Bv = DataHolder(b)
         GPflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
+
+    def SampleKernel(self, XExpanded, b=None, tol=1e-6):
+        if(b is not None):
+            self.Bv = np.ones((1, 1))*b
+        XTree = VBHelperFunctions.SetXExpandedBranchingPoint(XExpanded, self.Bv.value)
+        return SampleKernel(self, XTree, tol=tol), XTree
 
     def K(self, X, Y=None):
         if Y is None:

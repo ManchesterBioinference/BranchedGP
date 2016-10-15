@@ -74,12 +74,21 @@ def GetFunctionIndexListGeneral(Xin):
         # print str(ix) + ' ' + str(x) + ' f=' + str(functionList) + ' ' +  str(XSample[ix,1])
         idx = []
         for f in functionList:
-            Xnew.append([x, f])  # could have 1 or 0 based function list - does kernel care?
+            Xnew.append([x, f])  # 1 based function list - does kernel care?
             idx.append(inew)
             inew = inew + 1
         indicesBranch.append(idx)
     Xnewa = np.array(Xnew)
     return (Xnewa, indicesBranch, XSample)
+
+
+def SetXExpandedBranchingPoint(XExpanded, B):
+    ''' Return XExpanded by removing unavailable branches '''
+    # before branching pt, only function 1
+    X1 = XExpanded[np.logical_and(XExpanded[:, 0] <= B, XExpanded[:, 1] == 1).flatten(), :]
+    # after branching pt, only functions 2 and 2
+    X23 = XExpanded[np.logical_and(XExpanded[:, 0] > B, XExpanded[:, 1] != 1).flatten(), :]
+    return np.vstack([X1, X23])
 
 
 def InitModels(pt, XExpanded, Y):
