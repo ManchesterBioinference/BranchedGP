@@ -1,12 +1,8 @@
 import GPflow
 import numpy as np
-import time
-import pickle as pickle
 from . import assigngp_dense
 from . import branch_kernParamGPflow as bk
 from . import BranchingTree as bt
-import pods
-import GPyOpt
 from matplotlib import pyplot as plt
 from matplotlib import cm
 
@@ -39,7 +35,7 @@ def plotVBCode(mV, figsizeIn=(20, 10), lw=3., fs=10, labels=None, fPlotPhi=True,
 
     # Plot Phi or labels
     if(fPlotPhi):
-        Phi = FlattenPhi(mV)
+        Phi = mV.GetPhi()
         gp_num = 1  # can be 0,1,2 - Plot against this
         plt.scatter(pt, mV.Y.value[:, d], c=Phi[:, gp_num], vmin=0., vmax=1, s=40)
         plt.colorbar(label='GP {} assignment probability'.format(gp_num))
@@ -107,14 +103,3 @@ def InitModels(pt, XExpanded, Y):
     mV.kern.white.variance.fixed = True
     mV._compile()  # creates objective function
     return mV
-
-
-def FlattenPhi(mV):
-    # return flattened and rounded Phi i.e. N X 3
-    phiFlattened = np.zeros((mV.Y.shape[0], 3))  # only single branching point
-    Phi = np.round(np.exp(mV.logPhi._array), decimals=4)
-    iterC = 0
-    for i, _ in enumerate(mV.t):
-        phiFlattened[i, :] = Phi[i, iterC:iterC + 3]
-        iterC += 3
-    return phiFlattened

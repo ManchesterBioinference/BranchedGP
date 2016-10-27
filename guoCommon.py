@@ -78,6 +78,8 @@ def evaluatePseudoTime(pt, Ygene, labels, stageCell):
     1. Roughness across the three cell fates (TE, EPI, PE)
     2. Rank correlation with capture time
     '''
+    assert isinstance(pt, np.ndarray)
+    pt = pt.flatten()  # ensure vector
     roughnessAcrossGenes = pd.DataFrame(np.zeros((Ygene.columns.size, 3)), index=Ygene.columns, columns=['TE', 'EPI', 'PE'])
     for ig, g in enumerate(Ygene):
         gd = Ygene[g]

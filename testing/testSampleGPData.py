@@ -19,7 +19,7 @@ fPlot = True  # do we do plots?
 fDebug = True  # Enable debugging output - tensorflow print ops
 ########################################
 np.set_printoptions(precision=4)  # precision to print numpy array
-seed = 43
+seed = 0
 np.random.seed(seed=seed)  # easy peasy reproducibeasy
 tf.set_random_seed(seed)
 # Data generation
@@ -47,16 +47,17 @@ if(fPlot):
     bk.PlotSample(XExpanded, Yi)
     plt.title('Independent kernel')
 # Branching GP
-# Btry = [0.1, 0.5, 0.8]
-Btry = [0.8]
+Btry = [0.1, 0.5, 0.8]
+# Btry = [0.5]  # Real B cases
 BgridSearch = [0.0, 0.1, 0.5, 0.8, 1.0]
+# BgridSearch = [0.5]
 Yb = list()
 XTree = list()
 YX_sampled = [Kbranch.SampleKernel(XExpanded, b, tol=0.1) for b in Btry]
 if(fPlot):
     for i, YX in enumerate(YX_sampled):
         bk.PlotSample(YX[1], YX[0], np.ones((1, 1))*Btry[i])
-YX_sampled.append([Yi, XExpanded])  # Last entry is independent GP
+# YX_sampled.append([Yi, XExpanded])  # Last entry is independent GP
 # Fit Model on true hyperparameters
 for iyx, YX in enumerate(YX_sampled):
     tstart = time.time()
@@ -81,7 +82,7 @@ for iyx, YX in enumerate(YX_sampled):
     komgp2.fix()
     mo = OMGP(tReplicated[:, None], Y, K=2, variance=0.01, kernels=[komgp1, komgp2],
               prior_Z='DP')  # use a truncated DP with K=2 UNDONE
-    mo.optimize(step_length=0.01, maxiter=30, verbose=False)  # This just optimizers allocations
+    mo.optimize(step_length=0.01, maxiter=50, verbose=False)  # This just optimizers allocations
     if(fPlot):
         fig = plt.figure(figsize=(5, 5))
         mo.plot()
@@ -93,6 +94,18 @@ for iyx, YX in enumerate(YX_sampled):
     kb.branchkernelparam.kern.lengthscales.fixed = True
     kb.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
     kb.white.variance.fixed = True  # jitter for numerics
+#     # Null model - independent model
+#     ki = bk.IndKern(GPflow.kernels.Matern32(1) + GPflow.kernels.White(1))
+#     ki.kern.matern32.variance = kerlen
+#     ki.kern.matern32.variance.fixed = True
+#     ki.kern.matern32.lengthscales = kervar
+#     ki.kern.matern32.lengthscales.fixed = True
+#     ki.kern.white.variance = 1e-6
+#     ki.kern.white.variance.fixed = True
+#     mi = assigngp_dense.AssignGP(tReplicated, XExpandedRepl, Y, ki, indicesRepl, mo.phi, -1*np.zeros((1, 1)))
+#     mi.optimize(disp=0, maxiter=30)
+#     objInd = mi.objectiveFun()
+    # Branching model
     mV = assigngp_dense.AssignGP(tReplicated, XExpandedRepl, Y, kb, indicesRepl, mo.phi, kb.branchkernelparam.Bv.value)
     # Do grid search
     obj = np.zeros(len(BgridSearch))
