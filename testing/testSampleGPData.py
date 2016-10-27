@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 import GPy
 from GPclust import OMGP
 import time
+import pickle
 # Branching files
 from BranchedGP import VBHelperFunctions
 from BranchedGP import BranchingTree as bt
@@ -23,7 +24,7 @@ if(fTesting):
     fPlot = True  # do we do plots?
 else:
     NSamples = 100
-    maxiters = 40
+    maxiters = 50
     fPlot = False
 
 ########################################
@@ -92,7 +93,10 @@ ki.white.variance.fixed = True
 errorInBranchingPt = np.zeros((NSamples, len(Btry)))  # + integrated GP
 logLikelihoodRatio = np.zeros((NSamples, len(Btry)))
 timingInfo = np.zeros((NSamples, len(Btry), len(BgridSearch)))
+errorInBranchingPt[:] = np.nan
+logLikelihoodRatio[:] = np.nan
 for ns in range(NSamples):
+    print('Samples %g starting now' % ns)
     # Run over samples for different branching values
     for ibTrue, bTrue in enumerate(Btry):
         # Get sample for each true branching location and non-branching model
@@ -116,6 +120,7 @@ for ns in range(NSamples):
                   prior_Z='DP')  # use a truncated DP with K=2 UNDONE
         mo.optimize(step_length=0.01, maxiter=maxiters, verbose=False)  # This just optimizers allocations
         if(fPlot):
+            plt.close('all')  # start from scratch for all GP samples
             fig = plt.figure(figsize=(5, 5))
             mo.plot()
             plt.title('OMGPInit B=%s' % bs)
@@ -129,8 +134,12 @@ for ns in range(NSamples):
         obj = np.zeros(len(BgridSearch))
         for ib, b in enumerate(BgridSearch):
             tstart = time.time()
-            mV.UpdateBranchingPoint(np.ones((1, 1))*b)
-            mV.optimize(disp=0, maxiter=maxiters)
+            try:
+                mV.UpdateBranchingPoint(np.ones((1, 1))*b)
+                mV.optimize(disp=0, maxiter=maxiters)
+            except:
+                print('Failed')
+                continue
             obj[ib] = mV.objectiveFun()
             timingInfo[ns, ibTrue, ib] = time.time()-tstart
             if(fPlot):
@@ -155,7 +164,10 @@ for ns in range(NSamples):
         So the lower the R, the stronger the evidence for branching
         '''
         logLikelihoodRatio[ns, ibTrue] = S[im, 1] + objInt
-
+    saveDict = {'errorInBranchingPt': errorInBranchingPt,
+                'logLikelihoodRatio': logLikelihoodRatio,
+                'Btry': Btry, 'BgridSearch': BgridSearch}
+    pickle.dump(saveDict, open("testSampleGPData.p", "wb"))
 # Try sparse GP Model
 # Try learning hyperparameters
 # add asserts that minimum objective at true branching point
