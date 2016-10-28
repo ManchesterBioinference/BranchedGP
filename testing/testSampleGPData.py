@@ -16,8 +16,8 @@ from BranchedGP import assigngp_dense
 ########################################
 #         Test parameters
 ########################################
-fTesting = True  # quick run?
-N = 50  # Number of points in the sample path, we sample *3 
+fTesting = False  # quick run?
+N = 50  # Number of points in the sample path, we sample *3
 if(fTesting):
     NSamples = 2
     maxiters = 30
@@ -25,7 +25,7 @@ if(fTesting):
 else:
     NSamples = 100
     maxiters = 50
-    fPlot = False
+    fPlot = True
 
 ########################################
 np.set_printoptions(precision=4)  # precision to print numpy array
@@ -62,7 +62,7 @@ else:
 if(fTesting):
     BgridSearch = [0.5]
 else:
-    BgridSearch = [0.0, 0.1, 0.5, 0.85, 1.0]
+    BgridSearch = [0.0+1e-6, 0.1, 0.5, 0.85, 1.0]  # may have problem in Phi matrix calculation (try GetPhi())
 # Common data structures
 # OMGP
 komgp1 = GPy.kern.Matern32(1)

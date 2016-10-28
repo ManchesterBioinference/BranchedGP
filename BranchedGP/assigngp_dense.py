@@ -161,9 +161,10 @@ class AssignGP(GPflow.model.GPModel):
         phiExpanded = self.GetPhiExpanded()
         l = [phiExpanded[i, self.indices[i]] for i in range(len(self.indices))]
         phi = np.asarray(l)
-        assert np.all(phi.sum(1) <= 1)
-        assert np.all(phi >= 0)
-        assert np.all(phi <= 1)
+        tolError = 1e-6
+        assert np.all(phi.sum(1) <= 1+tolError)
+        assert np.all(phi >= 0-tolError)
+        assert np.all(phi <= 1+tolError)
         return phi
 
     @AutoFlow()
