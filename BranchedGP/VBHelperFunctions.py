@@ -7,32 +7,48 @@ from matplotlib import pyplot as plt
 from matplotlib import cm
 
 
-def plotVBCode(mV, figsizeIn=(20, 10), lw=3., fs=10, labels=None, fPlotPhi=True, fPlotVar=False):
-    fig = plt.figure(figsize=figsizeIn)
-    B = mV.kern.branchkernelparam.Bv.value.flatten()
-    assert B.size == 1, 'Code limited to one branch point, got ' + str(B.shape)
-    pt = mV.t
+def predictBranchingModel(m):
+    ''' return prediction of branching model '''
+    pt = m.t
+    B = m.kern.branchkernelparam.Bv.value.flatten()
     l = np.min(pt)
     u = np.max(pt)
-    d = 0  # constraint code to be 1D for now
+    mul = list()
+    varl = list()
+    ttestl = list()
     for f in range(1, 4):
         if(f == 1):
             ttest = np.linspace(l, B, 100)[:, None]  # root
         else:
             ttest = np.linspace(B, u, 100)[:, None]
         Xtest = np.hstack((ttest, ttest * 0 + f))
-        mu, var = mV.predict_f(Xtest)
+        mu, var = m.predict_f(Xtest)
         assert np.all(np.isfinite(mu)), 'All elements should be finite but are ' + str(mu)
         assert np.all(np.isfinite(var)), 'All elements should be finite but are ' + str(var)
+        mul.append(mu)
+        varl.append(var)
+        ttestl.append(ttest)
+    return ttestl, mul, varl
+
+
+def plotVBCode(mV, figsizeIn=(20, 10), lw=3., fs=10, labels=None, fPlotPhi=True, fPlotVar=False):
+    fig = plt.figure(figsize=figsizeIn)
+    B = mV.kern.branchkernelparam.Bv.value.flatten()
+    assert B.size == 1, 'Code limited to one branch point, got ' + str(B.shape)
+    pt = mV.t
+    ttestl, mul, varl = predictBranchingModel(mV)
+    d = 0  # constraint code to be 1D for now
+    for f in range(3):
+        mu = mul[f]
+        var = varl[f]
+        ttest = ttestl[f]
         mean, = plt.plot(ttest, mu[:, d], linewidth=lw)
         col = mean.get_color()
         if(fPlotVar):
             plt.plot(ttest.flatten(), mu[:, d] + 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
             plt.plot(ttest, mu[:, d] - 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
-
     v = plt.axis()
     plt.plot([B, B], v[-2:], '-m', linewidth=lw)
-
     # Plot Phi or labels
     if(fPlotPhi):
         Phi = mV.GetPhi()
