@@ -36,7 +36,9 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None):
     if(fTesting):
         BgridSearch = [0.5]
     else:
-        BgridSearch = [0.0+1e-6, 0.1, 0.5, 0.85, 1.0]  # may have problem in Phi matrix calculation (try GetPhi())
+        BgridSearch = np.linspace(0, 1, 11)
+        # may have problem in Phi matrix calculation (try GetPhi())
+        BgridSearch[0] = 1e-6
     # kernel hyperparameters
     kerlen = 3
     kervar = 2

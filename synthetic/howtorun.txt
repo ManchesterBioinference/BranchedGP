@@ -1,0 +1,57 @@
+ssh mqbssaby@dpsf.itservices.manchester.ac.uk
+ssh mqbssaby@csf2.itservices.manchester.ac.uk
+ssh mqbssaby@zrek.itservices.manchester.ac.uk
+	
+module load services/gridscheduler
+module load apps/gcc/tensorflow/0.10.0-py34-cpu
+module load tools/env/proxy
+module load tools/gcc/git/2.8.2
+
+local machine
+ssh mqbssaby@130.88.90.134
+
+mqbssaby@130.88.90.134:transfer/
+
+pip install jug --user
+
+scp -r GPflow/* mqbssaby@csf2.itservices.manchester.ac.uk:GPflow/
+
+install BranchedGP package
+python setup.py install --user --prefix=BranchedGP
+
+in BranchedGP/synthetic
+qsub -t 1-100 ./r.sh jugGPSamples.py 
+
+
+.local/bin/jug
+added to path
+
+Issues
+1. Cannot install BranchedGP package
+2. tensorflow issue (below)
+3. save files explicitly uses qsub rather than jug?
+
+======
+CRITICAL:root:Could not import file 'jugGPSamples.py' (error: /opt/gridware/apps/gcc/tensorflow/0.10.0/python3.4/cpu/lib/python3.4/site-packages/tensorflow/python/_pywrap_tensorflow.so: symbol memcpy, version GLIBC_2.14 not defined in file libc.so.6 with link time reference)
+Traceback (most recent call last):
+  File "/mnt/mr01-home01/mqbssaby/.local/lib/python3.4/site-packages/jug/jug.py", line 406, in init
+    exec(compile(jugfile_contents, jugfile, 'exec'), jugspace, jugspace)
+  File "jugGPSamples.py", line 3, in <module>
+    import tensorflow as tf
+  File "/opt/gridware/apps/gcc/tensorflow/0.10.0/python3.4/cpu/lib/python3.4/site-packages/tensorflow/__init__.py", line 23, in <module>
+    from tensorflow.python import *
+  File "/opt/gridware/apps/gcc/tensorflow/0.10.0/python3.4/cpu/lib/python3.4/site-packages/tensorflow/python/__init__.py", line 48, in <module>
+    from tensorflow.python import pywrap_tensorflow
+  File "/opt/gridware/apps/gcc/tensorflow/0.10.0/python3.4/cpu/lib/python3.4/site-packages/tensorflow/python/pywrap_tensorflow.py", line 28, in <module>
+    _pywrap_tensorflow = swig_import_helper()
+  File "/opt/gridware/apps/gcc/tensorflow/0.10.0/python3.4/cpu/lib/python3.4/site-packages/tensorflow/python/pywrap_tensorflow.py", line 24, in swig_import_helper
+    _mod = imp.load_module('_pywrap_tensorflow', fp, pathname, description)
+  File "/opt/gridware/apps/binapps/anaconda/3/2.3.0/lib/python3.4/imp.py", line 243, in load_module
+    return load_dynamic(name, filename, file)
+ImportError: /opt/gridware/apps/gcc/tensorflow/0.10.0/python3.4/cpu/lib/python3.4/site-packages/tensorflow/python/_pywrap_tensorflow.so: symbol memcpy, version GLIBC_2.14 not defined in file libc.so.6 with link time reference
+
+
+assigngp_dense
+assert b <= (self.t.max()+eps) and b >= (self.t.min() - eps)
+
+Do nosetests --pdb-failures --pdb ./test_set.py

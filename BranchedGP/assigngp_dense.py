@@ -124,12 +124,13 @@ class AssignGP(GPflow.model.GPModel):
 
     def UpdateBranchingPoint(self, b):
         ''' Function to update branching point '''
-        eps = 1e-6
+        eps = 1e-9
         assert isinstance(b, np.ndarray)
         self.b = b  # remember branching value
         self.kern.branchkernelparam.Bv = b
         assert isinstance(self.kern.branchkernelparam.Bv, GPflow.param.DataHolder)
-        assert b <= (self.t.max()+eps) and b >= (self.t.min() - eps)
+        assert b <= (self.t.max()+eps) and b >= (self.t.min() - eps),\
+            'Branching suspicious b=%f is not in [%f, %f] ' % (b, self.t.min(), self.t.max())
         assert self.logPhi.fixed is False, 'Phi should not be constant when changing branching location'
         self.InitialisePhiFromOMGP()
 
@@ -142,7 +143,7 @@ class AssignGP(GPflow.model.GPModel):
         phiInitial = np.zeros((N, 3 * N))
         # large neg number makes exact zeros, make smaller for added jitter
         phiInitial_invSoftmax = -9. * np.ones((N, 3 * N))
-        eps = 1e-12
+        eps = 1e-9
         iterC = 0
         for i, p in enumerate(self.t):
             if(p < self.b):  # before branching - it's the root
@@ -152,7 +153,7 @@ class AssignGP(GPflow.model.GPModel):
             phiInitial_invSoftmax[i, iterC:iterC + 3] = np.log(phiInitial[i, iterC:iterC + 3])
             iterC += 3
         assert not np.any(np.isnan(phiInitial)), 'no nans please ' + str(np.nonzero(np.isnan(phiInitial)))
-        assert not np.any(phiInitial < 0), 'no negatives please ' + str(np.nonzero(np.isnan(phiInitial)))
+        assert not np.any(phiInitial < -eps), 'no negatives please ' + str(np.nonzero(np.isnan(phiInitial)))
         self.logPhi = phiInitial_invSoftmax
 
     def GetPhi(self):
