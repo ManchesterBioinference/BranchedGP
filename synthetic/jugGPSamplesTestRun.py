@@ -45,10 +45,6 @@ def runSampleGPSparse(seedpr):
 
 
 # in this configuration, full and sparse should be run on exactly the same data
-fTesting = False
-if(fTesting):
-    NSamples = 10
-else:
-    NSamples = 100
-runsFull = [runSampleGPFull(n) for n in range(NSamples)]
-runsSpar = [runSampleGPSparse(n) for n in range(NSamples)]
+fTesting = True
+runsSpar = [runSampleGPSparse(n) for n in range(10)]
+runsFull = [runSampleGPFull(n) for n in range(10)]
