@@ -7,6 +7,9 @@ module load apps/gcc/tensorflow/0.10.0-py34-cpu
 module load tools/env/proxy
 module load tools/gcc/git/2.8.2
 
+zrek:
+module load apps/gcc/tensorflow/0.10.0-py34-gpu
+
 local machine
 ssh mqbssaby@130.88.90.134
 
@@ -19,10 +22,29 @@ scp -r GPflow/* mqbssaby@csf2.itservices.manchester.ac.uk:GPflow/
 install BranchedGP package
 python setup.py install --user --prefix=BranchedGP
 
+Jug
+=======
 in BranchedGP/synthetic
 qsub -t 1-100 ./r.sh jugGPSamples.py 
 
+native array
+========
+qsub -t 1-100 ./r.sh runArrayJob.py
 
+
+package install
+=================
+via path property
+print(BranchedGP.__path__)
+
+global packages for dpsf:
+installs in  /mnt/mr01-home01/mqbssaby/gridware/share/python/2.7.8/lib/python3.4/site-packages/ 
+
+Hack via local link: 
+ln -s ~/BranchedGP/BranchedGP BranchedGP
+
+Jug
+============
 .local/bin/jug
 added to path
 
@@ -50,6 +72,9 @@ Traceback (most recent call last):
     return load_dynamic(name, filename, file)
 ImportError: /opt/gridware/apps/gcc/tensorflow/0.10.0/python3.4/cpu/lib/python3.4/site-packages/tensorflow/python/_pywrap_tensorflow.so: symbol memcpy, version GLIBC_2.14 not defined in file libc.so.6 with link time reference
 
+Hit issue with numpy
+AttributeError: 'numpy.ndarray' object has no attribute 'cache'
+when calling OMGP
 
 assigngp_dense
 assert b <= (self.t.max()+eps) and b >= (self.t.min() - eps)

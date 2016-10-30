@@ -52,15 +52,12 @@ if __name__ == '__main__':
         N = 30
     else:
         N = 100
-    # Run single job
-    taskId_env = os.environ.get("SGE_TASK_ID")
-    if(taskId_env is None):
-        print('Task id environment SGE_TASK_ID is empty!')
-    taskId = int(taskId_env)
-    # Run both full and sparse versions
-    print('runArrayJob: Running full branching GP with seed %g' % taskId)
-    r = runSampleGPFull(taskId)
-    pickle.dump(r, open("runArrayJob_Full%g.p" % taskId, "wb"))
-    print('runArrayJob: Running sparse branching GP with seed %g' % taskId)
-    r = runSampleGPSparse(taskId)
-    pickle.dump(r, open("runArrayJob_Sparse%g.p" % taskId, "wb"))
+    # Run single job at a time
+    for taskId in range(1, 101):
+        # Run both full and sparse versions
+        print('runArrayJob: Running full branching GP with seed %g' % taskId)
+        r = runSampleGPFull(taskId)
+        pickle.dump(r, open("runArrayJob_Full%g.p" % taskId, "wb"))
+        print('runArrayJob: Running sparse branching GP with seed %g' % taskId)
+        r = runSampleGPSparse(taskId)
+        pickle.dump(r, open("runArrayJob_Sparse%g.p" % taskId, "wb"))
