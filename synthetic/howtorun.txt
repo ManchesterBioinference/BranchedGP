@@ -7,6 +7,11 @@ module load apps/gcc/tensorflow/0.10.0-py34-cpu
 module load tools/env/proxy
 module load tools/gcc/git/2.8.2
 
+newer anaconda?
+module load tools/env/proxy
+module load tools/gcc/git/2.8.2
+module load apps/binapps/anaconda/3/4.1.1
+
 zrek:
 module load apps/gcc/tensorflow/0.10.0-py34-gpu
 
@@ -30,6 +35,7 @@ qsub -t 1-100 ./r.sh jugGPSamples.py
 native array
 ========
 qsub -t 1-100 ./r.sh runArrayJob.py
+qsub -t 1-3 ./r.sh runArrayJob.py
 
 
 package install
@@ -42,6 +48,54 @@ installs in  /mnt/mr01-home01/mqbssaby/gridware/share/python/2.7.8/lib/python3.4
 
 Hack via local link: 
 ln -s ~/BranchedGP/BranchedGP BranchedGP
+
+tensorflow user install via conda
+========================
+via conda
+/mnt/mr01-home01/mqbssaby/.conda/envs/tensorflow
+
+local:
+conda create -n tensorflow11 python=3.5
+cluster:
+conda create -n tensorflow python=3.5
+
+conda config --add channels conda-forge
+conda search tensorflow11 --channel conda-forge
+
+source activate tensorflow11
+conda install -c conda-forge tensorflow
+ 
+export PYTHONPATH=$HOME/.conda/envs/tensorflow:$PYTHONPATH
+
+run:
+.conda/envs/tensorflow/bin/python
+or use 
+source activate tensorflow11
+python
+NOT ipython
+
+Problem:
+ImportError: /lib64/libc.so.6: version `GLIBC_2.14' not found (required by /mnt/mr01-home01/mqbssaby/.conda/envs/tensorflow/lib/python3.5
+/site-packages/tensorflow/python/_pywrap_tensorflow.so)
+
+export LD_PRELOAD=/opt/gridware/libs/intel/nag/fsl6i24dcl/mkl11.0/lib/intel64/libmkl_core.so
+'I'll need to send some info about how to fix the precompiled libraries to work on redhat 6 though.'
+ 
+ Interesting article - mixing conda and jupyter notebooks
+ http://stuartmumford.uk/blog/jupyter-notebook-and-conda.html
+ 
+ Install older GPy
+ ===================
+ git clone https://github.com/SheffieldML/GPy.git
+cd GPy
+git tag -l
+git checkout tags/<tag_name>
+python setup.py build_ext --inplace
+nosetests GPy/testing
+> then repro for old numpy
+
+fix python path by running bash shell command (.bash_profile)
+python setup.py install
 
 Jug
 ============
@@ -75,6 +129,16 @@ ImportError: /opt/gridware/apps/gcc/tensorflow/0.10.0/python3.4/cpu/lib/python3.
 Hit issue with numpy
 AttributeError: 'numpy.ndarray' object has no attribute 'cache'
 when calling OMGP
+GPy/kern/src/kernel_slice_operations.py", line 52, in __init__
+    self.X = self.k._slice_X(X)
+
+
+GPy had to be installed with --user (so installed in .local)
+import GPy
+import numpy as np
+k = GPy.kern.RBF(2)
+X=np.random.rand(2,2)
+k._slice_X(X)
 
 assigngp_dense
 assert b <= (self.t.max()+eps) and b >= (self.t.min() - eps)
