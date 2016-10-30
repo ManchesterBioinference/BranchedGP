@@ -1,10 +1,30 @@
-import GPflow
 import numpy as np
-from . import assigngp_dense
-# from . import branch_kernParamGPflow as bk should not import to avoid circularity
-from . import BranchingTree as bt
 from matplotlib import pyplot as plt
 from matplotlib import cm
+
+
+def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., fs=10, labels=None,
+                    fPlotPhi=True, fPlotVar=False):
+    ''' Plotting code that does not require access to the model but takes as input predictions. '''
+    fig = plt.figure(figsize=figsizeIn)
+    d = 0  # constraint code to be 1D for now
+    for f in range(3):
+        mu = mul[f]
+        var = varl[f]
+        ttest = ttestl[f]
+        mean, = plt.plot(ttest, mu[:, d], linewidth=lw)
+        col = mean.get_color()
+        if(fPlotVar):
+            plt.plot(ttest.flatten(), mu[:, d] + 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
+            plt.plot(ttest, mu[:, d] - 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
+    v = plt.axis()
+    plt.plot([B, B], v[-2:], '-m', linewidth=lw)
+    # Plot Phi or labels
+    if(fPlotPhi):
+        gp_num = 1  # can be 0,1,2 - Plot against this
+        plt.scatter(pt, Y[:, d], c=Phi[:, gp_num], vmin=0., vmax=1, s=40)
+        plt.colorbar(label='GP {} assignment probability'.format(gp_num))
+    return fig
 
 
 def predictBranchingModel(m):

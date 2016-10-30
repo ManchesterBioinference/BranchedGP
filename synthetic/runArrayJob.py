@@ -44,6 +44,7 @@ if __name__ == '__main__':
     '''
     Differences from jugscript:
     Use N=100 points
+    We have also changed fitSampleGP in non-testing case to use 11 points in  B grid search
     '''
     # in this configuration, full and sparse should be run on exactly the same data
     fTesting = True
