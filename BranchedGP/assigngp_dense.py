@@ -124,7 +124,7 @@ class AssignGP(GPflow.model.GPModel):
 
     def UpdateBranchingPoint(self, b):
         ''' Function to update branching point '''
-        eps = 1e-12
+        eps = 1e-6
         assert isinstance(b, np.ndarray)
         self.b = b  # remember branching value
         self.kern.branchkernelparam.Bv = b

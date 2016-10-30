@@ -127,6 +127,7 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None):
         mlocallist = list()
         for ib, b in enumerate(BgridSearch):
             tstart = time.time()
+            print('considering branch', b, 'btrue', bs)
             try:
                 m.UpdateBranchingPoint(np.ones((1, 1))*b)
                 m.optimize(disp=0, maxiter=maxiters)

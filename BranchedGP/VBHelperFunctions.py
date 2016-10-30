@@ -1,7 +1,7 @@
 import GPflow
 import numpy as np
 from . import assigngp_dense
-from . import branch_kernParamGPflow as bk
+# from . import branch_kernParamGPflow as bk should not import to avoid circularity
 from . import BranchingTree as bt
 from matplotlib import pyplot as plt
 from matplotlib import cm
@@ -101,21 +101,3 @@ def SetXExpandedBranchingPoint(XExpanded, B):
     # after branching pt, only functions 2 and 2
     X23 = XExpanded[np.logical_and(XExpanded[:, 0] > B, XExpanded[:, 1] != 1).flatten(), :]
     return np.vstack([X1, X23])
-
-
-def InitModels(pt, XExpanded, Y):
-    # code that's a bit crappy - we dont need this
-    tree = bt.BinaryBranchingTree(0, 90, fDebug=False)  # set to true to print debug messages
-    tree.add(None, 1, 10)  # single branching point
-    (fm, _) = tree.GetFunctionBranchTensor()
-    KbranchVB = bk.BranchKernelParam(GPflow.kernels.RBF(1), fm, BvInitial=np.ones((1, 1))) + GPflow.kernels.White(1)
-    # KbranchVB = bk.BranchKernelParam(GPflow.kernels.RBF(1), fm,
-    # BvInitial=np.ones((1,1))) + GPflow.kernels.White(1) +
-    # GPflow.kernels.Linear(1) + GPflow.kernels.Constant(1) # other copy of
-    # kernel
-    KbranchVB.branchkernelparam.Bv.fixed = True
-    mV = assigngp_dense.AssignGP(pt, XExpanded, Y, KbranchVB)
-    mV.kern.white.variance = 1e-6
-    mV.kern.white.variance.fixed = True
-    mV._compile()  # creates objective function
-    return mV
