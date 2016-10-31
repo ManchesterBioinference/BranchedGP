@@ -11,6 +11,7 @@ jug execute primes.py &      Run
 jug shell primes.py          Look at results using p = value(primes100)
 '''
 
+
 @TaskGenerator
 def runSampleGPFull(seedpr):
     # Get number of cores reserved by the batch system (NSLOTS is automatically set)
@@ -25,7 +26,8 @@ def runSampleGPFull(seedpr):
                                             intra_op_parallelism_threads=NUMCORES))
     with sess.as_default():
         # build the GPR object
-        return fitSampleGP.GetSampleGPFitBranchingModel(seedpr, fTesting=fTesting)
+        return fitSampleGP.GetSampleGPFitBranchingModel(seedpr, fTesting=fTesting, N=N)
+
 
 @TaskGenerator
 def runSampleGPSparse(seedpr):
@@ -41,14 +43,16 @@ def runSampleGPSparse(seedpr):
                                             intra_op_parallelism_threads=NUMCORES))
     with sess.as_default():
         # build the GPR object
-        return fitSampleGP.GetSampleGPFitBranchingModel(seedpr, fTesting=fTesting, nsparseGP=21)
+        return fitSampleGP.GetSampleGPFitBranchingModel(seedpr, fTesting=fTesting, nsparseGP=21, N=N)
 
 
 # in this configuration, full and sparse should be run on exactly the same data
 fTesting = False
 if(fTesting):
-    NSamples = 10
+    NSamples = 4
+    N = 100
 else:
     NSamples = 100
+    N = 100
 runsFull = [runSampleGPFull(n) for n in range(NSamples)]
-runsSpar = [runSampleGPSparse(n) for n in range(NSamples)]
+# runsSpar = [runSampleGPSparse(n) for n in range(NSamples)]

@@ -14,9 +14,10 @@ from BranchedGP import assigngp_dense
 from BranchedGP import assigngp_denseSparse
 
 
-def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None):
+def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None, noiseInSamples=0.001):
     '''
     N -> Number of points in the sample path, we sample *3
+    noiseInSamples -> how much noise to add in GP samples 
     '''
     np.random.seed(seed=seedpr)  # easy peasy reproducibeasy
     tf.set_random_seed(seedpr)
@@ -27,11 +28,11 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None):
     if(fTesting):
         maxiters = 30
     else:
-        maxiters = 50
+        maxiters = 100
     if(fTesting):
         Btry = [0.5, np.nan]  # Real B cases
     else:
-        Btry = [0.1, 0.5, 0.85, np.nan]  # early, med, late, none
+        Btry = [0.1, 0.5, 0.8, np.nan]  # early, med, late, none
     # Grid search locations
     if(fTesting):
         BgridSearch = [0.5]
@@ -40,9 +41,8 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None):
         # may have problem in Phi matrix calculation (try GetPhi())
         BgridSearch[0] = 1e-6
     # kernel hyperparameters
-    kerlen = 3
+    kerlen = 4
     kervar = 2
-    noiseInSamples = 0.1  # how much noise to add in GP samples
     B = np.ones((1, 1))*0.5
     t = np.linspace(0, 1, N)
     # Create tree structures
@@ -114,6 +114,7 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None):
         mo.optimize(step_length=0.01, maxiter=maxiters, verbose=False)  # This just optimizers allocations
         # Integrated GP
         mi = GPflow.gpr.GPR(tReplicated[:, None], Y, ki)
+        mi.likelihood.variance = noiseInSamples  # initialise to true value
         mi.optimize(disp=0, maxiter=maxiters)  # only likelihood variance not fixed
         objInt = -mi.compute_log_likelihood()-mi.compute_log_prior()
         # Branching model
@@ -135,6 +136,7 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None):
             print('considering branch', b, 'btrue', bs)
             try:
                 m.UpdateBranchingPoint(np.ones((1, 1))*b)
+                m.likelihood.variance = noiseInSamples     # reset but not fix
                 m.optimize(disp=0, maxiter=maxiters)
             except:
                 print('Failed')
@@ -166,7 +168,7 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None):
         if R > 0, -log(p(B)) > -log(p(G)) => log(p(B)) < log(p(G)) .. Model is integrative
         So the lower the R, the stronger the evidence for branching
         '''
-        logLikelihoodRatio[ibTrue] = S[im, 1] + objInt
+        logLikelihoodRatio[ibTrue] = S[im, 1] - objInt
     # all done!
     returnDict = {'errorInBranchingPt': errorInBranchingPt,
                   'logLikelihoodRatio': logLikelihoodRatio,
