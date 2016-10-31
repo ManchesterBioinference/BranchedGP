@@ -103,7 +103,9 @@ for ns in range(NSamples):
         if np.isnan(bTrue):
             bs = 'Ind'
             # Take random sample so training data same and we have replication
-            X = XExpanded[np.random.choice(XExpanded.shape[0], N, replace=False), :]
+            Xmid = XExpanded[3:-3, :]  # leave out first and last point
+            X = Xmid[np.random.choice(Xmid.shape[0], N-2, replace=False), :]
+            X = np.vstack([X, XExpanded[0, :], XExpanded[-1, :]])
             X = X[X[:, 0].argsort(), :]  # sort for easy plotting
             Y = bk.SampleKernel(KInt, X, tol=noiseInSamples)
         else:
@@ -164,10 +166,11 @@ for ns in range(NSamples):
         So the lower the R, the stronger the evidence for branching
         '''
         logLikelihoodRatio[ns, ibTrue] = S[im, 1] + objInt
-    saveDict = {'errorInBranchingPt': errorInBranchingPt,
-                'logLikelihoodRatio': logLikelihoodRatio,
-                'Btry': Btry, 'BgridSearch': BgridSearch}
-    pickle.dump(saveDict, open("testSampleGPData.p", "wb"))
+        # Save periodically
+        saveDict = {'errorInBranchingPt': errorInBranchingPt,
+                    'logLikelihoodRatio': logLikelihoodRatio,
+                    'Btry': Btry, 'BgridSearch': BgridSearch}
+        pickle.dump(saveDict, open("testSampleGPData.p", "wb"))
 # Try sparse GP Model
 # Try learning hyperparameters
 # add asserts that minimum objective at true branching point

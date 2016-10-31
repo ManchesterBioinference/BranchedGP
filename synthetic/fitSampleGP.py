@@ -96,7 +96,10 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None):
         if np.isnan(bTrue):
             bs = 'Ind'
             # Take random sample so training data same and we have replication
-            X = XExpanded[np.random.choice(XExpanded.shape[0], N, replace=False), :]
+            # leave out first and last point so we can add them back in
+            Xmid = XExpanded[3:-3, :]
+            X = Xmid[np.random.choice(Xmid.shape[0], N-2, replace=False), :]
+            X = np.vstack([X, XExpanded[0, :], XExpanded[-1, :]])
             X = X[X[:, 0].argsort(), :]  # sort for easy plotting
             Y = bk.SampleKernel(KInt, X, tol=noiseInSamples)
         else:
