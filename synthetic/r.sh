@@ -4,8 +4,6 @@
 #$ -V                     # Inherit environment (modulefile) settings
 # Load modulefiles....
 # Running jobs
-module load tools/env/proxy
-module load tools/gcc/git/2.8.2
 module load apps/binapps/anaconda/3/4.1.1
 export PATH=/opt/gridware/apps/gcc/tensorflow/fixes:$PATH
 export PYTHONPATH=$HOME/.local/lib/python3.5/site-packages

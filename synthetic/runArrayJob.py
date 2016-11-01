@@ -1,5 +1,7 @@
 import os
+import numpy
 import tensorflow as tf
+import GPflow
 import pickle
 import fitSampleGP
 '''
@@ -46,6 +48,10 @@ if __name__ == '__main__':
     Use N=100 points
     We have also changed fitSampleGP in non-testing case to use 11 points in  B grid search
     '''
+    # print some configuration
+    print('Numpy version', numpy.__version__, 'path:', numpy.__path__)
+    print('tensorflow version', tf.__version__, 'path:', tf.__path__)
+    print('GPflow version', GPflow.__version__, 'path:', GPflow.__path__)
     # in this configuration, full and sparse should be run on exactly the same data
     fTesting = False
     if(fTesting):
