@@ -83,6 +83,7 @@ export LD_PRELOAD=/opt/gridware/libs/intel/nag/fsl6i24dcl/mkl11.0/lib/intel64/li
  
  Interesting article - mixing conda and jupyter notebooks
  http://stuartmumford.uk/blog/jupyter-notebook-and-conda.html
+
  
  Install older GPy
  ===================
@@ -144,3 +145,34 @@ assigngp_dense
 assert b <= (self.t.max()+eps) and b >= (self.t.min() - eps)
 
 Do nosetests --pdb-failures --pdb ./test_set.py
+
+
+
+
+Tensorflow on csf
+==================
+# Load new anaconda and tools
+module load tools/env/proxy
+module load tools/gcc/git/2.8.2
+module load apps/binapps/anaconda/3/4.1.1
+# install tensorflow
+export TF_BINARY_URL=https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.11.0rc2-cp35-cp35m-linux_x86_64.whl
+pip install --upgrade $TF_BINARY_URL --user
+# fix libraries
+export PATH=/opt/gridware/apps/gcc/tensorflow/fixes:$PATH
+fix-tensorflow-lib.sh `fix-tensorflow-lib.sh -f` 2>&1 | tee tf-fix.log
+# add to python path so global python (not local) can find it
+export PYTHONPATH=$HOME/.local/lib/python3.5/site-packages
+# need to remove local numpy installed with tensorflow - when importing this numpy it fails with ImportError: cannot import name 'multiarray'
+pip uninstall numpy
+# Run global python ensuring anaconda-preloader is used.
+LD_PRELOAD="/usr/lib64/librt.so:/opt/gridware/apps/gcc/tensorflow/fixes/stubs/mylibc.so:/opt/gridware/compilers/gcc/4.8.2/lib64/libstdc++.so.6" /opt/gridware/apps/binapps/anaconda/3/2.3.0/bin/python "$@"
+
+
+# Running jobs
+module load tools/env/proxy
+module load tools/gcc/git/2.8.2
+module load apps/binapps/anaconda/3/4.1.1
+export PATH=/opt/gridware/apps/gcc/tensorflow/fixes:$PATH
+export PYTHONPATH=$HOME/.local/lib/python3.5/site-packages
+LD_PRELOAD="/usr/lib64/librt.so:/opt/gridware/apps/gcc/tensorflow/fixes/stubs/mylibc.so:/opt/gridware/compilers/gcc/4.8.2/lib64/libstdc++.so.6" /opt/gridware/apps/binapps/anaconda/3/2.3.0/bin/python "$@"
