@@ -30,7 +30,7 @@ def InitParams(m):
 ########################################
 fPlot = True  # do we do plots?
 fUsePriors = False  # Test priors on kernel hyperparameters
-fModelSelectionGrid = False
+fModelSelectionGrid = True
 fBO = False  # Bayesian optimisation
 fDebug = True  # Enable debugging output - tensorflow print ops
 ########################################
@@ -121,6 +121,7 @@ if(fModelSelectionGrid):
     for ib, b in enumerate(cb):
         mV.UpdateBranchingPoint(np.ones((1, 1))*b)
         InitParams(mV)
+        print('Model prior to optimi', mV)
         mV.optimize()
         obj[ib] = mV.objectiveFun()
         print('B=', b, 'kernel branch point', mV.kern.branchkernelparam.Bv.value, 'loglig=', obj[ib])
