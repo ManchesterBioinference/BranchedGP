@@ -55,7 +55,7 @@ if __name__ == "__main__":
                 objAll = np.zeros((len(Btry), len(BgridSearch), len(res)))  # trueB X cand B X nSamples
                 errorInBranchingPtAll = np.zeros((len(Btry), len(res)))  # trueB X nSamples
                 logLikelihoodRatioAll = np.zeros((len(Btry), len(res)))  # trueB X nSamples
-                timingInfoAll = np.zeros((len(Btry), len(BgridSearch), len(res)))  
+                timingInfoAll = np.zeros((len(Btry), len(BgridSearch), len(res)))
             else:
                 assert np.all(BgridSearchAll == BgridSearch)
                 assert len(BtryAll) == len(Btry)  # cannot test nan equality

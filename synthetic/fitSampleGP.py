@@ -134,13 +134,10 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None, n
         for ib, b in enumerate(BgridSearch):
             tstart = time.time()
             print('considering branch', b, 'btrue', bs)
-            try:
-                m.UpdateBranchingPoint(np.ones((1, 1))*b)
-                m.likelihood.variance = noiseInSamples     # reset but not fix
-                m.optimize(disp=0, maxiter=maxiters)
-            except:
-                print('Failed')
-                continue
+            # if code below fails - just throw away entire run
+            m.UpdateBranchingPoint(np.ones((1, 1))*b)
+            m.likelihood.variance = noiseInSamples     # reset but not fix
+            m.optimize(disp=0, maxiter=maxiters)
             obj[ib] = m.objectiveFun()
             timingInfo[ibTrue, ib] = time.time()-tstart
             # do prediction and save results
@@ -148,13 +145,14 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None, n
             ttestl, mul, varl = VBHelperFunctions.predictBranchingModel(m)
             # do not save model as this will break between GPflow versions
             mlocallist.append({'candidateB': b, 'obj': obj[ib], 'Phi': Phi,
-                               'ttestl': ttestl, 'mul': mul, 'varl': varl})
+                               'ttestl': ttestl, 'mul': mul, 'varl': varl, 'm': m})  # save model for debugging
         S = np.asarray([BgridSearch, obj]).T
         im = np.argmin(S[:, 1])
         print('TrueB %s\n===============\n' % bs, S, '\nMinimum at', S[im, :])
         print('Completed in', timingInfo[ibTrue, :].sum(), ' seconds.')
         mlist.append({'trueBStr': bs, 'bTrue': bTrue,
-                      'pt': m.t, 'Y': m.Y.value, 'mlocallist': mlocallist})
+                      'pt': m.t, 'Y': m.Y.value, 'obj': obj,
+                      'mlocallist': mlocallist})
         # distance from true B
         if np.isnan(bTrue):
             # for integrate GP, store most likely branching point found - should also look at likelihood ratio
