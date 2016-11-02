@@ -53,15 +53,15 @@ if __name__ == '__main__':
     print('tensorflow version', tf.__version__, 'path:', tf.__path__)
     print('GPflow version', GPflow.__version__, 'path:', GPflow.__path__)
     # in this configuration, full and sparse should be run on exactly the same data
-    fTesting = False
-    if(fTesting):
-        N = 30
-    else:
-        N = 100
     # Run single job
     taskId_env = os.environ.get("SGE_TASK_ID")
+    fTesting = False
+    N = 100
     if(taskId_env is None):
-        print('Task id environment SGE_TASK_ID is empty!')
+        print('Task id environment SGE_TASK_ID is empty doing testing!!')
+        taskId_env = 1
+        fTesting = True
+        N = 30
     taskId = int(taskId_env)
     # Run both full and sparse versions
     print('runArrayJob: Running full branching GP with seed %g' % taskId)

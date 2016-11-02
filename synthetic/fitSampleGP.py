@@ -145,7 +145,7 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None, n
             ttestl, mul, varl = VBHelperFunctions.predictBranchingModel(m)
             # do not save model as this will break between GPflow versions
             mlocallist.append({'candidateB': b, 'obj': obj[ib], 'Phi': Phi,
-                               'ttestl': ttestl, 'mul': mul, 'varl': varl, 'm': m})  # save model for debugging
+                               'ttestl': ttestl, 'mul': mul, 'varl': varl})
         S = np.asarray([BgridSearch, obj]).T
         im = np.argmin(S[:, 1])
         print('TrueB %s\n===============\n' % bs, S, '\nMinimum at', S[im, :])
