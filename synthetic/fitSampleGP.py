@@ -137,6 +137,7 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None, n
             # if code below fails - just throw away entire run
             m.UpdateBranchingPoint(np.ones((1, 1))*b)
             m.likelihood.variance = noiseInSamples     # reset but not fix
+            m._compile()
             m.optimize(disp=0, maxiter=maxiters)
             obj[ib] = m.objectiveFun()
             timingInfo[ibTrue, ib] = time.time()-tstart
@@ -152,7 +153,7 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None, n
         print('Completed in', timingInfo[ibTrue, :].sum(), ' seconds.')
         mlist.append({'trueBStr': bs, 'bTrue': bTrue,
                       'pt': m.t, 'Y': m.Y.value, 'obj': obj,
-                      'mlocallist': mlocallist})
+                      'mlocallist': mlocallist, 'objInt': objInt})
         # distance from true B
         if np.isnan(bTrue):
             # for integrate GP, store most likely branching point found - should also look at likelihood ratio

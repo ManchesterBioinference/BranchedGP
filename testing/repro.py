@@ -13,13 +13,13 @@ from BranchedGP import assigngp_dense
 
 
 def InitParams(m):
-    m.likelihood.variance = mo.variance.values[0]
+    m.likelihood.variance = 1
     # set lengthscale to maximum
     m.kern.branchkernelparam.kern.lengthscales = np.max(
-        np.array([mo.kern[0].lengthscale.values, mo.kern[1].lengthscale.values]))
+        np.array([1, 2]))
     # set process variance to average
     m.kern.branchkernelparam.kern.variance = np.mean(
-        np.array([mo.kern[0].variance.values, mo.kern[1].variance.values]))
+        np.array([1.]))
 
 ########################################
 #         Test parameters
@@ -55,19 +55,6 @@ tree.add(None, 1, trueB)
 XExpanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(t)
 print('XExpanded', XExpanded.shape)
 print('indices', len(indices))
-# Use OMGP for initialisation of branching model
-komgp1 = GPy.kern.Matern32(1)
-komgp2 = GPy.kern.Matern32(1)
-mo = OMGP(t[:, None], Y, K=2, variance=0.01, kernels=[komgp1, komgp2],
-          prior_Z='DP')  # use a truncated DP with K=2 UNDONE
-mo.kern[0].lengthscale = 5.*np.ptp(t)  # initialise length scale to range of data
-mo.kern[1].lengthscale = 5.*np.ptp(t)
-mo.optimize(step_length=0.01, maxiter=30)
-# plotting OMGP fit
-if(fPlot):
-    plt.ion()
-    fig = plt.figure(figsize=(10, 10))
-    mo.plot()
 # Create model
 Kbranch = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm, b=trueB.copy()) + GPflow.kernels.White(1)
 Kbranch.branchkernelparam.kern.variance = 1
@@ -79,10 +66,17 @@ print('Branching K branching parameter', Kbranch.branchkernelparam.Bv.value)
 # Initialise all model parameters using the OMGP model
 # Note that the OMGP model has different kernel hyperparameters for each latent function whereas the branching model
 # has one common set.
-mV = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices, mo.phi, Kbranch.branchkernelparam.Bv.value)
+phii = np.zeros((20, 2))
+phii[:, 0]=0.95
+phii[:, 1]=0.05
+mV = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices, phii, Kbranch.branchkernelparam.Bv.value)
 InitParams(mV)
 # put prior to penalise short length scales
+print('needs recompile', mV._needs_recompile)
 a = mV.compute_log_likelihood()+mV.compute_log_prior()
+print('needs recompile', mV._needs_recompile)
+mV._compile()
+print('needs recompile', mV._needs_recompile)
 objT = mV.compute_log_likelihood()
 '''
 Last line should fail with
