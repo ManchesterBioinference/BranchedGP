@@ -60,7 +60,7 @@ if __name__ == '__main__':
     if(taskId_env is None):
         print('Task id environment SGE_TASK_ID is empty doing testing!!')
         taskId_env = 1
-        fTesting = False
+        fTesting = True
         N = 100
     taskId = int(taskId_env)
     # Run both full and sparse versions

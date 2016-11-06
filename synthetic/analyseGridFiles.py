@@ -8,8 +8,8 @@ import numpy as np
 if __name__ == "__main__":
     # Control settings
     strDataDir = 'data'  # Where data files reside
-    fPlotAllFits = True
-    fPlotBestFit = False
+    fPlotAllFits = False
+    fPlotBestFit = True
     fSparse = False
     # Collections across all samples
     BtryAll = None
@@ -37,11 +37,7 @@ if __name__ == "__main__":
     plt.close('all')
     plt.ion()
     for ir, res in enumerate(rall):
-        if ir > 0:
-            continue
         for ns, r in enumerate(res):  # get task
-            if ns > 0:
-                continue
             '''{'errorInBranchingPt': errorInBranchingPt,
               'logLikelihoodRatio': logLikelihoodRatio,
               'Btry': Btry, 'BgridSearch': BgridSearch,
@@ -55,7 +51,7 @@ if __name__ == "__main__":
                 objAll = np.zeros((len(Btry), len(BgridSearch), len(res)))  # trueB X cand B X nSamples
                 errorInBranchingPtAll = np.zeros((len(Btry), len(res)))  # trueB X nSamples
                 logLikelihoodRatioAll = np.zeros((len(Btry), len(res)))  # trueB X nSamples
-                timingInfoAll = np.zeros((len(Btry), len(BgridSearch), len(res)))
+                timingInfoAll = np.zeros((len(rall), len(Btry), len(BgridSearch), len(res)))
                 objAll[:] = np.nan
                 errorInBranchingPtAll[:] = np.nan
                 logLikelihoodRatioAll[:] = np.nan
@@ -66,12 +62,10 @@ if __name__ == "__main__":
             # Update collection for this sample
             errorInBranchingPtAll[:, ns] = r['errorInBranchingPt']
             logLikelihoodRatioAll[:, ns] = r['logLikelihoodRatio']
-            timingInfoAll[:, :, ns] = r['timingInfo']
+            timingInfoAll[ir, :, :, ns] = r['timingInfo']
             mlist = r['mlist']
             assert len(mlist) == len(Btry), 'list size is %g - should be %g' % (len(mlist), len(Btry))
             for iml, ml in enumerate(mlist):
-                if(iml != 1):
-                    continue
                 # Experiment for given B, we have one fit per search grid B
                 ''' {'trueBStr': bs, 'bTrue': bTrue,
                       'pt': m.t, 'Y': m.Y.value, 'mlocallist': mlocallist}) '''
@@ -87,14 +81,21 @@ if __name__ == "__main__":
                 objAll[iml, :, ns] = obj
                 ''' {'candidateB': b, 'obj': obj[ib], 'Phi': Phi,  'ttestl': ttestl, 'mul': mul, 'varl': varl} '''
                 for im, mlocal in enumerate(mlocall):
-                    if((fPlotBestFit and iMin == im) or fPlotAllFits):
-                        v.plotBranchModel(mlocal['candidateB'], ml['pt'], ml['Y'],
-                                          mlocal['ttestl'], mlocal['mul'], mlocal['varl'],
-                                          mlocal['Phi'], fPlotPhi=True, fPlotVar=True)
-                        plt.title('%s TrueB=%s b=%g NLL=%f' % (rallDescr[ir], ml['trueBStr'],
-                                                               mlocal['candidateB'], mlocal['obj']))
-                    else:
-                        pass
+                    if(ns == 23):
+                        if((fPlotBestFit and iMin == im) or fPlotAllFits):
+                            print('plotting sample')
+                            v.plotBranchModel(mlocal['candidateB'], ml['pt'], ml['Y'],
+                                              mlocal['ttestl'], mlocal['mul'], mlocal['varl'],
+                                              mlocal['Phi'], fPlotPhi=True, fPlotVar=True)
+                            plt.title('%s:TB=%s b=%g NLL=%.1f NULL=%.1f' % (rallDescr[ir], ml['trueBStr'],
+                                                                            mlocal['candidateB'],
+                                                                            mlocal['obj'], ml['objInt']))
+                            a = plt.gca()
+                            ax2 = a.twinx()
+                            ax2.bar(BgridSearchAll, np.exp(-ml['obj'])/np.exp(-ml['obj']).sum(), color='g', width=0.01)
+                            ax2.set_ylabel('p(B)', color='green')
+                        else:
+                            pass
         # Plot objective function for full/sparse
         assert len(BtryAll) == 4 or len(BtryAll) == 2, 'for plotting assume 4 or 2 real branching locations'
         f, axarr = plt.subplots(2, 2, sharex=True, sharey=False, figsize=(10, 10))
@@ -141,4 +142,36 @@ if __name__ == "__main__":
             ax[ib].set_title('%s: Histogram of log likelihood ratios %g TrueB=%s' % (rallDescr[ir], len(res), stb))
             vax = ax[ib].axis()
             ax[ib].plot([0, 0], vax[-2:], '--g', linewidth=3)  # the further negative the more evidence for branching
-        # can plot timing info
+    # timing info: box plot of full/sparse for each candidate branching point
+    f, axarr = plt.subplots(1, sharex=True, sharey=False, figsize=(10, 10))
+    t = np.zeros((len(BgridSearchAll)*len(rall), len(Btry)*len(res)))
+    leg = list()
+    for i in range(len(BgridSearchAll)):
+        t[i*2, :] = timingInfoAll[0, :, i, :].flatten()  # full model
+        t[i*2+1, :] = timingInfoAll[1, :, i, :].flatten()  # sparse model
+        leg.append('F%.1f' % BgridSearchAll[i])
+        leg.append('S%.1f' % BgridSearchAll[i])
+    axarr.boxplot(t.T, labels=leg)
+    # timing info: box plot of full/sparse for each candidate branching point
+    f, axarr = plt.subplots(1, sharex=True, sharey=False, figsize=(10, 10))
+    t = np.zeros((len(rall), len(Btry)*len(res)*len(BgridSearchAll)))
+    leg = list()
+    t[0, :] = timingInfoAll[0, :, :, :].flatten()  # full model
+    t[1, :] = timingInfoAll[1, :, :, :].flatten()  # sparse model
+    leg.append('Full')
+    leg.append('Sparse')
+    axarr.boxplot(t.T, labels=leg)
+
+
+f, axarr = plt.subplots(2, sharex=True, sharey=False, figsize=(10, 10))
+v.plotBranchModel(mlocal['candidateB'], ml['pt'], ml['Y'],
+                  mlocal['ttestl'], mlocal['mul'], mlocal['varl'],
+                  mlocal['Phi'], fPlotPhi=True, fPlotVar=True)
+plt.title('%s:TB=%s b=%g NLL=%.1f NULL=%.1f' % (rallDescr[ir], ml['trueBStr'],
+                                                mlocal['candidateB'],
+                                                mlocal['obj'], ml['objInt']))
+ax1 = f.add_subplot(gs1[0])
+ax2 = f.add_subplot(gs1[1])
+ax2.bar(BgridSearchAll, np.exp(-ml['obj'])/np.exp(-ml['obj']).sum(), color='g', width=0.01)
+ax2.set_ylabel('p(B)', color='green')
+

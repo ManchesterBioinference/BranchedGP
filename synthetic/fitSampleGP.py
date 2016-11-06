@@ -35,7 +35,7 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None, n
         Btry = [0.1, 0.5, 0.8, np.nan]  # early, med, late, none
     # Grid search locations
     if(fTesting):
-        BgridSearch = [0.5]
+        BgridSearch = [0.1, 0.5]
     else:
         BgridSearch = np.linspace(0, 1, 11)
         # may have problem in Phi matrix calculation (try GetPhi())
@@ -137,7 +137,6 @@ def GetSampleGPFitBranchingModel(seedpr, fTesting=False, N=50, nsparseGP=None, n
             # if code below fails - just throw away entire run
             m.UpdateBranchingPoint(np.ones((1, 1))*b)
             m.likelihood.variance = noiseInSamples     # reset but not fix
-            m._compile()
             m.optimize(disp=0, maxiter=maxiters)
             obj[ib] = m.objectiveFun()
             timingInfo[ibTrue, ib] = time.time()-tstart

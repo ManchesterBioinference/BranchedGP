@@ -4,9 +4,10 @@ from matplotlib import cm
 
 
 def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., fs=10, labels=None,
-                    fPlotPhi=True, fPlotVar=False):
+                    fPlotPhi=True, fPlotVar=False, fNewFig=True):
     ''' Plotting code that does not require access to the model but takes as input predictions. '''
-    fig = plt.figure(figsize=figsizeIn)
+    if(fNewFig):
+        fig = plt.figure(figsize=figsizeIn)
     d = 0  # constraint code to be 1D for now
     for f in range(3):
         mu = mul[f]
