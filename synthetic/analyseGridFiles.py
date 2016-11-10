@@ -7,9 +7,10 @@ import numpy as np
 
 if __name__ == "__main__":
     # Control settings
-    strDataDir = 'data'  # Where data files reside
+    #     strDataDir = 'data'  # Where data files reside
+    strDataDir = '/home/mqbssaby/transfer/syn'
     fPlotAllFits = False
-    fPlotBestFit = True
+    fPlotBestFit = False
     fSparse = False
     # Collections across all samples
     BtryAll = None
@@ -49,6 +50,7 @@ if __name__ == "__main__":
                 BtryAll = Btry
                 BgridSearchAll = BgridSearch
                 objAll = np.zeros((len(Btry), len(BgridSearch), len(res)))  # trueB X cand B X nSamples
+                objIntAll = np.zeros((len(Btry), len(res)))  # trueB X nSamples
                 errorInBranchingPtAll = np.zeros((len(Btry), len(res)))  # trueB X nSamples
                 logLikelihoodRatioAll = np.zeros((len(Btry), len(res)))  # trueB X nSamples
                 timingInfoAll = np.zeros((len(rall), len(Btry), len(BgridSearch), len(res)))
@@ -79,15 +81,16 @@ if __name__ == "__main__":
                     obj.append(mlocal['obj'])
                 iMin = np.argmin(obj)
                 objAll[iml, :, ns] = obj
+                objIntAll[iml, ns] = ml['objInt']
                 ''' {'candidateB': b, 'obj': obj[ib], 'Phi': Phi,  'ttestl': ttestl, 'mul': mul, 'varl': varl} '''
                 for im, mlocal in enumerate(mlocall):
-                    if(ns == 23):
+                    if(ir == 0 and (ns == 1 or ns == 2)):
                         if((fPlotBestFit and iMin == im) or fPlotAllFits):
                             print('plotting sample')
                             v.plotBranchModel(mlocal['candidateB'], ml['pt'], ml['Y'],
                                               mlocal['ttestl'], mlocal['mul'], mlocal['varl'],
                                               mlocal['Phi'], fPlotPhi=True, fPlotVar=True)
-                            plt.title('%s:TB=%s b=%g NLL=%.1f NULL=%.1f' % (rallDescr[ir], ml['trueBStr'],
+                            plt.title('%s:%g: TB=%s b=%g NLL=%.1f NULL=%.1f' % (rallDescr[ir], ns, ml['trueBStr'],
                                                                             mlocal['candidateB'],
                                                                             mlocal['obj'], ml['objInt']))
                             a = plt.gca()
@@ -96,6 +99,9 @@ if __name__ == "__main__":
                             ax2.set_ylabel('p(B)', color='green')
                         else:
                             pass
+        # save data
+        np.savez(strDataDir+'analyseGridFiles%s.npz' % rallDescr[ir],
+                 objAll=objAll, BgridSearchAll=BgridSearchAll, BtryAll=BtryAll, objIntAll=objIntAll)
         # Plot objective function for full/sparse
         assert len(BtryAll) == 4 or len(BtryAll) == 2, 'for plotting assume 4 or 2 real branching locations'
         f, axarr = plt.subplots(2, 2, sharex=True, sharey=False, figsize=(10, 10))
@@ -162,16 +168,15 @@ if __name__ == "__main__":
     leg.append('Sparse')
     axarr.boxplot(t.T, labels=leg)
 
-
-f, axarr = plt.subplots(2, sharex=True, sharey=False, figsize=(10, 10))
-v.plotBranchModel(mlocal['candidateB'], ml['pt'], ml['Y'],
-                  mlocal['ttestl'], mlocal['mul'], mlocal['varl'],
-                  mlocal['Phi'], fPlotPhi=True, fPlotVar=True)
-plt.title('%s:TB=%s b=%g NLL=%.1f NULL=%.1f' % (rallDescr[ir], ml['trueBStr'],
-                                                mlocal['candidateB'],
-                                                mlocal['obj'], ml['objInt']))
-ax1 = f.add_subplot(gs1[0])
-ax2 = f.add_subplot(gs1[1])
-ax2.bar(BgridSearchAll, np.exp(-ml['obj'])/np.exp(-ml['obj']).sum(), color='g', width=0.01)
-ax2.set_ylabel('p(B)', color='green')
+ # f, axarr = plt.subplots(2, sharex=True, sharey=False, figsize=(10, 10))
+# v.plotBranchModel(mlocal['candidateB'], ml['pt'], ml['Y'],
+#                   mlocal['ttestl'], mlocal['mul'], mlocal['varl'],
+#                   mlocal['Phi'], fPlotPhi=True, fPlotVar=True)
+# plt.title('%s:TB=%s b=%g NLL=%.1f NULL=%.1f' % (rallDescr[ir], ml['trueBStr'],
+#                                                 mlocal['candidateB'],
+#                                                 mlocal['obj'], ml['objInt']))
+# ax1 = f.add_subplot(gs1[0])
+# ax2 = f.add_subplot(gs1[1])
+# ax2.bar(BgridSearchAll, np.exp(-ml['obj'])/np.exp(-ml['obj']).sum(), color='g', width=0.01)
+# ax2.set_ylabel('p(B)', color='green')
 
