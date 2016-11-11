@@ -5,8 +5,8 @@ from matplotlib import pyplot as plt
 
 
 strDataDir = '/home/mqbssaby/transfer/syn'
-# d = np.load(strDataDir+'analyseGridFilesFull.npz')  # ned to run analysGridFiles to get this file
-d = np.load(strDataDir+'analyseGridFilesSparse.npz')  # ned to run analysGridFiles to get this file
+d = np.load(strDataDir+'analyseGridFilesFull.npz')  # ned to run analysGridFiles to get this file
+# d = np.load(strDataDir+'analyseGridFilesSparse.npz')  # ned to run analysGridFiles to get this file
 objAll = d['objAll']
 BgridSearchAll = d['BgridSearchAll']
 BtryAll = d['BtryAll']
@@ -31,13 +31,19 @@ for ns in range(objAll.shape[2]):
             else:
                 bs = str(b)
             # for each trueB calculate posterior over grid
-            objSamples = objAll[ib, :, ns]
-            o = np.clip(objSamples, -600, 2000)  # for numerical stability
+            objSamples = -objAll[ib, :, ns]
+            # o = np.clip(objSamples, -2000, 600)  # for numerical stability
             # normalize and make positive
-            p = np.exp(-o)
-            assert np.all(~np.isinf(p)), 'infinities in p %s, obj=%s' % (str(p), str(o))
-            p = p/p.sum()
+            pun = np.exp(objSamples)
+            pun = pun/pun.sum()
+            # numerically stable way
+            o = objSamples
+            pn = np.exp(o - np.max(o))
+            pns = pn/pn.sum()
+            p = pns  # we use numerically stable calculation
+            assert np.allclose(pun[~np.isnan(pun)], pns[~np.isnan(pun)], atol=1e-4), '%f-%f' % (pun[~np.isnan(pun)], pns[~np.isnan(pun)])
             assert np.any(~np.isnan(p)), 'Nans in p! %s' % str(p)
+            assert np.any(~np.isinf(p)), 'Infinities in p! %s' % str(p)
             if(m == 0):
                 print('p=', np.round(p, 2), ' Obj=\n', objSamples, 'clipped=\n', o)
             # Sample from posterior

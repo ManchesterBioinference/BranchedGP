@@ -4,27 +4,30 @@ from matplotlib import cm
 
 
 def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., fs=10, labels=None,
-                    fPlotPhi=True, fPlotVar=False, fNewFig=True):
+                    fPlotPhi=True, fPlotVar=False, ax=None):
     ''' Plotting code that does not require access to the model but takes as input predictions. '''
-    if(fNewFig):
+    if(ax is None):
         fig = plt.figure(figsize=figsizeIn)
+        ax = fig.gca()
+    else:
+        fig = plt.gcf()
     d = 0  # constraint code to be 1D for now
     for f in range(3):
         mu = mul[f]
         var = varl[f]
         ttest = ttestl[f]
-        mean, = plt.plot(ttest, mu[:, d], linewidth=lw)
+        mean, = ax.plot(ttest, mu[:, d], linewidth=lw)
         col = mean.get_color()
         if(fPlotVar):
-            plt.plot(ttest.flatten(), mu[:, d] + 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
-            plt.plot(ttest, mu[:, d] - 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
-    v = plt.axis()
-    plt.plot([B, B], v[-2:], '-m', linewidth=lw)
+            ax.plot(ttest.flatten(), mu[:, d] + 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
+            ax.plot(ttest, mu[:, d] - 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
+    v = ax.axis()
+    ax.plot([B, B], v[-2:], '-m', linewidth=lw)
     # Plot Phi or labels
     if(fPlotPhi):
         gp_num = 1  # can be 0,1,2 - Plot against this
-        plt.scatter(pt, Y[:, d], c=Phi[:, gp_num], vmin=0., vmax=1, s=40)
-        plt.colorbar(label='GP {} assignment probability'.format(gp_num))
+        PhiColor = ax.scatter(pt, Y[:, d], c=Phi[:, gp_num], vmin=0., vmax=1, s=40)
+        plt.colorbar(PhiColor, label='GP {} assignment probability'.format(gp_num))
     return fig
 
 
