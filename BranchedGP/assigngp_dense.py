@@ -196,9 +196,9 @@ class AssignGP(GPflow.model.GPModel):
         Phi = (1 - 2e-6) * Phi + 1e-6
         sigma2 = self.likelihood.variance
         tau = 1. / self.likelihood.variance
-        L = tf.cholesky(K) + GPflow.tf_hacks.eye(M) * 1e-6
+        L = tf.cholesky(K) + GPflow.tf_wraps.eye(M) * 1e-6
         W = tf.transpose(L) * tf.sqrt(tf.reduce_sum(Phi, 0)) / tf.sqrt(sigma2)
-        P = tf.matmul(W, tf.transpose(W)) + GPflow.tf_hacks.eye(M)
+        P = tf.matmul(W, tf.transpose(W)) + GPflow.tf_wraps.eye(M)
         R = tf.cholesky(P)
         PhiY = tf.matmul(tf.transpose(Phi), self.Y)
         LPhiY = tf.matmul(tf.transpose(L), PhiY)
@@ -222,9 +222,9 @@ class AssignGP(GPflow.model.GPModel):
         # try sqaushing Phi to avoid numerical errors
         Phi = (1 - 2e-6) * Phi + 1e-6
         sigma2 = self.likelihood.variance
-        L = tf.cholesky(K) + GPflow.tf_hacks.eye(M) * 1e-6
+        L = tf.cholesky(K) + GPflow.tf_wraps.eye(M) * 1e-6
         W = tf.transpose(L) * tf.sqrt(tf.reduce_sum(Phi, 0)) / tf.sqrt(sigma2)
-        P = tf.matmul(W, tf.transpose(W)) + GPflow.tf_hacks.eye(M)
+        P = tf.matmul(W, tf.transpose(W)) + GPflow.tf_wraps.eye(M)
         R = tf.cholesky(P)
         PhiY = tf.matmul(tf.transpose(Phi), self.Y)
         LPhiY = tf.matmul(tf.transpose(L), PhiY)
@@ -254,7 +254,7 @@ class AssignGP(GPflow.model.GPModel):
         M = tf.shape(self.X)[0]
         K = self.kern.K(self.X)
         L = tf.cholesky(K)
-        tmp = tf.matrix_triangular_solve(L, GPflow.tf_hacks.eye(M), lower=True)
+        tmp = tf.matrix_triangular_solve(L, GPflow.tf_wraps.eye(M), lower=True)
         Ki = tf.matrix_triangular_solve(tf.transpose(L), tmp, lower=False)
         tau = 1. / self.likelihood.variance
         Phi = tf.nn.softmax(self.logPhi)
