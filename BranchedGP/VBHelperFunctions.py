@@ -4,7 +4,7 @@ from matplotlib import cm
 
 
 def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., fs=10, labels=None,
-                    fPlotPhi=True, fPlotVar=False, ax=None):
+                    fPlotPhi=True, fPlotVar=False, ax=None, fColorBar=True):
     ''' Plotting code that does not require access to the model but takes as input predictions. '''
     if(ax is None):
         fig = plt.figure(figsize=figsizeIn)
@@ -27,7 +27,10 @@ def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., f
     if(fPlotPhi):
         gp_num = 1  # can be 0,1,2 - Plot against this
         PhiColor = ax.scatter(pt, Y[:, d], c=Phi[:, gp_num], vmin=0., vmax=1, s=40)
-        plt.colorbar(PhiColor, label='GP {} assignment probability'.format(gp_num))
+        if(fColorBar):
+            fig.colorbar(PhiColor, label='GP {} assignment probability'.format(gp_num))
+        else:
+            return fig, PhiColor
     return fig
 
 
