@@ -6,8 +6,9 @@ import tensorflow as tf
 from . import pZ_construction_singleBP
 from matplotlib import pyplot as plt
 from GPflow.param import AutoFlow
+from GPflow.param import DataHolder
+
 # TODO S:
-# 1) create a parameter for breakpoints (in the kernel perhaps?) - done
 # 2) tidy up make_pZ_matrix and generalize to multiple latent functions
 
 
@@ -107,53 +108,69 @@ class AssignGP(GPflow.model.GPModel):
 
     """
 
-    def __init__(self, t, XExpanded, Y, kern, indices, phiInitial, b, fDebug=False):
+    def __init__(self, t, XExpanded, Y, kern, indices, b, phiPrior=None, phiInitial=None, fDebug=False):
         GPflow.model.GPModel.__init__(self, XExpanded, Y, kern,
                                       likelihood=GPflow.likelihoods.Gaussian(),
                                       mean_function=GPflow.mean_functions.Zero())
-        assert phiInitial.shape[0] == t.shape[0]
-        assert phiInitial.shape[1] == 2  # 1 branching point => 2 OMGP functions
         assert len(indices) == t.size, 'indices must be size N'
         assert len(t.shape) == 1, 'pseudotime should be 1D'
         self.t = t  # could be DataHolder? advantages
         self.indices = indices
-        self.phiInitial = phiInitial
         self.logPhi = GPflow.param.Param(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions
-        self.UpdateBranchingPoint(b)
+        if(phiInitial is None):
+            phiInitial = np.ones((t.size, 2))*0.5  # dont know anything
+            phiInitial[:, 0] = np.random.rand(t.size)
+            phiInitial[:, 1] = 1-phiInitial[:, 0]
+        self.UpdateBranchingPoint(b, phiInitial)
         self.fDebug = fDebug
+        # Used as p(Z) prior in KL term. This should add to 1 but will do so after UpdatePhPrior
+        self.phiPrior = DataHolder(np.ones((t.shape[0], t.shape[0] * 3)))
+        if(phiPrior is None):
+            phiPrior = np.ones((self.t.shape[0], 2)) * 0.5
+        self.UpdatePhiPrior(phiPrior)
 
-    def UpdateBranchingPoint(self, b):
-        ''' Function to update branching point '''
+    def UpdatePhiPrior(self, pZ0):
+        ''' Update prior on allocations p(Z) used in KL term '''
+        assert pZ0.shape[0] == self.t.shape[0]
+        assert pZ0.shape[1] == 2  # 1 branching point => 2 functions
+        eZ0 = pZ_construction_singleBP.expand_pZ0(pZ0)
+        self.phiPrior = eZ0
+        assert isinstance(self.phiPrior, GPflow.param.DataHolder), 'Must have DataHolder'
+
+    def UpdateBranchingPoint(self, b, phiInitial):
+        ''' Function to update branching point and optionally reset initial conditions for variational phi'''
         eps = 1e-9
         assert isinstance(b, np.ndarray)
+        assert b.size == 1, 'Must have scalar branching point'
         self.b = b  # remember branching value
         self.kern.branchkernelparam.Bv = b
         assert isinstance(self.kern.branchkernelparam.Bv, GPflow.param.DataHolder)
         assert b <= (self.t.max()+eps) and b >= (self.t.min() - eps),\
             'Branching suspicious b=%f is not in [%f, %f] ' % (b, self.t.min(), self.t.max())
         assert self.logPhi.fixed is False, 'Phi should not be constant when changing branching location'
-        self.InitialisePhiFromOMGP()
+        self.InitialiseVariationalPhi(phiInitial)
 
-    def InitialisePhiFromOMGP(self):
+    def InitialiseVariationalPhi(self, phiInitialIn):
         ''' Set initial state for Phi using branching location to constrain '''
+        assert np.allclose(phiInitialIn.sum(1), 1), 'probs must sum to 1 %s' % str(phiInitialIn)
         assert self.b == self.kern.branchkernelparam.Bv.value, 'Need to call UpdateBranchingPoint'
         N = self.Y.value.shape[0]
-        assert self.phiInitial.shape[0] == N
-        assert self.phiInitial.shape[1] == 2  # run OMGP with K=2 trajectories
-        phiInitial = np.zeros((N, 3 * N))
+        assert phiInitialIn.shape[0] == N
+        assert phiInitialIn.shape[1] == 2  # run OMGP with K=2 trajectories
+        phiInitialEx = np.zeros((N, 3 * N))
         # large neg number makes exact zeros, make smaller for added jitter
         phiInitial_invSoftmax = -9. * np.ones((N, 3 * N))
         eps = 1e-9
         iterC = 0
         for i, p in enumerate(self.t):
             if(p < self.b):  # before branching - it's the root
-                phiInitial[i, iterC:iterC + 3] = np.array([1 - 2 * eps, 0 + eps, 0 + eps])
+                phiInitialEx[i, iterC:iterC + 3] = np.array([1 - 2 * eps, 0 + eps, 0 + eps])
             else:
-                phiInitial[i, iterC:iterC + 3] = np.hstack([eps, self.phiInitial[i, :] - eps])
-            phiInitial_invSoftmax[i, iterC:iterC + 3] = np.log(phiInitial[i, iterC:iterC + 3])
+                phiInitialEx[i, iterC:iterC + 3] = np.hstack([eps, phiInitialIn[i, :] - eps])
+            phiInitial_invSoftmax[i, iterC:iterC + 3] = np.log(phiInitialEx[i, iterC:iterC + 3])
             iterC += 3
-        assert not np.any(np.isnan(phiInitial)), 'no nans please ' + str(np.nonzero(np.isnan(phiInitial)))
-        assert not np.any(phiInitial < -eps), 'no negatives please ' + str(np.nonzero(np.isnan(phiInitial)))
+        assert not np.any(np.isnan(phiInitialEx)), 'no nans please ' + str(np.nonzero(np.isnan(phiInitialEx)))
+        assert not np.any(phiInitialEx < -eps), 'no negatives please ' + str(np.nonzero(np.isnan(phiInitialEx)))
         self.logPhi = phiInitial_invSoftmax
 
     def GetPhi(self):
@@ -192,7 +209,7 @@ class AssignGP(GPflow.model.GPModel):
         D = tf.cast(tf.shape(self.Y)[1], tf.float64)
         K = self.kern.K(self.X)
         Phi = tf.nn.softmax(self.logPhi)
-        # try sqaushing Phi to avoid numerical errors
+        # try squashing Phi to avoid numerical errors
         Phi = (1 - 2e-6) * Phi + 1e-6
         sigma2 = self.likelihood.variance
         tau = 1. / self.likelihood.variance
@@ -219,7 +236,7 @@ class AssignGP(GPflow.model.GPModel):
         M = tf.shape(self.X)[0]
         K = self.kern.K(self.X)
         Phi = tf.nn.softmax(self.logPhi)
-        # try sqaushing Phi to avoid numerical errors
+        # try squashing Phi to avoid numerical errors
         Phi = (1 - 2e-6) * Phi + 1e-6
         sigma2 = self.likelihood.variance
         L = tf.cholesky(K) + GPflow.tf_wraps.eye(M) * 1e-6
@@ -247,32 +264,5 @@ class AssignGP(GPflow.model.GPModel):
 
     def build_KL(self, Phi):
         Bv_s = tf.squeeze(self.kern.branchkernelparam.Bv, squeeze_dims=[1])
-        pZ = pZ_construction_singleBP.make_matrix(self.t, Bv_s)
+        pZ = pZ_construction_singleBP.make_matrix(self.t, Bv_s, self.phiPrior)
         return tf.reduce_sum(Phi * tf.log(Phi)) - tf.reduce_sum(Phi * tf.log(pZ))
-
-    def build_predict_old(self, Xnew):
-        M = tf.shape(self.X)[0]
-        K = self.kern.K(self.X)
-        L = tf.cholesky(K)
-        tmp = tf.matrix_triangular_solve(L, GPflow.tf_wraps.eye(M), lower=True)
-        Ki = tf.matrix_triangular_solve(tf.transpose(L), tmp, lower=False)
-        tau = 1. / self.likelihood.variance
-        Phi = tf.nn.softmax(self.logPhi)
-        # try sqaushing Phi to avoid numerical errors
-        Phi = (1 - 2e-6) * Phi + 1e-6
-        A = tf.diag(tf.reduce_sum(Phi, 0))
-        Lamb = A * tau + Ki  # posterior precision
-        R = tf.cholesky(Lamb)
-        PhiY = tf.matmul(tf.transpose(Phi), self.Y)
-        tmp = tf.matrix_triangular_solve(R, PhiY, lower=True) * tau
-        mean_f = tf.matrix_triangular_solve(tf.transpose(R), tmp, lower=False)
-        # project onto Xnew
-        Kfx = self.kern.K(self.X, Xnew)
-        Kxx = self.kern.Kdiag(Xnew)
-        A = tf.matrix_triangular_solve(L, Kfx, lower=True)
-        B = tf.matrix_triangular_solve(tf.transpose(L), A, lower=False)
-        mean = tf.matmul(tf.transpose(B), mean_f)
-        var = Kxx - tf.reduce_sum(tf.square(A), 0)
-        RiB = tf.matrix_triangular_solve(R, B, lower=True)
-        var = var + tf.reduce_sum(RiB, 0)
-        return mean, tf.expand_dims(var, 1)
