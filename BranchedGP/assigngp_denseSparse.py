@@ -30,8 +30,9 @@ class AssignGPSparse(assigngp_dense.AssignGP):
 
     """
 
-    def __init__(self, t, XExpanded, Y, kern, indices, b, ZExpanded, fDebug=False, phiInitial=None):
-        assigngp_dense.AssignGP.__init__(self, t, XExpanded, Y, kern, indices, b, fDebug=fDebug, phiInitial=phiInitial)
+    def __init__(self, t, XExpanded, Y, kern, indices, b, ZExpanded, fDebug=False, phiInitial=None, phiPrior=None):
+        assigngp_dense.AssignGP.__init__(self, t, XExpanded, Y, kern, indices, b, fDebug=fDebug,
+                                         phiInitial=phiInitial, phiPrior=phiPrior)
         # Do not treat inducing points as parameters because they should always be fixed.
         self.ZExpanded = GPflow.param.DataHolder(ZExpanded)  # inducing points for sparse GP. Same as XExpanded
         assert ZExpanded.shape[1] == XExpanded.shape[1]
