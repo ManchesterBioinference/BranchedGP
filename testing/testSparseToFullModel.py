@@ -81,12 +81,13 @@ class TestSparseVariational(unittest.TestCase):
             ZExpanded = XExpanded[ir, :]
         else:
             ZExpanded = XExpanded  # Test on full data
-        mV = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices, mo.phi,
-                                                 Kbranch.branchkernelparam.Bv.value, ZExpanded, fDebug=fDebug)
+        mV = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices,
+                                                 Kbranch.branchkernelparam.Bv.value, ZExpanded, phiInitial=mo.phi,
+                                                 fDebug=fDebug)
         self.InitParams(mV, mo)
 
-        mVFull = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices, mo.phi,
-                                         Kbranch.branchkernelparam.Bv.value, fDebug=fDebug)
+        mVFull = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices,
+                                         Kbranch.branchkernelparam.Bv.value, fDebug=fDebug, phiInitial=mo.phi)
         self.InitParams(mVFull, mo)
 
         lsparse = mV.compute_log_likelihood()

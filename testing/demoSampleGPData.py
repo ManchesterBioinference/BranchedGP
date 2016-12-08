@@ -131,7 +131,7 @@ for ns in range(NSamples):
         mi.optimize(disp=0, maxiter=maxiters)  # only likelihood variance not fixed
         objInt = -mi.compute_log_likelihood()-mi.compute_log_prior()
         # Branching model
-        mV = assigngp_dense.AssignGP(tReplicated, XExpandedRepl, Y, kb, indicesRepl, mo.phi, kb.branchkernelparam.Bv.value)
+        mV = assigngp_dense.AssignGP(tReplicated, XExpandedRepl, Y, kb, indicesRepl, kb.branchkernelparam.Bv.value, phiInitial=mo.phi)
         # Do grid search
         obj = np.zeros(len(BgridSearch))
         for ib, b in enumerate(BgridSearch):
