@@ -31,14 +31,14 @@ plot_cell_trajectory(HSMM)
 # save
 write.csv(HSMM@reducedDimS, file='monocle/monocleDimRed.csv')
 write.csv(HSMM$Pseudotime, file='monocle/monoclePT.csv')
-#write.csv(HSMM$State, file='data/monocleState.csv')
+write.csv(HSMM$State, file='monocle/monocleState.csv')
 HSMMDefault = HSMM
 
-HSMMRoot <- orderCells(HSMM, reverse=FALSE, root_state=15)
+HSMMRoot <- orderCells(HSMM, reverse=FALSE, root_state=41)
 plot_cell_trajectory(HSMMRoot)
-write.csv(HSMMRoot@reducedDimS, file='data/monocleDimRed.csv')
-#write.csv(HSMMRoot$Pseudotime, file='data/monoclePT.csv')
-#write.csv(HSMMRoot$State, file='data/monocleState.csv')
+write.csv(HSMMRoot@reducedDimS, file='monocle/monocleDimRed.csv')
+write.csv(HSMMRoot$Pseudotime, file='monocle/monoclePT.csv')
+write.csv(HSMMRoot$State, file='monocle/monocleState.csv')
 HSMM = HSMMRoot
 
 # could also do 
@@ -60,4 +60,4 @@ plot_genes_branched_pseudotime(HSMM[hsmm_genes,],
                                branch_point=9,
                                ncol=1)
 
-buildBranchCellDataSet()                     
+                    
