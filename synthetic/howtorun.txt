@@ -1,3 +1,6 @@
+Information for csf cluster:
+http://ri.itservices.manchester.ac.uk/csf-apps/software/applications/r/
+
 ssh mqbssaby@dpsf.itservices.manchester.ac.uk
 ssh mqbssaby@csf2.itservices.manchester.ac.uk
 ssh mqbssaby@zrek.itservices.manchester.ac.uk
