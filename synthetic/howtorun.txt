@@ -1,5 +1,6 @@
 Information for csf cluster:
 http://ri.itservices.manchester.ac.uk/csf-apps/software/applications/r/
+http://ri.itservices.manchester.ac.uk/hydra-apps/software/applications/tensorflow/
 
 ssh mqbssaby@dpsf.itservices.manchester.ac.uk
 ssh mqbssaby@csf2.itservices.manchester.ac.uk
