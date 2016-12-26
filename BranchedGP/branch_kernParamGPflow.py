@@ -64,6 +64,12 @@ class BranchKernelParam(GPflow.kernels.Kern):
         XTree = VBHelperFunctions.SetXExpandedBranchingPoint(XExpanded, self.Bv.value)
         return SampleKernel(self, XTree, tol=tol), XTree
 
+    def SampleKernelFromTree(self, XTree, b, tol=1e-6):
+        ''' Sample kernel with assignments already done. '''
+        self.Bv = np.ones((1, 1))*b
+        assert np.all(XTree[XTree[:, 0] <= b, 1] == 1), 'Before branch point trunk is function 1.'
+        return SampleKernel(self, XTree, tol=tol)
+
     def K(self, X, Y=None):
         if Y is None:
             Y = X  # hack to avoid duplicating code below
