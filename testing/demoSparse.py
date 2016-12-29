@@ -86,7 +86,8 @@ print('Branching K branching parameter', Kbranch.branchkernelparam.Bv.value)
 M = 10  # number of inducing pts
 ir = np.random.choice(XExpanded.shape[0], M, replace=False)
 ZExpanded = XExpanded[ir, :].copy()
-mV = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices, mo.phi, Kbranch.branchkernelparam.Bv.value, ZExpanded)
+mV = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices,
+                                         Kbranch.branchkernelparam.Bv.value, ZExpanded, phiInitial=mo.phi)
 InitParams(mV)
 # put prior to penalise short length scales
 assert mV.compute_log_likelihood() == -mV.objectiveFun()
@@ -103,6 +104,7 @@ if(fPlot):
     plt.title('Initialisation')
 print('Initialisation')
 print('OMGP Phi matrix', np.round(mo.phi, 2))
+mV.UpdateBranchingPoint(np.ones((1, 1))*1.1, phiInitial=mo.phi)
 print('b=', mV.kern.branchkernelparam.Bv.value, 'Branch model Phi matrix', np.round(mV.GetPhi(), 2))
 mV.optimize()
 # Plot results - this will call predict
@@ -155,7 +157,8 @@ if(fBO):
     # Initialise all model parameters using the OMGP model
     # Note that the OMGP model has different kernel hyperparameters for each latent function whereas the branching model
     # has one common set.
-    mb = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices, mo.phi, Kbranch.branchkernelparam.Bv.value, ZExpanded, fDebug=fDebug)
+    mb = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices,
+                                             Kbranch.branchkernelparam.Bv.value, ZExpanded, fDebug=fDebug, phiInitial=mo.phi)
     InitParams(mb)
     if(fUsePriors):
         mb.kern.branchkernelparam.kern.lengthscales.prior = GPflow.priors.Gaussian(np.ptp(t), np.square(np.ptp(t) / 3.))

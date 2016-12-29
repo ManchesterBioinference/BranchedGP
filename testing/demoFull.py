@@ -30,7 +30,7 @@ def InitParams(m):
 ########################################
 fPlot = True  # do we do plots?
 fUsePriors = False  # Test priors on kernel hyperparameters
-fModelSelectionGrid = True
+fModelSelectionGrid = False
 fBO = False  # Bayesian optimisation
 fDebug = True  # Enable debugging output - tensorflow print ops
 ########################################
@@ -83,7 +83,7 @@ print('Branching K branching parameter', Kbranch.branchkernelparam.Bv.value)
 # Initialise all model parameters using the OMGP model
 # Note that the OMGP model has different kernel hyperparameters for each latent function whereas the branching model
 # has one common set.
-mV = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices, mo.phi, Kbranch.branchkernelparam.Bv.value)
+mV = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices, Kbranch.branchkernelparam.Bv.value, phiInitial=mo.phi)
 InitParams(mV)
 # put prior to penalise short length scales
 assert mV.compute_log_likelihood() == -mV.objectiveFun()
@@ -101,6 +101,7 @@ if(fPlot):
 print('Initialisation')
 print('OMGP Phi matrix', np.round(mo.phi, 2))
 print('b=', mV.kern.branchkernelparam.Bv.value, 'Branch model Phi matrix', np.round(mV.GetPhi(), 2))
+mV.UpdateBranchingPoint(np.ones((1, 1))*1.1, phiInitial=mo.phi)
 mV.optimize()
 # Plot results - this will call predict
 objT = mV.objectiveFun()
@@ -153,7 +154,7 @@ if(fBO):
     # Initialise all model parameters using the OMGP model
     # Note that the OMGP model has different kernel hyperparameters for each latent function whereas the branching model
     # has one common set.
-    mb = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices, mo.phi, Kbranch.branchkernelparam.Bv.value, fDebug=fDebug)
+    mb = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices, Kbranch.branchkernelparam.Bv.value, phiInitial=mo.phi, fDebug=fDebug)
     InitParams(mb)
     if(fUsePriors):
         mb.kern.branchkernelparam.kern.lengthscales.prior = GPflow.priors.Gaussian(np.ptp(t), np.square(np.ptp(t) / 3.))

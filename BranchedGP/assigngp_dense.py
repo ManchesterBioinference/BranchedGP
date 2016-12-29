@@ -145,8 +145,8 @@ class AssignGP(GPflow.model.GPModel):
         self.b = b  # remember branching value
         self.kern.branchkernelparam.Bv = b
         assert isinstance(self.kern.branchkernelparam.Bv, GPflow.param.DataHolder)
-        assert b <= (self.t.max()+eps) and b >= (self.t.min() - eps),\
-            'Branching suspicious b=%f is not in [%f, %f] ' % (b, self.t.min(), self.t.max())
+        # and b <= (self.t.max()+eps)
+        assert b >= (self.t.min() - eps), 'Branching suspicious b=%f is not in [%f, %f] ' % (b, self.t.min(), self.t.max())
         assert self.logPhi.fixed is False, 'Phi should not be constant when changing branching location'
         self.InitialiseVariationalPhi(phiInitial)
 
