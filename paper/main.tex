@@ -1,0 +1,352 @@
+%% LyX 2.3.0dev created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english]{article}
+\usepackage[T1]{fontenc}
+\usepackage[latin9]{inputenc}
+\usepackage{url}
+\usepackage{amsmath}
+
+\makeatletter
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+%\usepackage[utf8]{inputenc}
+%\usepackage{fontspec} % This line only for XeLaTeX and LuaLaTeX
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{pgfplots}
+%\usetikzlibrary{pgfplots.groupplots}
+
+\makeatother
+
+\usepackage{babel}
+\begin{document}
+
+\title{Branching Gaussian process}
+
+\author{Alexis Boukouvalas, James Hensman, Magnus Rattray}
+
+\date{January 25, 2017}
+
+\maketitle
+\global\long\def\N{\mathcal{N}}
+\global\long\def\Y{\mathcal{Y}}
+\global\long\def\Z{\mathcal{Z}}
+\global\long\def\F{f}
+\global\long\def\so{\mathcal{\sigma}}
+\global\long\def\PhiM{\mathcal{\Phi}}
+\global\long\def\m{M}
+\global\long\def\n{N}
+\global\long\def\X{X}
+\global\long\def\t{t}
+
+\tableofcontents{}
+
+\section{Introduction}
+
+Single-cell gene expression data can be used to uncover cellular progression
+through different states of a temporal transformation, e.g. during
+development, differentiation or disease. A single pseudotime parameter
+can be assigned to each cell to represent its cellular state. We propose
+a non-linear model to estimate the branching tree structure. The model
+provides a log likelihood ratio estimate of the evidence for branching
+and a posterior estimate of the most likely branching location as
+well as a confidence interval.
+
+\cite{yang2016inferring} developed a tractable GP model for the identification
+of a single perturbation point. They define a novel kernel that constrains
+two functions to intersect at a single point. The bifurcation point
+is identified by numerically approximating the posterior and selecting
+a point estimate. The model is used to identify when a gene becomes
+differentially expressed in time course gene expression data under
+a control and perturbed condition. In their approach all data points
+have been labelled with the branch that generated them. The ordering
+of time points is also assumed known and fixed.
+
+We extend their approach by removing the labelling assumption and
+include additional steps in the workflow in order to apply it to single-cell
+data. These include an estimate of the pseudotime using \cite{monocle2}.
+
+\section{Synthetic data:}
+
+
+\section{Application to single-cell RNA-seq data}
+
+Our aim is to perform a gene by gene application of the probabilistic
+branching model to see if we can differentiate early and late branching
+genes. Our analysis is on the postmitotic normalised data.
+
+Firstly we apply the Monocle \cite{monocle2} method to get a global
+pseudotime, branching estimation as well as label allocation. Monocle
+identifies lots of segments and we simplify the problem to two main
+branches. We have selected the starting cell by looking at the dimension
+reduction visualisation. However this should be further validate,
+perhaps by looking at known marker genes. We then score genes by difference
+in the t-statistic for branch end states. 
+
+We then apply the branching Gaussian process (GP) model to identify
+early and late branching genes.
+
+We apply the model on the top 500 genes from the previous step. There
+are multiple source of errors such as dropout and misclassification
+of cells by the global branch estimation. We therefore treat the labels
+as uncertain and the branching GP model may reassign cells to the
+other branch. This also allows for more flexible noise modelling including
+dropout without the need for a complex probabilistic noise model.
+
+
+\begin{figure}[htbp!] 
+\centering
+\resizebox{0.9\textwidth}{!}{\input{figs/dropseq_MonoclePseudotime.tex}}
+\caption{Dropseq data. Monocle reduce spaced coloured by pseudotime.}
+\end{figure}
+
+
+\begin{figure}[htbp!] 
+\centering
+\resizebox{0.9\textwidth}{!}{\input{figs/dropseq_loglikelihoodSpectrum.tex}}
+\caption{Dropseq data. Log-likelihood rank of top 500 genes.}
+\end{figure}
+
+\begin{figure}[htbp!] 
+\centering
+\resizebox{0.9\textwidth}{!}{\input{figs/dropseq_posteriorSummary.tex}}
+\caption{Dropseq data. Posterior branching summary.}
+\end{figure}
+
+\begin{figure}[htbp!] 
+\centering
+\resizebox{0.9\textwidth}{!}{\input{figs/dropseq_loglikelihoodSummary.tex}}
+\caption{Dropseq data. Log-likelihood ratio}
+\end{figure}
+
+%Early 'Nhs', 'Tcf4', 'Meis2' Med  'Maf', 'Ina', 'Gria1', 'Digap1' Late 'Rarb', 'Sybu'
+\pgfplotsset{ticks=none}  % do not show axis
+
+\begin{figure}[htbp!] 
+\centering
+\mbox{
+\subfigure[Nhs] {\resizebox{0.3\textwidth}{!} {\input{figs/dropseq_gexpr_Nhs.tex}}}
+\subfigure[Nhs] {\resizebox{0.3\textwidth}{!} {\input{figs/dropseq_obj_Nhs.tex}}}
+\subfigure[Nhs] {\resizebox{0.3\textwidth}{!} {\input{figs/dropseq_ma_Nhs.tex}}}
+}
+\mbox{
+\subfigure[Tcf4]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_gexpr_Tcf4.tex}}}
+\subfigure[Tcf4]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_obj_Tcf4.tex}}}
+\subfigure[Tcf4]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_ma_Tcf4.tex}}}
+}
+\mbox{
+\subfigure[Meis2]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_gexpr_Meis2.tex}}}
+\subfigure[Meis2]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_obj_Meis2.tex}}}
+\subfigure[Meis2]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_ma_Meis2.tex}}}
+}
+\caption{Dropseq data. Early branching genes}
+\label{figs.dropseqEarly}
+\end{figure}
+
+\begin{figure}[htbp!] 
+\centering
+\mbox{
+\subfigure[Maf] {\resizebox{0.3\textwidth}{!} {\input{figs/dropseq_gexpr_Maf.tex}}}
+\subfigure[Maf] {\resizebox{0.3\textwidth}{!} {\input{figs/dropseq_obj_Maf.tex}}}
+\subfigure[Maf] {\resizebox{0.3\textwidth}{!} {\input{figs/dropseq_ma_Maf.tex}}}
+}
+\mbox{
+\subfigure[Ina]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_gexpr_Ina.tex}}}
+\subfigure[Ina]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_obj_Ina.tex}}}
+\subfigure[Ina]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_ma_Ina.tex}}}
+}
+\mbox{
+\subfigure[Gria1]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_gexpr_Gria1.tex}}}
+\subfigure[Gria1]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_obj_Gria1.tex}}}
+\subfigure[Gria1]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_ma_Gria1.tex}}}
+}
+\caption{Dropseq data. Medium branching genes}
+\label{figs.dropseqMed}
+\end{figure}
+
+\begin{figure}[htbp!] 
+\centering
+\mbox{
+\subfigure[Rarb] {\resizebox{0.3\textwidth}{!} {\input{figs/dropseq_gexpr_Rarb.tex}}}
+\subfigure[Rarb] {\resizebox{0.3\textwidth}{!} {\input{figs/dropseq_obj_Rarb.tex}}}
+\subfigure[Rarb] {\resizebox{0.3\textwidth}{!} {\input{figs/dropseq_ma_Rarb.tex}}}
+}
+\mbox{
+\subfigure[Sybu]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_gexpr_Sybu.tex}}}
+\subfigure[Sybu]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_obj_Sybu.tex}}}
+\subfigure[Sybu]{\resizebox{0.3\textwidth}{!}{\input{figs/dropseq_ma_Sybu.tex}}}
+}
+\caption{Dropseq data. Late branching genes}
+\label{figs.dropseqLate}
+\end{figure}
+
+\section{Theory}
+
+We can define a kernel that describes two functions crossing at a
+single point \cite{yang2016inferring}\footnote{This result is re-derived in Appendix \ref{sec:TwoFunctionsCrossing}. }.
+In this work however we cannot assume the data points are labelled
+with the function the generated them. \cite{Lazaro-Gredilla2012,lazaro2014gaussian}
+define this is the data association problem and propose the overlapping
+mixture of GPs to address it.
+
+However using the OMG model to identify branches in pseudotime would
+be wasteful since we the functions are not independent as they are
+constrained to intersect at the branching point. Rather we believe
+there is underlying tree structure where branches occur at bifurcation
+points. 
+
+Let the likelihood be $p\left(\Y|\Z,\X\right)$ where $\Z$ is the
+$\n\times\m$ binary indicator matrix, $\X$ is the pseudotime ($\n\times1$)
+and $\Y$ the data ($\n\times D$). $\m\gg\n$ is the number of possible
+allocations for all points; for example if we have a single branching
+point whose location is unknown each point has 3 possible allocations
+and therefore $\m=3\times\n$.
+
+We assume a Gaussian error model with common observation noise $\so^{2}$,
+independent dimensions $d$ and we place a GP prior on the latent
+function values 
+
+\begin{equation}
+p\left(\F\left|\X\right.\right)=\mathcal{GP}\left(0,K\left(\X\right)\right)
+\end{equation}
+
+The likelihood can then be written as 
+
+\begin{equation}
+p\left(\Y|\Z,\X\right)=\int_{f}p\left(\F\left|\X\right.\right)\prod_{d}\N\left(\Y_{d}\left|\Z\F,\so^{2}I_{N}\right.\right)
+\end{equation}
+
+where $f$ is the $\m\times1$ vector of latent noise free function
+values. Let $\X_{*}$ the expanded version of $\X$ where is entry
+of the latter is replicated $\m$ times resulting in a $\left(\n\times\m\right)\times1$
+vector. Then the marginal likelihood is
+\begin{equation}
+p\left(\Y|\Z,\X\right)=\prod_{d}\N\left(\Y_{d}\left|0,vec\left(Z\right)K\left(\X_{*}\right)+\so^{2}I_{N}\right.\right)
+\end{equation}
+
+
+\section{Extensions}
+
+Extending to multiple branching points is possible by discretising
+the pseudotime space and trying all possible trees. Although computationally
+expensive, this is not intractable as pseudotime is a one-dimensional
+space. The number of permutations governed by Catalan number \footnote{See \url{https://en.wikipedia.org/wiki/Catalan_number}.}.
+
+We also constrain tree to be rooted at start of pseudotime, that is
+the branching grows with pseudo-time. In theory we could allow for
+a full graph in pseudo-time but prefer the simpler approach as it
+is also simpler to elicit the number of leafs in a binary tree. We
+could also use K-trees, where at each bifurcation point we could have
+$K>2$ branches but again for reasons of simplicity we select the
+binary tree, that is $K=2$.
+
+\appendix
+
+\section{Joint distribution of two functions constrained at a point\label{sec:TwoFunctionsCrossing}}
+
+We prove the result in Section 2.3 \cite{jingyang2015}. The following
+Gaussian Identity will be useful (Section 2.3.3, page 93, Equations
+2.113-2.117 \cite{bishopBook}). Let $p\left(x\right)=N\left(x\vert\mu,\Lambda^{-1}\right)$
+and $p\left(y|x\right)=N\left(y\vert Ax+b,L^{-1}\right)$ then we
+have 
+\begin{equation}
+p\left(y\right)=N\left(y|A\mu+b,L^{-1}+A\Lambda^{-1}A^{T}\right)\label{eq:bishopresult}
+\end{equation}
+.
+
+As \cite{jingyang2015} discuss the predictive mean of a GP conditional
+on a single point $\left(u,x_{p}\right)$ is $\mu\left(X\right)=\frac{k_{X}}{k_{p}}u$
+and $C\left(X,X\right)=K_{X}-\frac{k_{X}k_{X}^{T}}{k_{p}}$where we
+denote $K_{X}=K\left(X,X\right)$ the $N\times N$ test covariance,
+$k_{X}=K\left(X,x_{p}\right)$ the $N\times1$ train-test matrix and
+$k_{p}=K\left(x_{p},x_{p}\right)$ the scalar. Note that the latter
+does not depend on the kernel length scale but only on the variance
+terms (process+nugget).
+
+We now integrate out the latent response value at the bifurcation
+point by assuming 
+\begin{equation}
+p(u)=N\left(u\left|0,k_{p}\right.\right)\label{eq:prioru}
+\end{equation}
+ We also assume conditional independence between the responses $f$
+and $g$, that is $p\left(f,g|u\right)=p\left(f|u\right)p\left(g|u\right)$.
+Then we have 
+\begin{equation}
+p\left(f,g\right)=\int p\left(f,g|u\right)p\left(u\right)du\label{eq:intu}
+\end{equation}
+If we observe process $f$ at points $X$ and process $g$ at point
+$Z$ then we have 
+\begin{eqnarray}
+p\left(f\left(X\right),g\left(Z\right)|u\right) & = & \N\left(\begin{pmatrix}f\\
+g
+\end{pmatrix}\left|\begin{pmatrix}\mu\left(X\right)\\
+\mu\left(Z\right)
+\end{pmatrix},\begin{pmatrix}C\left(X,X\right) & 0\\
+0 & C\left(Z,Z\right)
+\end{pmatrix}\right.\right)\label{eq:fgulikelihood}\\
+ & = & \N\left(\begin{pmatrix}f\\
+g
+\end{pmatrix}\left|\begin{pmatrix}\frac{k_{X}}{k_{p}}\\
+\frac{k_{Z}}{k_{p}}
+\end{pmatrix}u,\begin{pmatrix}C\left(X,X\right) & 0\\
+0 & C\left(Z,Z\right)
+\end{pmatrix}\right.\right)
+\end{eqnarray}
+ an $2N\times2N$ matrix where $C\left(.,.\right)$ as defined previously.
+
+We can now use the result in Equation (\ref{eq:bishopresult}) to
+solve the integral in Equation (\ref{eq:intu}). 
+
+\begin{eqnarray*}
+p\left(f\left(X\right),g\left(Z\right)\right) & = & \N\left(\begin{pmatrix}f\\
+g
+\end{pmatrix}\left|0,\begin{pmatrix}C\left(X,X\right) & 0\\
+0 & C\left(Z,Z\right)
+\end{pmatrix}+\begin{pmatrix}\frac{k_{X}}{k_{p}}\\
+\frac{k_{Z}}{k_{p}}
+\end{pmatrix}k_{p}\begin{pmatrix}\frac{k_{X}}{k_{p}}\\
+\frac{k_{Z}}{k_{p}}
+\end{pmatrix}^{T}\right.\right)\\
+ & = & \N\left(\begin{pmatrix}f\\
+g
+\end{pmatrix}\left|0,\begin{pmatrix}C\left(X,X\right) & 0\\
+0 & C\left(Z,Z\right)
+\end{pmatrix}+\begin{pmatrix}\frac{k_{X}k_{X}^{T}}{k_{p}} & \frac{k_{X}k_{Z}^{T}}{k_{p}}\\
+\frac{k_{Z}k_{X}^{T}}{k_{p}} & \frac{k_{Z}k_{Z}^{T}}{k_{p}}
+\end{pmatrix}\right.\right)\\
+ & = & \N\left(\begin{pmatrix}f\\
+g
+\end{pmatrix}\left|0,\begin{pmatrix}K_{X} & \frac{k_{X}k_{Z}^{T}}{k_{p}}\\
+\frac{k_{Z}k_{X}^{T}}{k_{p}} & K_{Z}
+\end{pmatrix}\right.\right)
+\end{eqnarray*}
+
+which proves the result in Equation 6 of \cite{jingyang2015}.
+
+\section{Crossing kernel}
+
+The crossing kernel is
+
+\[
+p\left(f\left(X\right),g\left(Z\right)\right)=\int p\left(f|u\right)p\left(g|u\right)p\left(u\right)du=\N\left(\begin{pmatrix}f\\
+g
+\end{pmatrix}\left|0,\begin{pmatrix}K_{X} & k_{X}k_{p}^{-1}k_{Z}^{T}\\
+k_{Z}k_{p}^{-1}k_{X}^{T} & K_{Z}
+\end{pmatrix}\right.\right)
+\]
+ where $k_{X}=K\left(X,x_{p}\right)$ the $N\times1$ train-test matrix
+and $k_{p}=K\left(x_{p},x_{p}\right)$ the branching kernel.
+
+\section{Efficient implementation using TensorFlow.}
+
+We have implemented our approach in the GPflow framework \cite{GPflow2016}
+which leverages efficient computation using Tensorflow \cite{tensorflow2015-whitepaper}.
+
+In the latter we build an executable graph using python that can then
+be executed across many CPU/GPUs or in a distributed environment.
+The goal is to easily transition from research prototype to production.
+
+\bibliographystyle{plain}
+\bibliography{bibFile}
+
+\end{document}
