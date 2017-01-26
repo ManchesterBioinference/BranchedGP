@@ -1,0 +1,407 @@
+%\documentclass{beamer}
+\makeatletter\let\ifGm@compatii\relax\makeatother
+\documentclass[ignorenonframetext]{beamer}
+\mode<presentation>
+% Copyright 2003 by Till Tantau <tantau@cs.tu-berlin.de>.
+
+\usetheme{Aston}
+%\usetheme{Berkeley}
+
+\usepackage{subfigure}
+\usepackage[english]{babel}
+\usepackage[latin1]{inputenc}
+\usepackage{beamerthemesplit}
+\usepackage{booktabs}
+\usepackage{amsmath} % We will always use the amstex package!
+\usepackage{xspace} % Xspace is very useful to, thanks Guillaume!
+\usepackage{chicagoMod} % for bibliography
+
+\usepackage{data_assimilation}
+%\usepackage{gp}
+
+\newcommand{\mbf}	 {\boldsymbol}
+\newcommand{\enclose}[1] {{\it \lq #1\rq }\xspace}
+\newcommand{\degr}[1]	{\ensuremath{#1^{\circ}}\xspace}
+\newcommand{\trans}[1]	{\ensuremath{#1^{\text \tiny T}}\xspace}
+%\newcommand{\pxgy}[2]	{\ensuremath{\text{p}(#1\: | \: #2)}\xspace} % conditional probability of x given y
+\newcommand{\pxay}[2]	{\ensuremath{\text{p}(#1,#2)}\xspace} % joint probability of x and y
+\newcommand{\px}[1]	{\ensuremath{\text{p}(#1)}\xspace} % probability of x
+\newcommand{\approxpx}[1]	{\ensuremath{\text{q}(#1)}\xspace} % probability of x
+\newcommand{\approxpxgy}[2]	{\ensuremath{\text{q}(#1\: | \: #2)}\xspace} % probability of x
+\newcommand{\pbayes}[2]	{\ensuremath{\frac{\pxgy{#2}{#1}\px{#1}}{\px{#2}}}\xspace} % posterior probability of x given y
+\newcommand{\gaussoned}[3]  {\ensuremath{\frac{1}{\sqrt{2\pi #2}} \exp\left(-\frac{(#3-#1)^2}{2 #2}\right)}\xspace}  
+\newcommand{\propdist}	{\ensuremath{\hat{\text{q}}()}\xspace} % probability of x
+
+
+\newcommand{\prd}	{probability distribution\xspace}
+\newcommand{\prds}	{probability distributions\xspace}
+%\newcommand{\pdf}	{probability distribution function\xspace}
+\newcommand{\pdfs}	{probability distribution functions\xspace}
+
+
+\newcommand{\mean}{\ensuremath{\mu}\xspace}
+\newcommand{\bd}{\ensuremath{\mbf{D}}\xspace}
+\newcommand{\expect}[1]	{\ensuremath{E\left[#1\right]}\xspace} % expectation
+\newcommand{\bw}	{\ensuremath{\mbf{w}}\xspace} 
+\newcommand{\bt}	{\ensuremath{\mbf{t}}\xspace} 
+\newcommand{\bx}	{\ensuremath{\mbf{x}}\xspace} 
+\newcommand{\by}	{\ensuremath{\mbf{y}}\xspace} 
+
+\renewcommand{\emph}[1]		{{\color[rgb]{0.5804,0.1569,0.5451}#1}}
+\newcommand{\defn}[1]		{{\color[rgb]{0.5804,0.1569,0.5451}#1}}
+\newcommand{\imp}[1]		{{\color[rgb]{0.0000,0.2353,0.4745}#1}}
+\newcommand{\pers}[1]		{{\color[rgb]{0.0,0.3,0.3}#1}}
+
+\newcommand{\samplemean}        {\ensuremath{\hat{\mu}}\xspace}	% finite sample mean
+
+
+\newcommand{\outlineMark}[1]		{{\Huge \color[rgb]{1.0,0.3,0.3}#1}}
+
+\newcommand{\dint}		{\mathrm{d}} % d integral 
+\newcommand{\tr}		{\mathrm{tr}} % trace
+\newcommand{\diag}		{\mathrm{diag}} % trace
+\newcommand{\FIM}       {\ensuremath{\mathcal{F}}\xspace}
+\newcommand{\qi}{ {\tau } \xspace} % quantile index
+
+\newcommand{\Nkn}{ { N_{k,-i} } }
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\newcommand{\z}       {\ensuremath{\mathbf{z}}\xspace}
+\newcommand{\conc}       {\ensuremath{{\alpha}}\xspace}
+\newcommand{\thp}        {\ensuremath{\mathbf{\theta}_0}\xspace}
+
+%%% END : Put your own macro's here
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Remi's stuff ...
+\definecolor{turquoise}{RGB}{25,106,175}
+\definecolor{orange}{RGB}{240,100,50}
+\definecolor{green}{RGB}{0,128,0}
+\definecolor{urlgray}{RGB}{100,100,100}
+
+
+\renewcommand{\emph}[1]{{\color{turquoise} #1}}
+\newcommand{\textorange}[1]{{\color{orange} #1}}
+%\newcommand{\pictureurl}[1]{\tiny{\color{urlgray} #1}}
+\newcommand{\pictureurl}[1]{\ \footnote[frame]{\tiny{\color{urlgray} #1}}}
+\newcommand{\rarrow}{$\rightarrow$\ }
+\newcommand{\mc}[1]{\ensuremath{\mathbf{#1}}\xspace}
+
+%\setbeamercolor{block title}{bg=blue}
+%\setbeamercolor{background canvas}{bg=yellow} % see http://en.wikibooks.org/wiki/LaTeX/Presentations
+%\setbeamercolor{block body alerted}{bg=yellow}
+%\setbeamercolor{block body}{bg=red}
+\setbeamercolor{block head}{bg=blue,fg=white}
+%\setbeamercolor{block body example}{bg=green}
+%\setbeamercolor{block title alerted}{bg=black}
+%\setbeamercolor{block title}{bg=brown}
+
+
+\newcommand{\xinput}        {\ensuremath{\mc{x}}\xspace}
+\newcommand{\Xinput}        {\ensuremath{\mc{X}}\xspace}
+\newcommand{\youtput}        {\ensuremath{\mc{y}}\xspace} 
+\newcommand{\proboutput}        {\ensuremath{\mc{\beta}}\xspace} 
+\newcommand{\simfn} {\ensuremath{\mc{f}}\xspace}
+
+
+\newcommand{\der}		{\ensuremath{\partial}\xspace} % partial derivative
+
+
+\newcommand{\me}        {\ensuremath{\mc{\mu}}\xspace}
+\newcommand{\cov}       {\ensuremath{\Sigma}\xspace}
+\newcommand{\pa}        {\ensuremath{\mc{\theta}}\xspace}
+\newcommand{\X}        	{\ensuremath{\mc{X}}\xspace}
+
+\newcommand{\logvar}{\mc{z}} % log varinace
+\renewcommand{\obs}{\mc{t}}	% raw noisy observation
+\newcommand{\BasisFun} {\ensuremath{\mc{h}}\xspace}		% fixed basis array
+\newcommand{\BasisB} {\ensuremath{\mc{\beta}}\xspace}	% linear params
+
+
+% Private macros
+\usepackage{xspace}
+
+\newcommand{\x}        	{\ensuremath{\mc{x}}\xspace}
+\newcommand{\abc} {{\it ABC}\xspace}
+\newcommand{\design}        	{\ensuremath{\mc{\xi}}\xspace}
+
+\newcommand{\truemean}        {\ensuremath{{\mu}}\xspace}	% finite sample mean
+
+% Used in ch3 for coupled model
+\newcommand{\gpone} {\ensuremath{\mc{G_H}}\xspace}
+\newcommand{\gptwo} {\ensuremath{\mc{G_\sigma}}\xspace}
+\newcommand{\gpthree} {\ensuremath{\mc{G_{\mu}}}\xspace}
+\newcommand{\meanoutput}        {\ensuremath{\bar{y}}\xspace}
+\newcommand{\varoutput}        {\ensuremath{\mc{S}^2}\xspace} 
+\newcommand{\target}        {\ensuremath{\mc{t}}\xspace}
+\newcommand{\yuhba} {\ensuremath{\mc{Y}} \xspace}
+
+\newcommand{\Data} {\ensuremath{\mathcal{D}} \xspace}
+\renewcommand{\v}[1] {\mathbf{#1}} % vectors in math mode
+\newcommand{\ti} { \mathcal{\tau} }
+
+
+
+\newcommand{\myhbox}[1]{ \fbox{\bf {#1} }} 
+
+\graphicspath{{figs/}} 
+
+\newcommand{\arrow}[1][\ ]{\emph{$\boldsymbol{\Rightarrow}$}#1}
+
+%\setbeamercovered{transparent}
+\setbeamercovered{invisible}
+\setbeamercovered{dynamic}
+
+\newcommand{\cut}[1]{} % remove material from compilation - handy this!
+
+% PDF metadata settings
+\hypersetup{%
+	pdftitle={MUCM},%
+	pdfauthor={Alexis Boukouvalas},%
+	pdfsubject={},%
+	pdfstartview={FitH},%
+	pdfkeywords={}%
+}
+
+
+\title[Branching GPs]{Identification of branching using pseudotime estimation}
+\author[A.~Boukouvalas]{\textcolor{darkblue}{Alexis Boukouvalas}\\ \textcolor{blue}{\tt \tiny alexis.boukouvalas@manchester.ac.uk}}
+\institute{
+  \includegraphics[height=2cm]{ManchesterUniversityLogo} \hspace{2cm} 
+ \\
+  \textcolor{blue}{\tt \tiny http://personalpages.manchester.ac.uk/staff/alexis.boukouvalas/}
+}
+\date{
+  \textcolor{darkblue}{August 31, 2016} \\
+  Joint work with James Hensman, Magnus Rattray
+}
+
+
+% nice rounded corners
+\setbeamertemplate{blocks}[rounded][shadow=true] 
+
+% Make captions red without figure and colon
+\setbeamertemplate{caption}{\small \insertcaption}
+\setbeamercolor{caption}{fg=blue,bg=white} 
+
+% nice rounded corners
+\setbeamertemplate{blocks}[rounded][shadow=true] 
+
+\usepackage{xmpmulti}
+
+% new
+\usepackage{pgfplots}
+\usepackage[subpreambles=true]{standalone}
+\usepackage{tikz}
+
+
+\begin{document}
+
+% Make the title page.
+\frame{\titlepage}
+
+
+\begin{frame}{Hello world}
+%\input{../figs/dropseq_ma_Dlgap1.tex}
+\begin{columns}
+\begin{column}{0.5\textwidth} 
+    \begin{center}
+    Notional prior
+    
+    \includestandalone[width=.9\linewidth]{../figs/dropseq_ma_Dlgap1}
+     \end{center}
+\end{column}
+
+\begin{column}{0.5\textwidth} 
+    \begin{center}
+    Sample from the model
+    
+    \includestandalone[width=.9\linewidth]{../figs/dropseq_ma_Dlgap1}
+     \end{center}
+\end{column}
+\end{columns}
+\end{frame}
+
+
+\begin{frame}{Single cell non-linear branching models}
+\begin{itemize}
+\item Using probabilistic models, ensures a logical and consistent way of including relevant prior information such as cell capture times in synchronised populations.  
+\item Using the GPLVM framework allows us to infer pseudotime including such prior information [Reid]. 
+\item A non-linear mapping increases the accuracy of pseudotime estimation [TopSlam ,DPT].
+\item Missing information (dropout) is relatively straightforward to handle in a probabilistic model [ZIFA].
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Inferring perturbation time}
+	 \begin{block}{Perturbation time}
+		\begin{itemize}
+\item Jing et al (2016) developed a tractable GP model for the identification of a single perturbation point.
+\item Define a novel kernel that constrains two functions $f$ and $g$ to *cross* at a single point.
+\item Bifurcation point is identified by numerically approximating the posterior and selecting a point estimate. This is a model selection approach.
+		\end{itemize}
+    \begin{figure}
+    \centering
+    \includegraphics[width=.65\textwidth]{crossingKernel}
+    \end{figure}
+  \end{block}
+\end{frame}
+
+\begin{frame}{Inferring perturbation time II}
+\begin{itemize}
+\item Hyperparameters are estimated by assuming the two functions are independent, that is they do not cross.
+\item Model used "to identify at which time point a gene becomes differentially expressed in time course gene expression data under two various conditions.
+\item Both GPy and R implementations are available
+\end{itemize}
+
+\begin{block}{Key assumptions}
+\begin{itemize}
+\item All data points have been labelled as to which function ($f/g$) they belong to.
+\item The ordering of time points is assumed known and fixed.
+\end{itemize}
+\end{block}
+\end{frame}
+
+
+
+\begin{frame}{Branching Gaussian processes}
+\begin{itemize}
+\item Extend the kernel to multiple branching points assuming a tree structure. 
+\item Infer the function labels.
+\item Perform efficient inference (iterative MAP, Variational, Gibbs).
+\item Efficient implementation using Google Tensorflow.
+\item Time is not given but has be inferred - known as pseudotime inference in single cell literature.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Two stage approach}
+\begin{itemize}
+\item Infer pseudotime [see next slide].
+	\begin{itemize}
+    	\item Use capture time if available.
+\end{itemize}
+\item Initialisation: Use overlapping mixture of GPs to infer K trajectories. No branching.
+\item Create branching model using OMGP to initialise allocation probabilities $\Phi$ and kernel hyperparameters $\theta$.
+	
+\item Use Bayesian optimisation (GPyOpt) to learn $\theta$ and branching locations $B$.
+	\begin{itemize}
+   	\item Currently $\Phi$ fixed but could be optimised locally in each BO step evaluation.
+   	\item Still beneficial to use VB code rather than Jings model since we integrate out (approximately using VB bound) uncertainty in allocations.
+   	\end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Pseudotime}
+\begin{itemize}
+\item Use capture times as informative prior for pseudotime.
+	\begin{itemize}
+    	\item GPLVM with prior on each point $N(\tau_i | x_i, \sigma^2)$.
+	\end{itemize}
+\item No capture time.
+	\begin{itemize}
+    	\item Topslam (GPLVM+)
+    	\item Monocle (ICA+mpt)
+    	\item Waterfall (PCA+mpt)
+    	\item Wanderlust (t-SNE+k-nn).
+	\end{itemize}
+\item Branching models
+	\begin{itemize}
+    	\item Diffusion pseudotime.
+    	\item Slicer (LLE+entropy criterion).
+	\end{itemize}
+\end{itemize}
+\end{frame}    
+    
+    
+
+\begin{frame}
+\frametitle{Tree prior}
+\begin{columns}
+\begin{column}{0.7\textwidth} 
+    \begin{center}
+    Notional prior
+     \includegraphics[width=1\textwidth]{branchingGPtreeSmallFL}      
+     \end{center}
+\end{column}
+
+\begin{column}{0.55\textwidth} 
+    \begin{center}
+    Sample from the model
+     \includegraphics[width=1\textwidth]{multibrachKernelSample}      
+     \end{center}
+\end{column}
+\end{columns}
+\end{frame}    
+
+\begin{frame}{Learning pseudotime via Topslam (Max Zwiessele)}
+\begin{block}{Density in Bayesian GPLVM}
+Probabilistic dimensionality reduction technique allows for estimating the density of the landscape, depicted in gray shading of the background of the two dimensional image of the landscape.  Light areas are preferred by the algorithm, whereas dark areas increase the between cells distance in the landscape.
+\end{block}
+
+\begin{block}{Minimum spanning tree}
+The extraction of time is done by shortest paths along the extracted graph, depicted in the blue shading of edges, starting from the red circled starting cell.
+\end{block}
+\end{frame}   
+
+\begin{frame}{Learning pseudotime via Topslam (Max Zwiessele)}
+\begin{block}{Key assumptions}
+\small
+\begin{itemize}
+\item Bayesian Gaussian process latent variable model to reduce dimensionality. 
+\item Minimum spanning tree to infer pseudotime: temporal order from snapshot view of gene expression.
+\end{itemize}
+\end{block}
+
+ \begin{center}
+ \includegraphics[width=.45\textwidth]{BGPLVMknn50010.pdf}      
+ \end{center}
+\end{frame}    
+
+
+\begin{frame}{Step 2: Initialisation in latent space: Overlapping mixture of GPs}
+ \begin{center}
+ Working on the pseudotime and principal GPLVM direction.
+ \includegraphics[width=.75\textwidth]{OMGP}      
+ \end{center}
+\end{frame}    
+
+
+\begin{frame}{Step 3: Learning the branching structure}
+ \begin{center}
+ \includegraphics[width=.75\textwidth]{branchingJoint}      
+ \end{center}
+\end{frame}    
+
+\begin{frame}{Working on the raw gene expression with capture time, gene Id2}
+ \begin{center}
+ \includegraphics[width=.75\textwidth]{captureTimes}      
+ \end{center}
+\end{frame}    
+
+
+\begin{frame}{Raw gene expression: True cell type}
+ \begin{center}
+ \includegraphics[width=.75\textwidth]{captureTimesGroundTruth}      
+ \end{center}
+\end{frame}    
+
+   
+\begin{frame}{Summary}
+\begin{itemize}
+\item Infer peudotime across a branching process which allows an unsynchronised or partly synchronised cell population to be placed on a developmental continuum.
+\item Easy to extend to multiple branching points: harder optimization problem using same objective function on higher dimensions.
+\item Leverage existing approaches (Sparse GP) to improve performance, e.g. Drop-seq=50k cells.
+\end{itemize}
+\end{frame}   
+
+\begin{frame}{Extensions}
+\begin{itemize}
+\item Compare to Diffusion pseudotime, Waterfall and Slicer and other approaches.
+\item Pseudotime inference; jointly identify labels and time order. 
+\item Constrain derivatives to be the same at crossing points so transitions are smooth at branching points.
+\item Different kernels in tree structure via model selection; e.g. periodic vs non-periodic kernels.
+\item Stochastic process prior on trees. Place non-parametric prior on tree structure and perform inference on tree structure as well as branching GP.
+\end{itemize}
+\end{frame}    
+
+
+\end{document}
