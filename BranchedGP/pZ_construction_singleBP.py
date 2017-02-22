@@ -14,7 +14,11 @@ def expand_pZ0(pZ0):
     return r
 
 
-def make_matrix(X, BP, eZ0, epsilon=1e-6, pZ0=None):
+def make_matrix(X, BP, eZ0, epsilon=1e-6):
+    ''' Compute pZ which is N by N*3 matrix of prior assignment.
+    This code has to be consistent with assigngp_dense.InitialiseVariationalPhi to where
+        the equality is placed i.e. if x<=b trunk and if x>b branch or vice versa. We use the
+         former convention.'''
     num_columns = 3 * tf.shape(X)[0]  # for 3 latent fns
     rows = []
     count = tf.zeros((1,), dtype=tf.int32)
@@ -39,10 +43,9 @@ def make_matrix(X, BP, eZ0, epsilon=1e-6, pZ0=None):
 
 
 if __name__ == "__main__":
-    #X = np.random.rand(10, 1)
     np.set_printoptions(suppress=True,  precision=2)
-    X = np.linspace(0, 1, 4, dtype=float)[:, None]
-    X = np.sort(X, 0)
+    # X = np.linspace(0, 1, 4, dtype=float)[:, None]
+    X = np.array([0.1, 0.2, 0.3, 0.4])[:, None]
     BP_tf = tf.placeholder(tf.float64, shape=[])
     eZ0_tf = tf.placeholder(tf.float64, shape=(X.shape[0], X.shape[0]*3))
     pZ0 = np.array([[0.7, 0.3], [0.1, 0.9], [0.5, 0.5], [1, 0]])
@@ -58,7 +61,7 @@ if __name__ == "__main__":
         if(X[r] > BP):  # after branch point should be prior
             assert np.allclose(pZ[r, c+1:c+3], pZ0[r, :], atol=1e-6), 'must be the same! %s-%s' % (str(pZ[r, c:c+3]), str(pZ0[r, :]))
         else:
-            assert np.allclose(pZ[r, c:c+3], np.array([1., 0., 0.]), atol=1e-6), 'must be the same! %s-%s' % (str(pZ[r, c:c+3]), str(pZ0[r, :]))
+            assert np.allclose(pZ[r, c:c+3], np.array([1., 0., 0.]), atol=1e-6), 'must be the same! %s-%s' % (str(pZ[r, c:c+3]), str(np.array([1., 0., 0.])))
 #     from matplotlib import pyplot as plt
 #     plt.ion()
 #     plt.matshow(pZ)

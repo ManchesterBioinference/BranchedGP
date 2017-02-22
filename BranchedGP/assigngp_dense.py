@@ -108,7 +108,7 @@ class AssignGP(GPflow.model.GPModel):
 
     """
 
-    def __init__(self, t, XExpanded, Y, kern, indices, b, phiPrior=None, phiInitial=None, fDebug=False):
+    def __init__(self, t, XExpanded, Y, kern, indices, b, phiPrior=None, phiInitial=None, fDebug=False, KConst=None):
         GPflow.model.GPModel.__init__(self, XExpanded, Y, kern,
                                       likelihood=GPflow.likelihoods.Gaussian(),
                                       mean_function=GPflow.mean_functions.Zero())
@@ -128,6 +128,9 @@ class AssignGP(GPflow.model.GPModel):
         if(phiPrior is None):
             phiPrior = np.ones((self.t.shape[0], 2)) * 0.5
         self.UpdatePhiPrior(phiPrior)
+        self.KConst = KConst
+        if(not fDebug):
+            assert KConst is None, 'KConst only for debugging'
 
     def UpdatePhiPrior(self, pZ0):
         ''' Update prior on allocations p(Z) used in KL term '''
@@ -151,7 +154,10 @@ class AssignGP(GPflow.model.GPModel):
         self.InitialiseVariationalPhi(phiInitial)
 
     def InitialiseVariationalPhi(self, phiInitialIn):
-        ''' Set initial state for Phi using branching location to constrain '''
+        ''' Set initial state for Phi using branching location to constrain.
+        This code has to be consistent with pZ_construction.singleBP.make_matrix to where
+        the equality is placed i.e. if x<=b trunk and if x>b branch or vice versa. We use the
+         former convention.'''
         assert np.allclose(phiInitialIn.sum(1), 1), 'probs must sum to 1 %s' % str(phiInitialIn)
         assert self.b == self.kern.branchkernelparam.Bv.value, 'Need to call UpdateBranchingPoint'
         N = self.Y.value.shape[0]
@@ -163,7 +169,7 @@ class AssignGP(GPflow.model.GPModel):
         eps = 1e-9
         iterC = 0
         for i, p in enumerate(self.t):
-            if(p < self.b):  # before branching - it's the root
+            if(p <= self.b):  # before branching - it's the root
                 phiInitialEx[i, iterC:iterC + 3] = np.array([1 - 2 * eps, 0 + eps, 0 + eps])
             else:
                 phiInitialEx[i, iterC:iterC + 3] = np.hstack([eps, phiInitialIn[i, :] - eps])
@@ -207,7 +213,10 @@ class AssignGP(GPflow.model.GPModel):
         N = tf.cast(tf.shape(self.Y)[0], tf.float64)
         M = tf.shape(self.X)[0]
         D = tf.cast(tf.shape(self.Y)[1], tf.float64)
-        K = self.kern.K(self.X)
+        if(self.KConst is not None):
+            K = self.KConst
+        else:
+            K = self.kern.K(self.X)
         Phi = tf.nn.softmax(self.logPhi)
         # try squashing Phi to avoid numerical errors
         Phi = (1 - 2e-6) * Phi + 1e-6
@@ -227,10 +236,18 @@ class AssignGP(GPflow.model.GPModel):
         c = tf.matrix_triangular_solve(R, LPhiY, lower=True) / sigma2
         # compute KL
         KL = self.build_KL(Phi)
-        return -0.5 * N * D * tf.log(2. * np.pi / tau)\
-            - 0.5 * D * tf.reduce_sum(tf.log(tf.square(tf.diag_part(R))))\
-            - 0.5 * tf.reduce_sum(tf.square(self.Y)) / sigma2\
-            + 0.5 * tf.reduce_sum(tf.square(c)) - KL
+        a1 = -0.5 * N * D * tf.log(2. * np.pi / tau)
+        a2 = - 0.5 * D * tf.reduce_sum(tf.log(tf.square(tf.diag_part(R))))
+        a3 = - 0.5 * tf.reduce_sum(tf.square(self.Y)) / sigma2
+        a4 = + 0.5 * tf.reduce_sum(tf.square(c))
+        a5 = - KL
+        if(self.fDebug):
+            a1 = tf.Print(a1, [a1], message='a1=')
+            a2 = tf.Print(a2, [a2], message='a2=')
+            a3 = tf.Print(a3, [a3], message='a3=')
+            a4 = tf.Print(a4, [a4], message='a4=')
+            a5 = tf.Print(a5, [a5, Phi], message='a5 and Phi=', summarize=10)
+        return a1+a2+a3+a4+a5
 
     def build_predict(self, Xnew, full_cov=False):
         M = tf.shape(self.X)[0]

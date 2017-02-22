@@ -53,11 +53,11 @@ class AssignGPSparse(assigngp_dense.AssignGP):
 
         Kdiag = self.kern.Kdiag(self.X)
         L = tf.cholesky(Kuu)
-        p = tf.reduce_sum(Phi, 0)
+        A = tf.reduce_sum(Phi, 0)
         LiKuf = tf.matrix_triangular_solve(L, Kuf)
-        W = LiKuf * tf.sqrt(p) / sigma
+        W = LiKuf * tf.sqrt(A) / sigma
         P = tf.matmul(W, tf.transpose(W)) + GPflow.tf_wraps.eye(M)
-        traceTerm = -0.5 * tf.reduce_sum(Kdiag * p) / sigma2 + 0.5 * tf.reduce_sum(tf.square(W))
+        traceTerm = -0.5 * tf.reduce_sum(Kdiag * A) / sigma2 + 0.5 * tf.reduce_sum(tf.square(W))
         R = tf.cholesky(P)
         tmp = tf.matmul(LiKuf, tf.matmul(tf.transpose(Phi), self.Y))
         c = tf.matrix_triangular_solve(R, tmp, lower=True) / sigma2
