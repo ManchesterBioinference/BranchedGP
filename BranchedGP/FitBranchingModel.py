@@ -117,6 +117,8 @@ def EstimateBranchModel(strsave, gUse, globalBranching, GPt, GPy, BgridSearchIn=
     return dictionary with model information and model.
     prior is v[0]
     '''
+    assert isinstance(BgridSearchIn, list), 'Must be list got %s' % str(type(BgridSearchIn))
+    assert np.all(np.array(BgridSearchIn) <= 1), 'Pseudotime between 0 and 1 got %s' % str(BgridSearchIn)
     assert GPt.ndim == 1, 'GPt should be 1-D got %s' % str(GPt.shape)
     assert GPy.ndim == 2, 'GPy should be 2-D got %s' % str(GPy.shape)
     if(fFixhyperpar):
@@ -189,10 +191,7 @@ def EstimateBranchModel(strsave, gUse, globalBranching, GPt, GPy, BgridSearchIn=
             m.kern.branchkernelparam.kern.variance.fixed = True
             m.kern.branchkernelparam.kern.lengthscales.fixed = True
             m.likelihood.variance.fixed = True
-            # Run optimisation again only if hyperparameters were not fixed
-            obj[ib] = MultipleRestartsChoose(strsave, m, v, globalBranching, infPriorPhi, b, maxiter,
-                                             fFixKernel=fFixKernel,
-                                             kerlen=kerlenIn, kervar=kervarIn, noise=noiseInSamplesIn, fDebug=fDebug)
+
         # do prediction and save results
         Phi = m.GetPhi()
         ttestl, mul, varl = VBHelperFunctions.predictBranchingModel(m)
