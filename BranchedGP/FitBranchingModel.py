@@ -107,7 +107,7 @@ def MultipleRestartsChoose(strsave, m, v, globalBranching, infPriorPhi, b, maxit
 def EstimateBranchModel(strsave, gUse, globalBranching, GPt, GPy, BgridSearchIn=[0.4, 0.7],
                         fSavefile=True, M=20, maxiter=10, infPriorPhi=True, v=[0.95],
                         kervarIn=[0.1, 1, 6], kerlenIn=[0.1, 1, 6], noiseInSamplesIn=[0.01, 0.1, 1],
-                        fFixhyperpar=False, fDebug=False):
+                        fFixhyperpar=False, fDebug=False, m=None):
     ''' Function to analyse specific genes using Branching GP
     Will perform a model hyperparameter estimation at Monocle branching point (0.1).
     Then estimate the model without hyperparemeter estimation at BgridSearchIn locations.
@@ -146,18 +146,22 @@ def EstimateBranchModel(strsave, gUse, globalBranching, GPt, GPy, BgridSearchIn=
     phiInitial, phiPrior = GetInitialConditionsAndPrior(globalBranching, v[0], infPriorPhi)
     assert phiInitial.shape[0] == GPt.size
     # Construct model
-    if(M == 0):
-        m = assigngp_dense.AssignGP(GPt, XExpanded, GPy, kb, indices,
-                                    np.ones((1, 1))*ptb, phiInitial=phiInitial, phiPrior=phiPrior)
+    if(m is None):
+        if(M == 0):
+            m = assigngp_dense.AssignGP(GPt, XExpanded, GPy, kb, indices,
+                                        np.ones((1, 1))*ptb, phiInitial=phiInitial, phiPrior=phiPrior)
+        else:
+            # ir = np.random.choice(XExpanded.shape[0], M)
+            # ZExpanded = XExpanded[ir, :]
+            ZExpanded = np.ones((M, 2))
+            ZExpanded[:, 0] = np.linspace(0, 1, M, endpoint=False)
+            ZExpanded[:, 1] = np.array([i for j in range(M) for i in range(1,4)])[:M]
+            m = assigngp_denseSparse.AssignGPSparse(GPt, XExpanded, GPy, kb, indices,
+                                                    np.ones((1, 1))*ptb, ZExpanded, phiInitial=phiInitial, phiPrior=phiPrior)
     else:
-        # ir = np.random.choice(XExpanded.shape[0], M)
-        # ZExpanded = XExpanded[ir, :]
-        ZExpanded = np.ones((M, 2))
-        ZExpanded[:, 0] = np.linspace(0, 1, M, endpoint=False)
-        ZExpanded[:, 1] = np.array([i for j in range(M) for i in range(1,4)])[:M]
-        m = assigngp_denseSparse.AssignGPSparse(GPt, XExpanded, GPy, kb, indices,
-                                                np.ones((1, 1))*ptb, ZExpanded, phiInitial=phiInitial, phiPrior=phiPrior)
-
+        assert fFixhyperpar, 'reusing model all hyperparameters must be fixed.'
+        m.Y = GPy
+        assert np.allclose(m.t, GPt)
     if(fFixhyperpar):
         assert len(kervarIn) == 1
         assert len(noiseInSamplesIn) == 1
