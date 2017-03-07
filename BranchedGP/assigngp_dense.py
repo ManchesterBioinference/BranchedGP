@@ -1,5 +1,4 @@
 # coding: utf-8
-
 import GPflow
 import numpy as np
 import tensorflow as tf
@@ -10,7 +9,7 @@ from GPflow.param import DataHolder
 
 # TODO S:
 # 2) tidy up make_pZ_matrix and generalize to multiple latent functions
-
+float_type = GPflow.settings.dtypes.float_type
 
 def PlotSample(D, X, M, samples, B=None, lw=3.,
                fs=10, figsizeIn=(12, 16), title=None, mV=None):
@@ -210,9 +209,9 @@ class AssignGP(GPflow.model.GPModel):
 
     def build_likelihood(self):
         print('assignegp_dense compiling model (build_likelihood)')
-        N = tf.cast(tf.shape(self.Y)[0], tf.float64)
+        N = tf.cast(tf.shape(self.Y)[0], dtype=float_type)
         M = tf.shape(self.X)[0]
-        D = tf.cast(tf.shape(self.Y)[1], tf.float64)
+        D = tf.cast(tf.shape(self.Y)[1], dtype=float_type)
         if(self.KConst is not None):
             K = self.KConst
         else:
@@ -270,12 +269,12 @@ class AssignGP(GPflow.model.GPModel):
         if full_cov:
             var = self.kern.K(Xnew) + tf.matmul(tf.transpose(tmp2), tmp2)\
                 - tf.matmul(tf.transpose(tmp1), tmp1)
-            shape = tf.pack([1, 1, tf.shape(self.Y)[1]])
+            shape = tf.stack([1, 1, tf.shape(self.Y)[1]])
             var = tf.tile(tf.expand_dims(var, 2), shape)
         else:
             var = self.kern.Kdiag(Xnew) + tf.reduce_sum(tf.square(tmp2), 0)\
                 - tf.reduce_sum(tf.square(tmp1), 0)
-            shape = tf.pack([1, tf.shape(self.Y)[1]])
+            shape = tf.stack([1, tf.shape(self.Y)[1]])
             var = tf.tile(tf.expand_dims(var, 1), shape)
         return mean, var
 

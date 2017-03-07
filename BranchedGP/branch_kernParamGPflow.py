@@ -5,6 +5,7 @@ from GPflow.param import DataHolder
 import tensorflow as tf
 import numpy as np
 from matplotlib import pyplot as plt
+float_type = GPflow.settings.dtypes.float_type
 
 
 def PlotSample(X, samples, B=None, lw=3., fs=10, figsizeIn=(5, 5)):
@@ -90,14 +91,14 @@ class BranchKernelParam(GPflow.kernels.Kern):
             i1s = i1s_r
             i2s = i2s_r
 
-        i1s_matrix = tf.tile(i1s, tf.reverse(tf.shape(i2s), [True]))
-        i2s_matrix = tf.tile(i2s, tf.reverse(tf.shape(i1s), [True]))
+        i1s_matrix = tf.tile(i1s, tf.reverse(tf.shape(i2s), [0]))
+        i2s_matrix = tf.tile(i2s, tf.reverse(tf.shape(i1s), [0]))
         i2s_matrixT = tf.transpose(i2s_matrix)
 
         Ktts = self.kern.K(t1s, t2s)  # N*M X N*M
         with tf.name_scope("kttscope"):  # scope
             same_functions = tf.equal(i1s_matrix, tf.transpose(i2s_matrix), name='FiEQFj')
-            K_s = tf.select(same_functions, Ktts, Ktts, name='selectFiEQFj')  # just setup matrix with block diagonal
+            K_s = tf.where(same_functions, Ktts, Ktts, name='selectFiEQFj')  # just setup matrix with block diagonal
 
         m = self.fm.shape[0]
         for fi in range(m):
@@ -126,9 +127,9 @@ class BranchKernelParam(GPflow.kernels.Kern):
                             Br = tf.Print(self.Bv, [tf.shape(self.Bv), self.Bv], message='Bv=', name='Bv', summarize=3)  # will print message
                         else:
                             Br = self.Bv
-                        Bs = ((tf.concat(0, [tf.slice(Br, [i - 1, 0], [1, 1]) for i in bint])))
+                        Bs = ((tf.concat([tf.slice(Br, [i - 1, 0], [1, 1]) for i in bint], 0)))
 
-                        kbb = self.kern.K(Bs) + tf.diag(tf.ones(tf.shape(Bs)[:1], dtype=tf.float64)) * 1e-6
+                        kbb = self.kern.K(Bs) + tf.diag(tf.ones(tf.shape(Bs)[:1], dtype=float_type)) * 1e-6
                         if(self.fDebug):
                             kbb = tf.Print(kbb, [tf.shape(kbb), kbb], message='kbb=', name='kbb', summarize=10)
                             kbb = tf.Print(kbb, [self.kern.lengthscales], message='lenscales=', name='lenscales', summarize=10)
@@ -142,7 +143,7 @@ class BranchKernelParam(GPflow.kernels.Kern):
                         a = tf.matmul(Kb1s, Kbbs_inv)
                         K_crosss = tf.matmul(a, tf.transpose(Kb2s), name='Kt1_Bi_invBB_KBt2')
 
-                        K_s = tf.select(t12F, K_crosss, K_s, name='selectIndex')
+                        K_s = tf.where(t12F, K_crosss, K_s, name='selectIndex')
         return K_s
 
     def Kdiag(self, X):
@@ -161,10 +162,10 @@ class IndKern(GPflow.kernels.Kern):
             i1 = X[:, -1:]
             Ktt = self.kern.K(t1)
 
-            i1_matrix = tf.tile(i1, tf.reverse(tf.shape(i1), [True]))
+            i1_matrix = tf.tile(i1, tf.reverse(tf.shape(i1), [0]))
 
             same_functions = tf.equal(i1_matrix, tf.transpose(i1_matrix))
-            K_s = tf.select(same_functions, Ktt, tf.zeros_like(Ktt))
+            K_s = tf.where(same_functions, Ktt, tf.zeros_like(Ktt))
             return K_s
         else:
             t1 = tf.expand_dims(X[:, 0], 1)
@@ -174,11 +175,11 @@ class IndKern(GPflow.kernels.Kern):
 
             Ktt = self.kern.K(t1, t2)
 
-            i1_matrix = tf.tile(i1, tf.reverse(tf.shape(i2), [True]))
-            i2_matrix = tf.tile(i2, tf.reverse(tf.shape(i1), [True]))
+            i1_matrix = tf.tile(i1, tf.reverse(tf.shape(i2), [0]))
+            i2_matrix = tf.tile(i2, tf.reverse(tf.shape(i1), [0]))
 
             same_functions = tf.equal(i1_matrix, tf.transpose(i2_matrix))
-            K_s = tf.select(same_functions, Ktt, tf.zeros_like(Ktt))
+            K_s = tf.where(same_functions, Ktt, tf.zeros_like(Ktt))
             return K_s
 
     def Kdiag(self, X):

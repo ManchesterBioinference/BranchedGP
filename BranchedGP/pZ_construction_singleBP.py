@@ -1,5 +1,7 @@
 import numpy as np
 import tensorflow as tf
+import GPflow
+float_type = GPflow.settings.dtypes.float_type
 
 
 def expand_pZ0(pZ0):
@@ -28,26 +30,26 @@ def make_matrix(X, BP, eZ0, epsilon=1e-6):
         n = tf.cast(tf.greater(x, BP), tf.int32) + 1
         # n == 1 when x <= BP
         # n == 2 when x > BP
-        row = [tf.zeros(count + n - 1, tf.float64) + epsilon]  # all entries until count are zero
+        row = [tf.zeros(count + n - 1, dtype=float_type) + epsilon]  # all entries until count are zero
         # add 1's for possible entries
-        probs = tf.ones(n, tf.float64)
+        probs = tf.ones(n, dtype=float_type)
         row.append(probs)
-        row.append(tf.zeros(2 - 2 * (n - 1), tf.float64) + epsilon)  # append zero
+        row.append(tf.zeros(2 - 2 * (n - 1), dtype=float_type) + epsilon)  # append zero
         count += 3
-        row.append(tf.zeros(num_columns - count, tf.float64) + epsilon)
+        row.append(tf.zeros(num_columns - count, dtype=float_type) + epsilon)
         # ensure things are correctly shaped
-        row = tf.concat(0, row, name='singleconcat')
+        row = tf.concat(row, 0, name='singleconcat')
         row = tf.expand_dims(row, 0)
         rows.append(row)
-    return tf.mul(tf.concat(0, rows, name='multiconcat'), eZ0)
+    return tf.multiply(tf.concat(rows, 0, name='multiconcat'), eZ0)
 
 
 if __name__ == "__main__":
     np.set_printoptions(suppress=True,  precision=2)
     # X = np.linspace(0, 1, 4, dtype=float)[:, None]
     X = np.array([0.1, 0.2, 0.3, 0.4])[:, None]
-    BP_tf = tf.placeholder(tf.float64, shape=[])
-    eZ0_tf = tf.placeholder(tf.float64, shape=(X.shape[0], X.shape[0]*3))
+    BP_tf = tf.placeholder(dtype=float_type, shape=[])
+    eZ0_tf = tf.placeholder(dtype=float_type, shape=(X.shape[0], X.shape[0]*3))
     pZ0 = np.array([[0.7, 0.3], [0.1, 0.9], [0.5, 0.5], [1, 0]])
     eZ0 = expand_pZ0(pZ0)
     BP = 0.2

@@ -1,5 +1,4 @@
 # coding: utf-8
-
 import GPflow
 import numpy as np
 import tensorflow as tf
@@ -7,6 +6,7 @@ import tensorflow as tf
 # from matplotlib import pyplot as plt
 # from GPflow.param import AutoFlow
 from . import assigngp_dense
+float_type = GPflow.settings.dtypes.float_type
 
 
 class AssignGPSparse(assigngp_dense.AssignGP):
@@ -38,9 +38,9 @@ class AssignGPSparse(assigngp_dense.AssignGP):
         assert ZExpanded.shape[1] == XExpanded.shape[1]
 
     def build_likelihood(self):
-        N = tf.cast(tf.shape(self.Y)[0], tf.float64)
+        N = tf.cast(tf.shape(self.Y)[0], dtype=float_type)
         M = tf.shape(self.ZExpanded)[0]
-        D = tf.cast(tf.shape(self.Y)[1], tf.float64)
+        D = tf.cast(tf.shape(self.Y)[1], dtype=float_type)
 
         Phi = tf.nn.softmax(self.logPhi)
         # try squashing Phi to avoid numerical errors
@@ -101,11 +101,11 @@ class AssignGPSparse(assigngp_dense.AssignGP):
         if full_cov:
             var = self.kern.K(Xnew) + tf.matmul(tf.transpose(tmp2), tmp2)\
                 - tf.matmul(tf.transpose(tmp1), tmp1)
-            shape = tf.pack([1, 1, tf.shape(self.Y)[1]])
+            shape = tf.stack([1, 1, tf.shape(self.Y)[1]])
             var = tf.tile(tf.expand_dims(var, 2), shape)
         else:
             var = self.kern.Kdiag(Xnew) + tf.reduce_sum(tf.square(tmp2), 0)\
                 - tf.reduce_sum(tf.square(tmp1), 0)
-            shape = tf.pack([1, tf.shape(self.Y)[1]])
+            shape = tf.stack([1, tf.shape(self.Y)[1]])
             var = tf.tile(tf.expand_dims(var, 1), shape)
         return mean, var
