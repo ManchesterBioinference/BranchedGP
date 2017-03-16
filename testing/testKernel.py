@@ -10,7 +10,7 @@ from BranchedGP import branch_kernParamGPflow as bk
 from BranchedGP import assigngp_dense
 import tensorflow as tf
 
-GPflow.settings.dtypes.float_type = tf.float32
+# GPflow.settings.dtypes.float_type = tf.float32
 
 float_type = GPflow.settings.dtypes.float_type
 
