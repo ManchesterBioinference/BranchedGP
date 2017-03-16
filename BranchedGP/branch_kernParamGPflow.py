@@ -50,6 +50,7 @@ class BranchKernelParam(GPflow.kernels.Kern):
     def __init__(self, base_kern, branchPtTensor, b, fDebug=False):
         ''' branchPtTensor is tensor of branch points of size F X F X B where F the number of
         functions and B the number of branching points '''
+        GPflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
         self.kern = base_kern
         self.fm = branchPtTensor
         self.fDebug = fDebug
@@ -57,7 +58,7 @@ class BranchKernelParam(GPflow.kernels.Kern):
         assert self.fm.shape[0] == self.fm.shape[1]
         assert self.fm.shape[2] > 0
         self.Bv = DataHolder(b)
-        GPflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
+
 
     def SampleKernel(self, XExpanded, b=None, tol=1e-6):
         if(b is not None):
