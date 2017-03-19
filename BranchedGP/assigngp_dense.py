@@ -9,7 +9,10 @@ from GPflow.param import DataHolder
 
 # TODO S:
 # 2) tidy up make_pZ_matrix and generalize to multiple latent functions
-float_type = GPflow.settings.dtypes.float_type
+from GPflow import settings
+float_type = settings.dtypes.float_type
+int_type = settings.dtypes.int_type
+np_float_type = np.float32 if float_type is tf.float32 else np.float64
 
 def PlotSample(D, X, M, samples, B=None, lw=3.,
                fs=10, figsizeIn=(12, 16), title=None, mV=None):
@@ -113,7 +116,7 @@ class AssignGP(GPflow.model.GPModel):
                                       mean_function=GPflow.mean_functions.Zero())
         assert len(indices) == t.size, 'indices must be size N'
         assert len(t.shape) == 1, 'pseudotime should be 1D'
-        self.t = t  # could be DataHolder? advantages
+        self.t = t.astype(np_float_type)  # could be DataHolder? advantages
         self.indices = indices
         self.logPhi = GPflow.param.Param(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions
         if(phiInitial is None):
@@ -144,7 +147,7 @@ class AssignGP(GPflow.model.GPModel):
         eps = 1e-9
         assert isinstance(b, np.ndarray)
         assert b.size == 1, 'Must have scalar branching point'
-        self.b = b  # remember branching value
+        self.b = b.astype(np_float_type)  # remember branching value
         self.kern.branchkernelparam.Bv = b
         assert isinstance(self.kern.branchkernelparam.Bv, GPflow.param.DataHolder)
         # and b <= (self.t.max()+eps)
@@ -168,10 +171,10 @@ class AssignGP(GPflow.model.GPModel):
         eps = 1e-9
         iterC = 0
         for i, p in enumerate(self.t):
-            if(p <= self.b):  # before branching - it's the root
-                phiInitialEx[i, iterC:iterC + 3] = np.array([1 - 2 * eps, 0 + eps, 0 + eps])
-            else:
+            if(p > self.b):  # before branching - it's the root
                 phiInitialEx[i, iterC:iterC + 3] = np.hstack([eps, phiInitialIn[i, :] - eps])
+            else:
+                phiInitialEx[i, iterC:iterC + 3] = np.array([1 - 2 * eps, 0 + eps, 0 + eps])
             phiInitial_invSoftmax[i, iterC:iterC + 3] = np.log(phiInitialEx[i, iterC:iterC + 3])
             iterC += 3
         assert not np.any(np.isnan(phiInitialEx)), 'no nans please ' + str(np.nonzero(np.isnan(phiInitialEx)))
@@ -213,7 +216,7 @@ class AssignGP(GPflow.model.GPModel):
         M = tf.shape(self.X)[0]
         D = tf.cast(tf.shape(self.Y)[1], dtype=float_type)
         if(self.KConst is not None):
-            K = self.KConst
+            K = tf.cast(self.KConst, float_type)
         else:
             K = self.kern.K(self.X)
         Phi = tf.nn.softmax(self.logPhi)
