@@ -38,6 +38,7 @@ class AssignGPSparse(assigngp_dense.AssignGP):
         assert ZExpanded.shape[1] == XExpanded.shape[1]
 
     def build_likelihood(self):
+        print('assignegp_denseSparse compiling model (build_likelihood)')
         N = tf.cast(tf.shape(self.Y)[0], dtype=float_type)
         M = tf.shape(self.ZExpanded)[0]
         D = tf.cast(tf.shape(self.Y)[1], dtype=float_type)

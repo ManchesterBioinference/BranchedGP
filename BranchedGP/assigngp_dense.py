@@ -116,19 +116,20 @@ class AssignGP(GPflow.model.GPModel):
                                       mean_function=GPflow.mean_functions.Zero())
         assert len(indices) == t.size, 'indices must be size N'
         assert len(t.shape) == 1, 'pseudotime should be 1D'
-        self.t = t.astype(np_float_type)  # could be DataHolder? advantages
+        self.N = t.shape[0]
+        self.t = t.astype(np_float_type) # could be DataHolder? advantages
         self.indices = indices
         self.logPhi = GPflow.param.Param(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions
         if(phiInitial is None):
-            phiInitial = np.ones((t.size, 2))*0.5  # dont know anything
-            phiInitial[:, 0] = np.random.rand(t.size)
+            phiInitial = np.ones((self.N, 2))*0.5  # dont know anything
+            phiInitial[:, 0] = np.random.rand(self.N)
             phiInitial[:, 1] = 1-phiInitial[:, 0]
         self.UpdateBranchingPoint(b, phiInitial)
         self.fDebug = fDebug
         # Used as p(Z) prior in KL term. This should add to 1 but will do so after UpdatePhPrior
         self.phiPrior = DataHolder(np.ones((t.shape[0], t.shape[0] * 3)))
         if(phiPrior is None):
-            phiPrior = np.ones((self.t.shape[0], 2)) * 0.5
+            phiPrior = np.ones((self.N, 2)) * 0.5
         self.UpdatePhiPrior(phiPrior)
         self.KConst = KConst
         if(not fDebug):
@@ -136,7 +137,7 @@ class AssignGP(GPflow.model.GPModel):
 
     def UpdatePhiPrior(self, pZ0):
         ''' Update prior on allocations p(Z) used in KL term '''
-        assert pZ0.shape[0] == self.t.shape[0]
+        assert pZ0.shape[0] == self.N
         assert pZ0.shape[1] == 2  # 1 branching point => 2 functions
         eZ0 = pZ_construction_singleBP.expand_pZ0(pZ0)
         self.phiPrior = eZ0
