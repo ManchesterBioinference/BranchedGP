@@ -4,6 +4,28 @@ import GPflow
 float_type = GPflow.settings.dtypes.float_type
 
 
+def expand_pZ0Zeros(pZ0, epsilon=1e-6):
+    assert pZ0.shape[1] == 2, 'Should have exactly two cols got %g ' % pZ0.shape[1]
+    num_columns = 3 * pZ0.shape[0]
+    r = np.zeros((pZ0.shape[0], num_columns)) + epsilon
+    count = 0
+    for iz0, z0 in enumerate(pZ0):
+        assert z0.sum() == 1, 'should sum to 1 is %s=%.3f' % (str(z0), z0.sum())
+        r[iz0, count+1:count+3] = z0
+        count += 3
+    return r
+
+def expand_pZ0PureNumpyZeros(eZ0, BP, X, epsilon=1e-6):
+    N = X.size
+    r = eZ0.copy()
+    count = 0
+    i = np.flatnonzero(X <= BP)
+    # mark trunk as [1, 0, 0]
+    r[i, i*3] = 1
+    r[i, i * 3 + 1] = epsilon
+    r[i, i * 3 + 2] = epsilon
+    return r
+
 def expand_pZ0(pZ0):
     assert pZ0.shape[1] == 2, 'Should have exactly two cols got %g ' % pZ0.shape[1]
     num_columns = 3 * pZ0.shape[0]
@@ -50,10 +72,10 @@ if __name__ == "__main__":
     X = np.array([0.1, 0.2, 0.3, 0.4])[:, None]
     BP_tf = tf.placeholder(dtype=float_type, shape=[])
     eZ0_tf = tf.placeholder(dtype=float_type, shape=(X.shape[0], X.shape[0]*3))
-    pZ0 = np.array([[0.7, 0.3], [0.1, 0.9], [0.5, 0.5], [1, 0]])
+    pZ0 = np.array([[0.7, 0.3], [0.1, 0.9], [0.5, 0.5], [0.85, 0.15]])
     eZ0 = expand_pZ0(pZ0)
     BP = 0.2
-    pZ = tf.Session().run(make_matrix(X, BP, eZ0_tf), feed_dict={BP_tf: BP, eZ0_tf: eZ0})
+    pZ = tf.Session().run(make_matrix(X, BP_tf, eZ0_tf), feed_dict={BP_tf: BP, eZ0_tf: eZ0})
     print('pZ0', pZ0)
     print('eZ0', eZ0)
     print('pZ', pZ)
@@ -67,3 +89,11 @@ if __name__ == "__main__":
 #     from matplotlib import pyplot as plt
 #     plt.ion()
 #     plt.matshow(pZ)
+    eZ0z = expand_pZ0Zeros(pZ0)
+    r = expand_pZ0PureNumpyZeros(eZ0z, BP, X)
+    assert np.allclose(r, pZ)
+
+    # try another
+    pZ = tf.Session().run(make_matrix(X, BP_tf, eZ0_tf), feed_dict={BP_tf: 0.3, eZ0_tf: eZ0})
+    r = expand_pZ0PureNumpyZeros(eZ0z, 0.3, X)
+    assert np.allclose(r, pZ)

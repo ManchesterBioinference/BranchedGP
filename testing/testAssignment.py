@@ -72,13 +72,12 @@ class TestSparseVariational(unittest.TestCase):
         self.assertTrue(np.allclose(PhiOptimised[idxB, 1], 1),  'PhiOptimised idxB=%s' % str(PhiOptimised[idxB, :]))
         # reset model and test informative KL prior
         m.UpdateBranchingPoint(Kbranch.branchkernelparam.Bv.value, phiInitial)  # reset initial phi
-        m.UpdatePhiPrior(phiPrior.copy())  # prior
         InitKernParams(m)
         ll_flatprior = m.compute_log_likelihood()
         phiInfPrior = np.ones((N, 2))*0.5  # dont know anything
         phiInfPrior[-1, :] = [0.99, 0.01]
         # phiInfPrior[-2, :] = [0.01, 0.99]
-        m.UpdatePhiPrior(phiInfPrior.copy())  # prior
+        m.UpdateBranchingPoint(Kbranch.branchkernelparam.Bv.value, phiInitial, prior=phiInfPrior)
         ll_betterprior = m.compute_log_likelihood()
         self.assertTrue(ll_betterprior > ll_flatprior, '%f <> %f' % (ll_betterprior, ll_flatprior))
 

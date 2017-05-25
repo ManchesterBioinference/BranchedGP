@@ -124,36 +124,30 @@ class AssignGP(GPflow.model.GPModel):
             phiInitial = np.ones((self.N, 2))*0.5  # dont know anything
             phiInitial[:, 0] = np.random.rand(self.N)
             phiInitial[:, 1] = 1-phiInitial[:, 0]
-        self.UpdateBranchingPoint(b, phiInitial)
         self.fDebug = fDebug
         # Used as p(Z) prior in KL term. This should add to 1 but will do so after UpdatePhPrior
-        self.phiPrior = DataHolder(np.ones((t.shape[0], t.shape[0] * 3)))
         if(phiPrior is None):
             phiPrior = np.ones((self.N, 2)) * 0.5
-        self.UpdatePhiPrior(phiPrior)
+        # Fix prior term - this is without trunk
+        self.pZ = DataHolder(np.ones((t.shape[0], t.shape[0] * 3)))
+        self.UpdateBranchingPoint(b, phiInitial, prior=phiPrior)
         self.KConst = KConst
         if(not fDebug):
             assert KConst is None, 'KConst only for debugging'
 
-    def UpdatePhiPrior(self, pZ0):
-        ''' Update prior on allocations p(Z) used in KL term '''
-        assert pZ0.shape[0] == self.N
-        assert pZ0.shape[1] == 2  # 1 branching point => 2 functions
-        eZ0 = pZ_construction_singleBP.expand_pZ0(pZ0)
-        self.phiPrior = eZ0
-        assert isinstance(self.phiPrior, GPflow.param.DataHolder), 'Must have DataHolder'
-
-    def UpdateBranchingPoint(self, b, phiInitial):
+    def UpdateBranchingPoint(self, b, phiInitial, prior=None):
         ''' Function to update branching point and optionally reset initial conditions for variational phi'''
-        eps = 1e-9
+        assert isinstance(self.pZ, GPflow.param.DataHolder), 'Must have DataHolder'
         assert isinstance(b, np.ndarray)
         assert b.size == 1, 'Must have scalar branching point'
         self.b = b.astype(np_float_type)  # remember branching value
         self.kern.branchkernelparam.Bv = b
         assert isinstance(self.kern.branchkernelparam.Bv, GPflow.param.DataHolder)
-        # and b <= (self.t.max()+eps)
-        # assert b >= (self.t.min() - eps), 'Branching suspicious b=%f is not in [%f, %f] ' % (b, self.t.min(), self.t.max())
         assert self.logPhi.fixed is False, 'Phi should not be constant when changing branching location'
+        if prior is not None:
+            self.eZ0 = pZ_construction_singleBP.expand_pZ0Zeros(prior)
+        self.pZ = pZ_construction_singleBP.expand_pZ0PureNumpyZeros(self.eZ0.copy(), b, self.t)
+        assert isinstance(self.pZ, GPflow.param.DataHolder), 'Must have DataHolder'
         self.InitialiseVariationalPhi(phiInitial)
 
     def InitialiseVariationalPhi(self, phiInitialIn):
@@ -284,5 +278,5 @@ class AssignGP(GPflow.model.GPModel):
 
     def build_KL(self, Phi):
         Bv_s = tf.squeeze(self.kern.branchkernelparam.Bv, squeeze_dims=[1])
-        pZ = pZ_construction_singleBP.make_matrix(self.t, Bv_s, self.phiPrior)
-        return tf.reduce_sum(Phi * tf.log(Phi)) - tf.reduce_sum(Phi * tf.log(pZ))
+        # pZ = pZ_construction_singleBP.make_matrix(self.t, Bv_s, self.phiPrior)
+        return tf.reduce_sum(Phi * tf.log(Phi)) - tf.reduce_sum(Phi * tf.log(self.pZ))
