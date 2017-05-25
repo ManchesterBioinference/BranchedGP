@@ -146,7 +146,7 @@ class AssignGP(GPflow.model.GPModel):
         assert self.logPhi.fixed is False, 'Phi should not be constant when changing branching location'
         if prior is not None:
             self.eZ0 = pZ_construction_singleBP.expand_pZ0Zeros(prior)
-        self.pZ = pZ_construction_singleBP.expand_pZ0PureNumpyZeros(self.eZ0.copy(), b, self.t)
+        self.pZ = pZ_construction_singleBP.expand_pZ0PureNumpyZeros(self.eZ0, b, self.t)
         assert isinstance(self.pZ, GPflow.param.DataHolder), 'Must have DataHolder'
         self.InitialiseVariationalPhi(phiInitial)
 
