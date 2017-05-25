@@ -4,7 +4,7 @@ from matplotlib import cm
 
 
 def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., fs=10, labels=None,
-                    fPlotPhi=True, fPlotVar=False, ax=None, fColorBar=True):
+                    fPlotPhi=True, fPlotVar=False, ax=None, fColorBar=True, colorarray = ['darkolivegreen', 'goldernrod', 'mediumvioletred']):
     ''' Plotting code that does not require access to the model but takes as input predictions. '''
     if(ax is None):
         fig = plt.figure(figsize=figsizeIn)
@@ -16,8 +16,8 @@ def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., f
         mu = mul[f]
         var = varl[f]
         ttest = ttestl[f]
-        mean, = ax.plot(ttest, mu[:, d], linewidth=lw)
-        col = mean.get_color()
+        col = colorarray[f]  # mean.get_color()
+        mean, = ax.plot(ttest, mu[:, d], linewidth=lw, color=col)
         if(fPlotVar):
             ax.plot(ttest.flatten(), mu[:, d] + 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
             ax.plot(ttest, mu[:, d] - 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
