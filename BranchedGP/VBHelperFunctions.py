@@ -2,6 +2,37 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import cm
 
+def PlotBGPFit(GPy, GPt, Bsearch, d, figsize=(5, 5), height_ratios= [5, 1], colorarray=['darkolivegreen', 'peru', 'mediumvioletred']):
+    """
+    Plot BGP model
+    :param GPt: pseudotime
+    :param GPy: gene expression. Should be 0 mean for best performance.
+    :param Bsearch: list of candidate branching points
+    :param d: output dictionary from FitModel
+    :param figsize: figure size
+    :param height_ratios: ratio of assignment plot vs posterior branching time plot
+    :param colorarray: colors for each branch
+    :return: dictionary of log likelihood, GPflow model, Phi matrix, predictive set of points,
+    mean and variance, hyperparameter values, posterior on branching time
+    """
+    fig, axa = plt.subplots(2, 1, figsize=figsize, sharex=True,  gridspec_kw = {'height_ratios': height_ratios})
+    ax = axa[0]
+    y, pt, mul, ttestl = GPy, GPt, d['prediction']['mu'], d['prediction']['xtest']
+    lw = 4
+    for f in range(3):
+        mu = mul[f]
+        ttest = ttestl[f]
+        col = colorarray[f]  # mean.get_color()
+        mean, = ax.plot(ttest, mu, linewidth=lw, color=col, alpha=0.7)
+        gp_num = 1  # can be 0,1,2 - Plot against this
+        PhiColor = ax.scatter(pt, y, c=d['Phi'][:, gp_num], vmin=0., vmax=1, s=40, alpha=0.7)
+    cb=fig.colorbar(PhiColor, ax=ax, orientation="horizontal")
+    ax = axa[1]
+    o = d['loglik'][:-1]
+    pn = np.exp(o - np.max(o))
+    p = pn/pn.sum()
+    ax.stem(Bsearch[:-1], p)
+    return fig, axa
 
 def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., fs=10, labels=None,
                     fPlotPhi=True, fPlotVar=False, ax=None, fColorBar=True, colorarray = ['darkolivegreen', 'goldernrod', 'mediumvioletred']):
