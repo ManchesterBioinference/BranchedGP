@@ -1,6 +1,6 @@
 # GPBranch
 
-GPBranch is a package for building Gaussian process models in python, using [TensorFlow](github.com/tensorflow) and [GPFlow](https://github.com/GPflow/GPflow). 
+GPBranch is a package for building Branching Gaussian process models in python, using [TensorFlow](github.com/tensorflow) and [GPFlow](https://github.com/GPflow/GPflow). 
 It has been created by Alexis Boukouvalas, James Hensman and Magnus Rattray. 
 
 # Install
