@@ -1,12 +1,9 @@
-# GPBranch
+# BranchedGP
 
-GPBranch is a package for building Gaussian process models in python, using [TensorFlow](github.com/tensorflow) and [GPFlow](https://github.com/GPflow/GPflow). 
+BranchedGP is a package for building Branching Gaussian process models in python, using [TensorFlow](github.com/tensorflow) and [GPFlow](https://github.com/GPflow/GPflow). 
 It has been created by Alexis Boukouvalas, James Hensman and Magnus Rattray. 
 
 # Install
-
-## 1) Install Tensorflow and GPflow.
-
    - Install tensorflow
 ```
 pip install tensorflow
@@ -16,6 +13,7 @@ pip install tensorflow
 git clone https://github.com/GPflow/GPflow.git
 cd GPflow    
 python setup.py install
+cd
 ```
     
 See [GPFlow](https://github.com/GPflow/GPflow) page for more detailed instructions.
@@ -25,12 +23,15 @@ See [GPFlow](https://github.com/GPflow/GPflow) page for more detailed instructio
 git clone https://github.com/ManchesterBioinference/BranchedGP
 cd BranchedGP
 python setup.py install
+cd
 ```
 
 # Tests
 To run the tests should takes < 3min.
 ```
-cd testing
+pip install nose
+pip install nose-timer
+cd BranchedGP/testing
 nosetests --pdb-failures --pdb --with-timer
 ```
 
@@ -38,7 +39,7 @@ nosetests --pdb-failures --pdb --with-timer
 # List of notebooks
 To run the notebooks
 ```
-cd notebooks
+cd BranchedGP/notebooks
 jupyter notebook
 ```
 
