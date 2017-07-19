@@ -94,7 +94,10 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
             print(m)
             print('-' * 60)
             ll[0] = np.nan
-            return ll, m, np.nan, np.nan, np.nan, np.nan, np.nan
+            # return model so can inspect model
+            return {'loglik': ll, 'model': m, 'Phi': np.nan,
+                    'prediction': {'xtest': np.nan, 'mu': np.nan, 'var': np.nan},
+                    'hyperparameters': np.nan, 'posteriorB': np.nan}
         # prediction
         Phi = m.GetPhi()
         Phi_l.append(Phi)
