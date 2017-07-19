@@ -20,8 +20,28 @@ python setup.py install
     
 See [GPFlow](https://github.com/GPflow/GPflow) page for more detailed instructions.
 
+   - Installed Branched GP package
+```
+git clone https://github.com/ManchesterBioinference/BranchedGP
+cd BranchedGP
+python setup.py install
+```
+
+# Tests
+To run the tests should takes < 1min.
+```
+cd testing
+nosetests --pdb-failures --pdb --with-timer
+```
+
 
 # List of notebooks
+To run the notebooks
+```
+cd notebooks
+jupyter notebook
+```
+
 | File <br> name | Description | 
 | --- | --- | 
 | Hematopoiesis.ipynb | Application of BGP to hematopoiesis data. |
