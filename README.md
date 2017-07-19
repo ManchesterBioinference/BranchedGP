@@ -9,7 +9,7 @@ It has been created by Alexis Boukouvalas, James Hensman and Magnus Rattray.
 
    - Install tensorflow
 ```
-python setup.py develop
+pip install tensorflow
 ```
    - Install GPflow
 ```
