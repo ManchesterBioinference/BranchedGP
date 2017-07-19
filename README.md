@@ -27,6 +27,7 @@ python setup.py install
 # Tests
 To run the tests should takes < 3min.
 ```
+pip install nose-timer
 cd testing
 nosetests --pdb-failures --pdb --with-timer
 ```
