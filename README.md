@@ -13,6 +13,7 @@ pip install tensorflow
 git clone https://github.com/GPflow/GPflow.git
 cd GPflow    
 python setup.py install
+cd
 ```
     
 See [GPFlow](https://github.com/GPflow/GPflow) page for more detailed instructions.
@@ -22,13 +23,14 @@ See [GPFlow](https://github.com/GPflow/GPflow) page for more detailed instructio
 git clone https://github.com/ManchesterBioinference/BranchedGP
 cd BranchedGP
 python setup.py install
+cd
 ```
 
 # Tests
 To run the tests should takes < 3min.
 ```
 pip install nose-timer
-cd testing
+cd BranchedGP/testing
 nosetests --pdb-failures --pdb --with-timer
 ```
 
@@ -36,7 +38,7 @@ nosetests --pdb-failures --pdb --with-timer
 # List of notebooks
 To run the notebooks
 ```
-cd notebooks
+cd BranchedGP/notebooks
 jupyter notebook
 ```
 
