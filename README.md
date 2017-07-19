@@ -14,8 +14,7 @@ It has been created by Alexis Boukouvalas, James Hensman and Magnus Rattray.
     
     cd GPflow
     
-    python setup.py install
-    ```
+    python setup.py install```
     
 See [GPFlow](https://github.com/GPflow/GPflow) page for more detailed instructions.
 
