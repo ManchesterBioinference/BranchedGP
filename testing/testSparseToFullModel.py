@@ -2,8 +2,6 @@
 import GPflow
 import numpy as np
 import tensorflow as tf
-from GPclust import OMGP
-import GPy
 import unittest
 # import pickle
 # Branching files
@@ -15,14 +13,12 @@ from BranchedGP import assigngp_dense
 
 
 class TestSparseVariational(unittest.TestCase):
-    def InitParams(self, m, mo):
-        m.likelihood.variance = mo.variance.values[0]
+    def InitParams(self, m):
+        m.likelihood.variance = 0.1
         # set lengthscale to maximum
-        m.kern.branchkernelparam.kern.lengthscales = np.max(
-            np.array([mo.kern[0].lengthscale.values, mo.kern[1].lengthscale.values]))
+        m.kern.branchkernelparam.kern.lengthscales = 1.
         # set process variance to average
-        m.kern.branchkernelparam.kern.variance = np.mean(
-            np.array([mo.kern[0].variance.values, mo.kern[1].variance.values]))
+        m.kern.branchkernelparam.kern.variance = 1.
 
     def test_sparse(self):
         ls, lf = self.runSparseModel()
@@ -56,16 +52,7 @@ class TestSparseVariational(unittest.TestCase):
         (fm, _) = tree.GetFunctionBranchTensor()
         XExpanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(t)
         print('XExpanded', XExpanded.shape)
-        print('indices', len(indices))
-        # Use OMGP for initialisation of branching model
-        komgp1 = GPy.kern.Matern32(1)
-        komgp2 = GPy.kern.Matern32(1)
-        mo = OMGP(t[:, None], Y, K=2, variance=0.01, kernels=[komgp1, komgp2],
-                  prior_Z='DP')  # use a truncated DP with K=2 UNDONE
-        mo.kern[0].lengthscale = 5.*np.ptp(t)  # initialise length scale to range of data
-        mo.kern[1].lengthscale = 5.*np.ptp(t)
-        mo.optimize(step_length=0.01, maxiter=5)
-        # Create model
+        print('indices', len(indices))        # Create model
         Kbranch = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm, b=trueB.copy()) + GPflow.kernels.White(1)
         Kbranch.branchkernelparam.kern.variance = 1
         Kbranch.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
@@ -73,22 +60,21 @@ class TestSparseVariational(unittest.TestCase):
         print('Kbranch matrix', Kbranch.compute_K(XExpanded, XExpanded))
         print('Branching K free parameters', Kbranch.branchkernelparam)
         print('Branching K branching parameter', Kbranch.branchkernelparam.Bv.value)
-        # Initialise all model parameters using the OMGP model
-        # Note that the OMGP model has different kernel hyperparameters for each latent function whereas the branching model
-        # has one common set.
         if(M is not None):
             ir = np.random.choice(XExpanded.shape[0], M)
             ZExpanded = XExpanded[ir, :]
         else:
             ZExpanded = XExpanded  # Test on full data
+
+        phiInitial =  np.ones((N, 2))*0.5  # dont know anything
         mV = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices,
-                                                 Kbranch.branchkernelparam.Bv.value, ZExpanded, phiInitial=mo.phi,
+                                                 Kbranch.branchkernelparam.Bv.value, ZExpanded, phiInitial=phiInitial,
                                                  fDebug=fDebug)
-        self.InitParams(mV, mo)
+        self.InitParams(mV)
 
         mVFull = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices,
-                                         Kbranch.branchkernelparam.Bv.value, fDebug=fDebug, phiInitial=mo.phi)
-        self.InitParams(mVFull, mo)
+                                         Kbranch.branchkernelparam.Bv.value, fDebug=fDebug, phiInitial=phiInitial)
+        self.InitParams(mVFull)
 
         lsparse = mV.compute_log_likelihood()
         lfull = mVFull.compute_log_likelihood()
