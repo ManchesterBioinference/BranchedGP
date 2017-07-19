@@ -29,6 +29,7 @@ cd
 # Tests
 To run the tests should takes < 3min.
 ```
+pip install nose
 pip install nose-timer
 cd BranchedGP/testing
 nosetests --pdb-failures --pdb --with-timer
