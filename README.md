@@ -4,9 +4,6 @@ GPBranch is a package for building Gaussian process models in python, using [Ten
 It has been created by Alexis Boukouvalas, James Hensman and Magnus Rattray. 
 
 # Install
-
-## 1) Install Tensorflow and GPflow.
-
    - Install tensorflow
 ```
 pip install tensorflow
