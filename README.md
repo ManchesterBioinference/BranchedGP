@@ -6,7 +6,15 @@ It has been created by Alexis Boukouvalas, James Hensman and Magnus Rattray.
 # Install
 
 ## 1) Install Tensorflow fork and GPflow.
-See [GPFlow](https://github.com/GPflow/GPflow) page for instructions.
+
+   - Install tensorflow
+```pip install tensorflow```
+   - Install GPflow
+    ```git clone https://github.com/GPflow/GPflow.git
+    cd GPflow
+    python setup.py install
+    ```
+See [GPFlow](https://github.com/GPflow/GPflow) page for more detailed instructions.
 
 
 # List of notebooks
