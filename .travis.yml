@@ -15,9 +15,14 @@ install:
   - conda info -a
 
   # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=3.5 numpy scipy pandas nose nbformat nbconvert jupyter_client jupyter
+  - conda create -q -n test-environment python=3.5 numpy scipy pandas nose nbformat nbconvert jupyter_client jupyter matplotlib
   - source activate test-environment
   - pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.2.1-cp35-cp35m-linux_x86_64.whl
+  - pip install nose-timer
+  - pip install matplotlib
+  - pip install jupyter_client
+  - conda install --yes nb_conda
+  - conda install --yes ipykernel
   - git clone https://github.com/GPflow/GPflow.git
   - cd GPflow    
   - python setup.py install
