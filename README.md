@@ -3,7 +3,7 @@
 BranchedGP is a package for building Branching Gaussian process models in python, using [TensorFlow](github.com/tensorflow) and [GPFlow](https://github.com/GPflow/GPflow). 
 It has been created by Alexis Boukouvalas, James Hensman and Magnus Rattray. 
 
-[![Python3.5 Status](https://travis-ci.org/BranchedGP/BranchedGP.svg?branch=master)](https://travis-ci.org/BranchedGP/BranchedGP)
+[![Python3.5 Status](https://travis-ci.org/ManchesterBioinference/BranchedGP.svg?branch=master)](https://travis-ci.org/ManchesterBioinference/BranchedGP)
 
 # Install
 If you have any problems with installation see the script at the bottom of the page for a detailed setup guide from a branch new python environment. 
