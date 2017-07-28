@@ -8,7 +8,6 @@ from BranchedGP import VBHelperFunctions
 from BranchedGP import BranchingTree as bt
 from BranchedGP import branch_kernParamGPflow as bk
 from BranchedGP import assigngp_dense
-from BranchedGP import BayesianOptimiser
 
 
 def InitKernParams(ms):

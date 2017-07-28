@@ -1,21 +1,156 @@
 import numpy as np
-import pickle
+from BranchedGP import VBHelperFunctions
+from BranchedGP import BranchingTree as bt
+from BranchedGP import branch_kernParamGPflow as bk
+from BranchedGP import assigngp_denseSparse
+from BranchedGP import assigngp_dense
 import GPflow
-import os
-import sys
-import traceback
-# Branching model
-from . import VBHelperFunctions
-from . import BranchingTree as bt
-from . import branch_kernParamGPflow as bk
-from . import assigngp_denseSparse
-from . import assigngp_dense
+import traceback, sys
 
-def ensure_dir(f):
-    ''' from http://stackoverflow.com/questions/273192/how-to-check-if-a-directory-exists-and-create-it-if-necessary '''
-    d = os.path.dirname(f)
-    if not os.path.exists(d):
-        os.makedirs(d)
+def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
+             M=10, likvar=1., kerlen=2., kervar=5., fDebug=False, maxiter=100,
+             fPredict=True, fixHyperparameters=False):
+    """
+    Fit BGP model
+    :param bConsider: list of candidate branching points
+    :param GPt: pseudotime
+    :param GPy: gene expression. Should be 0 mean for best performance.
+    :param globalBranching: cell labels
+    :param priorConfidence: prior confidence on cell labels
+    :param M: number of inducing points
+    :param likvar: initial value for Gaussian noise variance
+    :param kerlen: initial value for kernel length scale
+    :param kervar: initial value for kernel variance
+    :param fDebug: Print debugging information
+    :param maxiter: maximum number of iterations for optimisation
+    :param fPredict: compute predictive mean and variance
+    :param fixHyperparameters: should kernel hyperparameters be kept fixed or optimised?
+
+    :return: dictionary of log likelihood, GPflow model, Phi matrix, predictive set of points,
+    mean and variance, hyperparameter values, posterior on branching time
+    """
+    assert isinstance(bConsider, list), 'Candidate B must be list'
+    assert GPt.ndim == 1
+    assert GPy.ndim == 2
+    assert GPt.size == GPy.size, 'pseudotime and gene expression data must be the same size'
+    assert globalBranching.size == GPy.size, 'state space must be same size as number of cells'
+    assert M >= 2, 'at least 2 inducing points should be given'
+    phiInitial, phiPrior = GetInitialConditionsAndPrior(globalBranching, priorConfidence, infPriorPhi=True)
+    # it = np.argsort(GPt)
+    # print('GPt and prior', np.hstack([GPt[it][:,None], phiPrior[it,:], phiInitial[it,:]]))
+    # print(phiPrior[:5, :])
+    XExpanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(GPt)
+    ptb = np.min([np.min(GPt[globalBranching == 2]), np.min(GPt[globalBranching == 3])])
+    tree = bt.BinaryBranchingTree(0, 1, fDebug=False)
+    tree.add(None, 1, np.ones((1, 1)) * ptb)  # B can be anything here
+    (fm, _) = tree.GetFunctionBranchTensor()
+    kb = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm, b=np.zeros((1, 1))) + GPflow.kernels.White(1)
+    kb.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
+    kb.white.variance.fixed = True  # jitter for numerics
+    if(M == 0):
+        m = assigngp_dense.AssignGP(GPt, XExpanded, GPy, kb, indices,
+                                                np.ones((1, 1)) * ptb, phiInitial=phiInitial,
+                                                phiPrior=phiPrior)
+    else:
+        ZExpanded = np.ones((M, 2))
+        ZExpanded[:, 0] = np.linspace(0, 1, M, endpoint=False)
+        ZExpanded[:, 1] = np.array([i for j in range(M) for i in range(1, 4)])[:M]
+        m = assigngp_denseSparse.AssignGPSparse(GPt, XExpanded, GPy, kb, indices,
+                                                np.ones((1, 1)) * ptb, ZExpanded, phiInitial=phiInitial, phiPrior=phiPrior)
+    # Initialise hyperparameters
+    m.likelihood.variance = likvar
+    m.kern.branchkernelparam.kern.lengthscales = kerlen
+    m.kern.branchkernelparam.kern.variance = kervar
+    if(fixHyperparameters):
+        print('Fixing hyperparameters')
+        m.kern.branchkernelparam.kern.lengthscales.fixed = True
+        m.likelihood.variance.fixed = True
+        m.kern.branchkernelparam.kern.variance.fixed = True
+    else:
+        if fDebug:
+            print('Adding prior logistic on length scale to avoid numerical problems')
+        m.kern.branchkernelparam.kern.lengthscales.prior = GPflow.priors.Gaussian(2, .1)
+        m.kern.branchkernelparam.kern.variance.prior = GPflow.priors.Gaussian(3, 1)
+        m.likelihood.variance.prior = GPflow.priors.Gaussian(0.1, .1)
+
+    # optimization
+    ll = np.zeros(len(bConsider))
+    Phi_l = list()
+    ttestl_l, mul_l, varl_l = list(), list(), list()
+    hyps = list()
+    for ib, b in enumerate(bConsider):
+        m.UpdateBranchingPoint(np.ones((1, 1)) * b, phiInitial)
+        try:
+            m.optimize(disp=fDebug, maxiter=maxiter)
+            # show remember winning hyperparameter
+            hyps.append({'likvar':  m.likelihood.variance.value, 'kerlen':  m.kern.branchkernelparam.kern.lengthscales.value,
+                    'kervar': m.kern.branchkernelparam.kern.variance.value})
+            ll[ib] = m.compute_log_likelihood()
+        except:
+            print('Failure', "Unexpected error:", sys.exc_info()[0])
+            print('-' * 60)
+            traceback.print_exc(file=sys.stdout)
+            print('Exception caused by model')
+            print(m)
+            print('-' * 60)
+            ll[0] = np.nan
+            # return model so can inspect model
+            return {'loglik': ll, 'model': m, 'Phi': np.nan,
+                    'prediction': {'xtest': np.nan, 'mu': np.nan, 'var': np.nan},
+                    'hyperparameters': np.nan, 'posteriorB': np.nan}
+        # prediction
+        Phi = m.GetPhi()
+        Phi_l.append(Phi)
+        if(fPredict):
+            ttestl, mul, varl = VBHelperFunctions.predictBranchingModel(m)
+            ttestl_l.append(ttestl), mul_l.append(mul), varl_l.append(varl)
+        else:
+            ttestl_l.append([]), mul_l.append([]), varl_l.append([])
+    iw = np.argmax(ll)
+    postB = GetPosteriorB(ll, bConsider)
+    if fDebug:
+        print('BGP Maximum at b=%.2f' % bConsider[iw], 'CI= [%.2f, %.2f]' %(postB['B_CI'][0], postB['B_CI'][1]))
+    assert np.allclose(bConsider[iw], postB['Bmode']), '%s-%s' % str(postB['B_CI'], bConsider[iw])
+    return {'loglik': ll, 'model': m, 'Phi': Phi_l[iw],
+            'prediction': {'xtest': ttestl_l[iw], 'mu': mul_l[iw], 'var': varl_l[iw]},
+            'hyperparameters': hyps[iw], 'posteriorB': postB}
+
+
+
+def GetPosteriorB(objUnsorted, BgridSearch, ciLimits=[0.01, 0.99]):
+    '''
+    Return posterior on B for each experiment, confidence interval index, map index
+    '''
+    # for each trueB calculate posterior over grid
+    # ... in a numerically stable way
+    assert objUnsorted.size == len(BgridSearch), 'size do not match %g-%g' % (objUnsorted.size, len(BgridSearch))
+    gr = np.array(BgridSearch)
+    isort = np.argsort(gr)
+    gr = gr[isort]
+    o = objUnsorted[isort].copy()  # sorted objective funtion
+    imode = np.argmax(o)
+    pn = np.exp(o - np.max(o))
+    p = pn/pn.sum()
+    assert np.any(~np.isnan(p)), 'Nans in p! %s' % str(p)
+    assert np.any(~np.isinf(p)), 'Infinities in p! %s' % str(p)
+    pb_cdf = np.cumsum(p)
+    confInt = np.zeros(len(ciLimits), dtype=int)
+    for pb_i, pb_c in enumerate(ciLimits):
+        pb_idx = np.flatnonzero(pb_cdf <= pb_c)
+        if(pb_idx.size == 0):
+            confInt[pb_i] = 0
+        else:
+            confInt[pb_i] = np.max(pb_idx)
+    # if((imode+5) > 0 and imode < (len(BgridSearch)-5)):  # for modes at end points conf interval checks do not hold
+    #     assert confInt[0] <= (imode-1), 'Lower confidence point bigger than mode! (%s)-%g' % (str(confInt), imode)
+    #     assert confInt[1] >= (imode+1), 'Upper confidence point bigger than mode! (%s)-%g' % (str(confInt), imode)
+    assert np.all(confInt < o.size), confInt
+    B_CI = gr[confInt]
+    Bmode = gr[imode]
+    # return confidence interval as well as mode, and indexes for each
+    return {'B_CI': B_CI, 'Bmode': Bmode, 'idx_confInt': confInt, 'idx_mode': imode, 'BgridSearch_sort': gr, 'isort': isort}
+
+
 
 
 def GetInitialConditionsAndPrior(globalBranching, v, infPriorPhi):
@@ -43,177 +178,3 @@ def GetInitialConditionsAndPrior(globalBranching, v, infPriorPhi):
     assert np.all(~np.isnan(phiInitial)), 'No nans please!'
     assert np.all(~np.isnan(phiPrior)), 'No nans please!'
     return phiInitial, phiPrior
-
-
-def MultipleRestartsChoose(strsave, m, v, globalBranching, infPriorPhi, b, maxiter, fFixKernel=True,
-                           kerlen=None, kervar=None, noise=None, fDebug=False):
-    ''' Do multiple random restarts as per v list and kernlen list '''
-    assert isinstance(b, float), 'branching should be scalar is %s' % str(type(b))
-    if (fFixKernel is False):
-        assert kerlen is not None and len(kerlen) > 0
-        assert kervar is not None and len(kervar) > 0
-        assert noise is not None and len(noise) > 0
-        assert m.kern.branchkernelparam.kern.lengthscales.fixed is False
-        assert m.kern.branchkernelparam.kern.variance.fixed is False
-        assert m.likelihood.variance.fixed is False
-        h = [{'l': l, 'kv': kv, 'n': n, 'v': vinitial} for l in kerlen for kv in kervar for n in noise for vinitial in v]
-    else:
-        assert m.kern.branchkernelparam.kern.lengthscales.fixed
-        assert m.kern.branchkernelparam.kern.variance.fixed
-        assert m.likelihood.variance.fixed
-        h = [{'v': vinitial} for vinitial in v]
-    ll = np.zeros(len(h), dtype=float)
-    ll[:] = -np.inf
-    params = np.zeros(len(h), dtype=object)
-    for ih, hc in enumerate(h):
-        # set the parameters for initial value - could be Phi and theta or just Phi
-        assert hc['v'] >= 0 and hc['v'] <= 1, 'bad v {:f}'.format(hc['v'])
-        phiInitial, _ = GetInitialConditionsAndPrior(globalBranching, hc['v'], infPriorPhi)
-        m.UpdateBranchingPoint(np.ones((1, 1))*b, phiInitial)
-        if(fFixKernel is False):
-            m.kern.branchkernelparam.kern.lengthscales = hc['l']
-            m.kern.branchkernelparam.kern.variance = hc['kv']
-            m.likelihood.variance = hc['n']
-        if (fDebug):
-            print('MultipleRestartsChoose:: prior {}'.format(infPriorPhi), 'len', kerlen, 'var', kervar, 'noise', noise,
-                  'B=', b, 'v', v, 'maxiter', maxiter, 'fFixKernel', fFixKernel)
-            print('model', m)
-            print('Phi', m.GetPhi())
-            print('Initial Phi', phiInitial)
-        try:
-            m.optimize(disp=fDebug, maxiter=maxiter)
-            ll[ih] = m.compute_log_likelihood()
-            params[ih] = m.get_free_state()
-        except:
-            print(strsave, 'Params', hc, "Unexpected error:", sys.exc_info()[0])
-            print('-' * 60)
-            traceback.print_exc(file=sys.stdout)
-            print('-' * 60)
-            continue
-    # pick winner
-    iw = np.argmax(ll)
-    assert not np.isinf(ll[iw]), 'MultipleRestartsChoose: ' + str(ll)
-    assert iw.size == 1
-    if (fFixKernel is False):
-        # Only set parameters having optimized hyperparameters
-        m.set_state(params[iw])
-        strHyp = 'prior {}, n:{:.2f} v:{:.2f} l:{:.2f}'.format(infPriorPhi, m.likelihood.variance.value[0],
-                                                               m.kern.branchkernelparam.kern.variance.value[0],
-                                                               m.kern.branchkernelparam.kern.lengthscales.value[0])
-        print('Optimized model:', len(h), 'multiple restarts', 'fFixKernel', fFixKernel, 'winner', strHyp)
-    return ll[iw]
-
-
-def EstimateBranchModel(strsave, gUse, globalBranching, GPt, GPy, BgridSearchIn=[0.4, 0.7],
-                        fSavefile=True, M=20, maxiter=10, infPriorPhi=True, v=[0.95],
-                        kervarIn=[0.1, 1, 6], kerlenIn=[0.1, 1, 6], noiseInSamplesIn=[0.01, 0.1, 1],
-                        fFixhyperpar=False, fDebug=False, m=None):
-    ''' Function to analyse specific genes using Branching GP
-    Will perform a model hyperparameter estimation at Monocle branching point (0.1).
-    Then estimate the model without hyperparemeter estimation at BgridSearchIn locations.
-    noiseInSamplesIn initial value for likelihood variance
-    M number of inducing points
-    maxiter maximum number of optimisation iterations
-    return dictionary with model information and model.
-    prior is v[0]
-    '''
-    assert isinstance(BgridSearchIn, list), 'Must be list got %s' % str(type(BgridSearchIn))
-    assert np.all(np.array(BgridSearchIn) <= 1), 'Pseudotime between 0 and 1 got %s' % str(BgridSearchIn)
-    assert GPt.ndim == 1, 'GPt should be 1-D got %s' % str(GPt.shape)
-    assert GPy.ndim == 2, 'GPy should be 2-D got %s' % str(GPy.shape)
-    if(fFixhyperpar):
-        assert len(kervarIn) == 1
-        assert len(kerlenIn) == 1
-        assert len(noiseInSamplesIn) == 1
-    assert isinstance(v, list), 'v must be list got %s' % str(v)
-    ptb = np.min([np.min(GPt[globalBranching == 2]), np.min(GPt[globalBranching == 3])])
-    print('Estimating branching model at Monocle2 branching point %.2f' % ptb)
-    # Create tree structures
-    tree = bt.BinaryBranchingTree(0, 1, fDebug=False)
-    tree.add(None, 1, np.ones((1, 1))*ptb)  # B can be anything here
-    (fm, _) = tree.GetFunctionBranchTensor()
-    # Branching kernel
-    kb = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm, b=np.zeros((1, 1))) + GPflow.kernels.White(1)
-    kb.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
-    kb.white.variance.fixed = True  # jitter for numerics
-    # Getting functions list
-    XExpanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(GPt)
-    assert GPt.dtype == np.float
-    assert XExpanded.dtype == np.float
-    print('Training data is', 'GPt', GPt.shape, 'y', GPy.shape, 'Expanded X', XExpanded.shape)
-
-    # set prior and initial conditions
-    phiInitial, phiPrior = GetInitialConditionsAndPrior(globalBranching, v[0], infPriorPhi)
-    assert phiInitial.shape[0] == GPt.size
-    # Construct model
-    if(m is None):
-        if(M == 0):
-            m = assigngp_dense.AssignGP(GPt, XExpanded, GPy, kb, indices,
-                                        np.ones((1, 1))*ptb, phiInitial=phiInitial, phiPrior=phiPrior)
-        else:
-            # ir = np.random.choice(XExpanded.shape[0], M)
-            # ZExpanded = XExpanded[ir, :]
-            ZExpanded = np.ones((M, 2))
-            ZExpanded[:, 0] = np.linspace(0, 1, M, endpoint=False)
-            ZExpanded[:, 1] = np.array([i for j in range(M) for i in range(1,4)])[:M]
-            m = assigngp_denseSparse.AssignGPSparse(GPt, XExpanded, GPy, kb, indices,
-                                                    np.ones((1, 1))*ptb, ZExpanded, phiInitial=phiInitial, phiPrior=phiPrior)
-    else:
-        assert fFixhyperpar, 'reusing model all hyperparameters must be fixed.'
-        m.Y = GPy
-        assert np.allclose(m.t, GPt)
-    if(fFixhyperpar):
-        assert len(kervarIn) == 1
-        assert len(noiseInSamplesIn) == 1
-        assert len(kerlenIn) == 1
-        m.likelihood.variance = noiseInSamplesIn[0]
-        m.kern.branchkernelparam.kern.lengthscales = kerlenIn[0]
-        m.kern.branchkernelparam.kern.variance = kervarIn[0]
-        m.likelihood.variance.fixed = True
-        m.kern.branchkernelparam.kern.lengthscales.fixed = True
-        m.kern.branchkernelparam.kern.variance.fixed = True
-    else:
-        m.likelihood.variance.fixed = False
-        m.kern.branchkernelparam.kern.lengthscales.fixed = False
-        m.kern.branchkernelparam.kern.variance.fixed = False
-    BgridSearch = [ptb] + BgridSearchIn + [1.1]
-    timingInfo = np.zeros(len(BgridSearch))
-    obj = np.zeros(len(BgridSearch))
-    mlocallist = list()
-    # ########################### Grid search ############
-    for ib, b in enumerate(BgridSearch):
-        if(ib == 0):
-            fFixKernel = fFixhyperpar  # for ptb point we can estimate hyperparameters
-        # if code below fails - just throw away entire run
-        obj[ib] = MultipleRestartsChoose(strsave, m, v, globalBranching, infPriorPhi, b, maxiter, fFixKernel=fFixKernel,
-                                         kerlen=kerlenIn, kervar=kervarIn, noise=noiseInSamplesIn, fDebug=fDebug)
-        if (ib == 0 and not fFixKernel):
-            # for ptb point redo optimisation with fixed hyperparameters
-            # Only set these once to avoid recompilation
-            print('Fixing kernel hyperparameters.')
-            fFixKernel = True  # Use previous estimates
-            m.kern.branchkernelparam.kern.variance.fixed = True
-            m.kern.branchkernelparam.kern.lengthscales.fixed = True
-            m.likelihood.variance.fixed = True
-
-        # do prediction and save results
-        Phi = m.GetPhi()
-        ttestl, mul, varl = VBHelperFunctions.predictBranchingModel(m)
-        # do not save model as this will break between GPflow versions
-        mlocallist.append({'candidateB': b, 'obj': obj[ib], 'Phi': Phi,
-                           'ttestl': ttestl, 'mul': mul, 'varl': varl})
-    # do not save model as this will break between GPflow versions
-    retObj = {'mlocallist': mlocallist,
-              'obj': obj, 'timingInfo': timingInfo, 'BgridSearch': BgridSearch,
-              'XExpanded': XExpanded,
-              'GPt': GPt,  'GPy': GPy, 'M': M,
-              'maxiter': maxiter, 'gUse': gUse,
-              'globalBranching': globalBranching,
-              'v': v, 'kerlenIn': kerlenIn, 'kervarIn': kervarIn, 'noiseInSamplesIn': noiseInSamplesIn,
-              'likvar': m.likelihood.variance.value, 'kerlen': m.kern.branchkernelparam.kern.lengthscales.value,
-              'kervar': m.kern.branchkernelparam.kern.variance.value}  # 'mGPR': mi.get_parameter_dict()
-    if(fSavefile):
-        ensure_dir(strsave+'/')
-        print('Saving file', strsave+'/'+gUse+'.p')
-        pickle.dump(retObj, open(strsave+'/'+gUse+'.p', "wb"))
-    return retObj, m  # return model in case caller wants to do stuff with it
