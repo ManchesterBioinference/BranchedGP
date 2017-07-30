@@ -4,6 +4,7 @@ BranchedGP is a package for building Branching Gaussian process models in python
 It has been created by Alexis Boukouvalas, James Hensman and Magnus Rattray. 
 
 [![Build Status](https://travis-ci.org/ManchesterBioinference/BranchedGP.svg?branch=master)](https://travis-ci.org/ManchesterBioinference/BranchedGP)
+[![codecov](https://codecov.io/gh/ManchesterBioinference/BranchedGP/branch/master/graph/badge.svg)](https://codecov.io/gh/ManchesterBioinference/BranchedGP)
 
 # Install
 If you have any problems with installation see the script at the bottom of the page for a detailed setup guide from a branch new python environment. 
