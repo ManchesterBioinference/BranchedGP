@@ -43,7 +43,7 @@ m = d['model']
 iw = np.argmax(d['loglik'])
 Bmode = BgridSearch[iw]
 
-fPlot = True
+fPlot = False
 if(fPlot):
     from matplotlib import pyplot as plt
     plt.ion()
