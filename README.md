@@ -64,7 +64,6 @@ jupyter notebook
 | VBHelperFunctions.py | Plotting code. |
 
 
-=======
 # Python 2.7 Compatibility testing
 This gives a detailed breakdown of all the steps requires. It sets up a conda environment but direct installation is also possible.
 ```
