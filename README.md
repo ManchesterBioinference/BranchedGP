@@ -66,6 +66,13 @@ jupyter notebook
 | BranchingTree.py | Code to generate branching tree. |
 | VBHelperFunctions.py | Plotting code. |
 
+# Running in a cluster
+When running BranchingGP in a cluster it may be useful to constrain the number of cores used. To do this insert this code at the beginning of your script.
+```
+from GPflow import settings
+settings.session.intra_op_parallelism_threads = NUMCORES
+settings.session.inter_op_parallelism_threads = NUMCORES
+```
 
 # Python 2.7 Compatibility testing
 This gives a detailed breakdown of all the steps requires. It sets up a conda environment but direct installation is also possible.
