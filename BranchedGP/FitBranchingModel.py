@@ -9,7 +9,7 @@ import traceback, sys
 
 def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
              M=10, likvar=1., kerlen=2., kervar=5., fDebug=False, maxiter=100,
-             fPredict=True, fixHyperparameters=False):
+             fPredict=True, fixHyperparameters=False, fixInducingPoints=False):
     """
     Fit BGP model
     :param bConsider: list of candidate branching points
@@ -25,7 +25,7 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
     :param maxiter: maximum number of iterations for optimisation
     :param fPredict: compute predictive mean and variance
     :param fixHyperparameters: should kernel hyperparameters be kept fixed or optimised?
-
+    :param fixInducingPoints: should inducing points be fixed or optimised?
     :return: dictionary of log likelihood, GPflow model, Phi matrix, predictive set of points,
     mean and variance, hyperparameter values, posterior on branching time
     """
@@ -57,6 +57,8 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
         ZExpanded[:, 1] = np.array([i for j in range(M) for i in range(1, 4)])[:M]
         m = assigngp_denseSparse.AssignGPSparse(GPt, XExpanded, GPy, kb, indices,
                                                 np.ones((1, 1)) * ptb, ZExpanded, phiInitial=phiInitial, phiPrior=phiPrior)
+        if fixInducingPoints:
+            m.ZExpanded.fixed = True
     # Initialise hyperparameters
     m.likelihood.variance = likvar
     m.kern.branchkernelparam.kern.lengthscales = kerlen
@@ -82,7 +84,7 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
         m.UpdateBranchingPoint(np.ones((1, 1)) * b, phiInitial)
         try:
             m.optimize(disp=fDebug, maxiter=maxiter)
-            # show remember winning hyperparameter
+            # remember winning hyperparameter
             hyps.append({'likvar':  m.likelihood.variance.value, 'kerlen':  m.kern.branchkernelparam.kern.lengthscales.value,
                     'kervar': m.kern.branchkernelparam.kern.variance.value})
             ll[ib] = m.compute_log_likelihood()
