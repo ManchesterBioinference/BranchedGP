@@ -1,6 +1,17 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import cm
+import os
+
+def savefig_mine(dirname, fs):
+    ensure_dir(dirname)
+    ffs = dirname + '/' + fs
+    plt.savefig('%s.pdf' % ffs, bbox_inches='tight')
+
+def ensure_dir(d):
+    ''' Ensure directory exists '''
+    if not os.path.exists(d):
+        os.makedirs(d)
 
 def PlotBGPFit(GPy, GPt, Bsearch, d, figsize=(5, 5), height_ratios= [5, 1], colorarray=['darkolivegreen', 'peru', 'mediumvioletred']):
     """

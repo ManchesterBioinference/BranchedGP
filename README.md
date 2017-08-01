@@ -50,6 +50,9 @@ jupyter notebook
 | File <br> name | Description | 
 | --- | --- | 
 | Hematopoiesis.ipynb | Application of BGP to hematopoiesis data. |
+| SyntheticData.ipynb | Application of BGP to synthetic data. |
+
+
 
 # List of python library files
 | File <br> name | Description | 
