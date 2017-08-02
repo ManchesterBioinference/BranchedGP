@@ -10,7 +10,7 @@ Alexis Boukouvalas, James Hensman, Magnus Rattray, bioRxiv, 2017.](http://www.bi
 [![codecov](https://codecov.io/gh/ManchesterBioinference/BranchedGP/branch/master/graph/badge.svg)](https://codecov.io/gh/ManchesterBioinference/BranchedGP)
 
 # Install
-If you have any problems with installation see the script at the bottom of the page for a detailed setup guide from a branch new python environment. 
+If you have any problems with installation see the script at the bottom of the page for a detailed setup guide from a new python environment. 
 
    - Install tensorflow
 ```
