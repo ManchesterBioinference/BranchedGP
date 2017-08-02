@@ -16,7 +16,7 @@ class TestSamplingAndPlotting(unittest.TestCase):
         tree.add(None, 1, branchingPoint)  # single branching point
         (fm, fmb) = tree.GetFunctionBranchTensor()
         # Specify where to evaluate the kernel
-        t = np.linspace(0.01, 1, 100)
+        t = np.linspace(0.01, 1, 40)
         (XForKernel, indicesBranch, Xtrue) = tree.GetFunctionIndexList(t, fReturnXtrue=True)
         # Specify the kernel and its hyperparameters
         # These determine how smooth and variable the branching functions are
@@ -32,18 +32,33 @@ class TestSamplingAndPlotting(unittest.TestCase):
         BgridSearch = [0.1, branchingPoint, 1.1]
         globalBranchingLabels = XForKernel[:, 1]  # use correct labels for tests
         # could add a mistake
+        print('Sparse model')
         d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
-                                       maxiter=20, priorConfidence=0.80)
-
-        # Plot model
+                                       maxiter=20, priorConfidence=0.80, M=10)
         bmode = BgridSearch[np.argmax(d['loglik'])]
         assert bmode == branchingPoint, bmode
+        # Plot model
         pred = d['prediction']  # prediction object from GP
         _=bplot.plotBranchModel(bmode, XForKernel[:, 0], samples, pred['xtest'], pred['mu'], pred['var'],
                                 d['Phi'], fPlotPhi=True, fColorBar=True, fPlotVar = True)
 
 
         _=bplot.PlotBGPFit(samples, XForKernel[:, 0], BgridSearch, d)
+
+        print('Try dense model')
+        d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
+                                       maxiter=20, priorConfidence=0.80, M=0)
+        bmode = BgridSearch[np.argmax(d['loglik'])]
+        assert bmode == branchingPoint, bmode
+        print('Try sparse model with fixed inducing points')
+        d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
+                                       maxiter=20, priorConfidence=0.80, M=15, fixInducingPoints=True)
+        bmode = BgridSearch[np.argmax(d['loglik'])]
+        assert bmode == branchingPoint, bmode
+        print('Try sparse model with fixed hyperparameters')
+        d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
+                                       maxiter=20, priorConfidence=0.80, M=15,
+                                       likvar=1e-3, kerlen=2., kervar=1., fixHyperparameters=True)
 
         # You can rerun the same code as many times as you want and get different sample paths
         # We can also sample independent functions. This is the assumption in the overlapping mixtures of GPs model (OMGP) discussed in the paper.
