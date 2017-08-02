@@ -16,7 +16,7 @@ class TestSamplingAndPlotting(unittest.TestCase):
         tree.add(None, 1, branchingPoint)  # single branching point
         (fm, fmb) = tree.GetFunctionBranchTensor()
         # Specify where to evaluate the kernel
-        t = np.linspace(0.01, 1, 40)
+        t = np.linspace(0.01, 1, 60)
         (XForKernel, indicesBranch, Xtrue) = tree.GetFunctionIndexList(t, fReturnXtrue=True)
         # Specify the kernel and its hyperparameters
         # These determine how smooth and variable the branching functions are
@@ -52,7 +52,7 @@ class TestSamplingAndPlotting(unittest.TestCase):
         assert bmode == branchingPoint, bmode
         print('Try sparse model with fixed inducing points')
         d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
-                                       maxiter=20, priorConfidence=0.80, M=15, fixInducingPoints=True)
+                                       maxiter=20, priorConfidence=0.80, M=20, fixInducingPoints=True)
         bmode = BgridSearch[np.argmax(d['loglik'])]
         assert bmode == branchingPoint, bmode
         print('Try sparse model with fixed hyperparameters')
