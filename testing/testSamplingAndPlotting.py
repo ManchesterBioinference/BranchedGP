@@ -27,7 +27,7 @@ class TestSamplingAndPlotting(unittest.TestCase):
         # Sample the kernel
         samples = bk.SampleKernel(KbranchParam, XForKernel)
         # Plot the sample
-        bk.PlotSample(XForKernel, samples)
+        bk.PlotSample(XForKernel, samples, B=tree.GetBranchValues())
         # Fit model
         BgridSearch = [0.1, branchingPoint, 1.1]
         globalBranchingLabels = XForKernel[:, 1]  # use correct labels for tests

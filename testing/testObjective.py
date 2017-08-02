@@ -43,15 +43,6 @@ class TestObjectiveMin(unittest.TestCase):
         m = d['model']
         iw = np.argmax(d['loglik'])
         Bmode = BgridSearch[iw]
-
-        fPlot = False
-        if(fPlot):
-            from matplotlib import pyplot as plt
-            plt.ion()
-            plt.close('all')
-            f, ax = VBHelperFunctions.PlotBGPFit(Y, t, BgridSearch, d)
-            f, ax = plt.subplots(1,1, sharex=False, sharey=False)
-            ax.scatter(t, Y)
         # Check winner is the truth
         assignment = np.ones(N)
         assignment[d['Phi'][:, 1] > 0.5] = 2
