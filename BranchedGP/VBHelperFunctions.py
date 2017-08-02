@@ -1,17 +1,5 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from matplotlib import cm
-import os
-
-def savefig_mine(dirname, fs):
-    ensure_dir(dirname)
-    ffs = dirname + '/' + fs
-    plt.savefig('%s.pdf' % ffs, bbox_inches='tight')
-
-def ensure_dir(d):
-    ''' Ensure directory exists '''
-    if not os.path.exists(d):
-        os.makedirs(d)
 
 def PlotBGPFit(GPy, GPt, Bsearch, d, figsize=(5, 5), height_ratios= [5, 1], colorarray=['darkolivegreen', 'peru', 'mediumvioletred']):
     """
@@ -46,7 +34,7 @@ def PlotBGPFit(GPy, GPt, Bsearch, d, figsize=(5, 5), height_ratios= [5, 1], colo
     return fig, axa
 
 def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., fs=10, labels=None,
-                    fPlotPhi=True, fPlotVar=False, ax=None, fColorBar=True, colorarray = ['darkolivegreen', 'goldernrod', 'mediumvioletred']):
+                    fPlotPhi=True, fPlotVar=False, ax=None, fColorBar=True, colorarray = ['darkolivegreen', 'peru', 'mediumvioletred']):
     ''' Plotting code that does not require access to the model but takes as input predictions. '''
     if(ax is None):
         fig = plt.figure(figsize=figsizeIn)
@@ -76,7 +64,7 @@ def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., f
     return fig
 
 
-def predictBranchingModel(m):
+def predictBranchingModel(m, full_cov=False):
     ''' return prediction of branching model '''
     pt = m.t
     B = m.kern.branchkernelparam.Bv.value.flatten()
@@ -91,7 +79,10 @@ def predictBranchingModel(m):
         else:
             ttest = np.linspace(B, u, 100)[:, None]
         Xtest = np.hstack((ttest, ttest * 0 + f))
-        mu, var = m.predict_f(Xtest)
+        if full_cov:
+            mu, var = m.predict_f_full_cov(Xtest)
+        else:
+            mu, var = m.predict_f(Xtest)
         # print('mu', mu)
         idx = np.isnan(mu)
         # print('munan', mu[idx], var[idx], ttest[idx])
@@ -101,44 +92,6 @@ def predictBranchingModel(m):
         varl.append(var)
         ttestl.append(ttest)
     return ttestl, mul, varl
-
-
-def plotVBCode(mV, figsizeIn=(20, 10), lw=3., fs=10, labels=None, fPlotPhi=True, fPlotVar=False):
-    fig = plt.figure(figsize=figsizeIn)
-    B = mV.kern.branchkernelparam.Bv.value.flatten()
-    assert B.size == 1, 'Code limited to one branch point, got ' + str(B.shape)
-    pt = mV.t
-    ttestl, mul, varl = predictBranchingModel(mV)
-    d = 0  # constraint code to be 1D for now
-    for f in range(3):
-        mu = mul[f]
-        var = varl[f]
-        ttest = ttestl[f]
-        mean, = plt.plot(ttest, mu[:, d], linewidth=lw)
-        col = mean.get_color()
-        if(fPlotVar):
-            plt.plot(ttest.flatten(), mu[:, d] + 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
-            plt.plot(ttest, mu[:, d] - 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
-    v = plt.axis()
-    plt.plot([B, B], v[-2:], '-m', linewidth=lw)
-    # Plot Phi or labels
-    if(fPlotPhi):
-        Phi = mV.GetPhi()
-        gp_num = 1  # can be 0,1,2 - Plot against this
-        plt.scatter(pt, mV.Y.value[:, d], c=Phi[:, gp_num], vmin=0., vmax=1, s=40)
-        plt.colorbar(label='GP {} assignment probability'.format(gp_num))
-    elif(labels is not None):
-        # plot labels
-        labelLegend = np.unique(labels)
-        with plt.style.context('seaborn-whitegrid'):
-            colors = cm.spectral(np.linspace(0, 1, len(labelLegend)))
-            for lab, c in zip(labelLegend, colors):
-                y1 = pt[labels == lab]
-                y2 = mV.Y.value[labels == lab]
-                plt.scatter(y1, y2, label=lab, c=c, s=80)
-                plt.text(np.median(y1), np.median(y2), lab, fontsize=45, color='blue')
-            plt.legend(loc='upper left')
-    return fig
 
 
 def GetFunctionIndexListGeneral(Xin):
@@ -166,10 +119,3 @@ def GetFunctionIndexListGeneral(Xin):
     return (Xnewa, indicesBranch, XSample)
 
 
-def SetXExpandedBranchingPoint(XExpanded, B):
-    ''' Return XExpanded by removing unavailable branches '''
-    # before branching pt, only function 1
-    X1 = XExpanded[np.logical_and(XExpanded[:, 0] <= B, XExpanded[:, 1] == 1).flatten(), :]
-    # after branching pt, only functions 2 and 2
-    X23 = XExpanded[np.logical_and(XExpanded[:, 0] > B, XExpanded[:, 1] != 1).flatten(), :]
-    return np.vstack([X1, X23])
