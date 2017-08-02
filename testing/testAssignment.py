@@ -17,7 +17,6 @@ def InitKernParams(ms):
 
 class TestSparseVariational(unittest.TestCase):
     def test(self):
-        fDebug = True  # Enable debugging output - tensorflow print ops
         np.set_printoptions(suppress=True,  precision=5)
         seed = 43
         np.random.seed(seed=seed)  # easy peasy reproducibeasy
@@ -39,6 +38,8 @@ class TestSparseVariational(unittest.TestCase):
         # Create tree structures
         tree = bt.BinaryBranchingTree(0, 1, fDebug=False)
         tree.add(None, 1, trueB)
+        assert tree.getRoot().val == trueB
+        assert  tree.getRoot().idB == 1
         (fm, _) = tree.GetFunctionBranchTensor()
         XExpanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(t)
         # Create model
@@ -60,15 +61,18 @@ class TestSparseVariational(unittest.TestCase):
         m.optimize(disp=0, maxiter=100)
         print('Model after initialisation\n', m, '\n===========================')
         ttestl, mul, varl = VBHelperFunctions.predictBranchingModel(m)
-        self.assertTrue(len(varl) == 3, 'Must have 3 predictions for 3 functions')
-        self.assertTrue(np.all(varl[0] > 0), 'neg variances for variance function 0')
-        self.assertTrue(np.all(varl[1] > 0), 'neg variances for variance function 1')
-        self.assertTrue(np.all(varl[2] > 0), 'neg variances for variance function 2')
+        _, _, covl = VBHelperFunctions.predictBranchingModel(m, full_cov=True)
+        for i in range(len(varl)):
+            assert np.all(covl[i].diagonal().flatten() == varl[i].flatten())
+        assert(len(varl) == 3, 'Must have 3 predictions for 3 functions')
+        assert(np.all(varl[0] > 0), 'neg variances for variance function 0')
+        assert(np.all(varl[1] > 0), 'neg variances for variance function 1')
+        assert(np.all(varl[2] > 0), 'neg variances for variance function 2')
         PhiOptimised = m.GetPhi()
         print('phiPrior', phiPrior)
         print('PhiOptimised', PhiOptimised)
-        self.assertTrue(np.allclose(PhiOptimised[idxA, 2], 1),  'PhiOptimised idxA=%s' % str(PhiOptimised[idxA, :]))
-        self.assertTrue(np.allclose(PhiOptimised[idxB, 1], 1),  'PhiOptimised idxB=%s' % str(PhiOptimised[idxB, :]))
+        assert(np.allclose(PhiOptimised[idxA, 2], 1),  'PhiOptimised idxA=%s' % str(PhiOptimised[idxA, :]))
+        assert(np.allclose(PhiOptimised[idxB, 1], 1),  'PhiOptimised idxB=%s' % str(PhiOptimised[idxB, :]))
         # reset model and test informative KL prior
         m.UpdateBranchingPoint(Kbranch.branchkernelparam.Bv.value, phiInitial)  # reset initial phi
         InitKernParams(m)
@@ -78,7 +82,7 @@ class TestSparseVariational(unittest.TestCase):
         # phiInfPrior[-2, :] = [0.01, 0.99]
         m.UpdateBranchingPoint(Kbranch.branchkernelparam.Bv.value, phiInitial, prior=phiInfPrior)
         ll_betterprior = m.compute_log_likelihood()
-        self.assertTrue(ll_betterprior > ll_flatprior, '%f <> %f' % (ll_betterprior, ll_flatprior))
+        assert(ll_betterprior > ll_flatprior, '%f <> %f' % (ll_betterprior, ll_flatprior))
 
 
 if __name__ == '__main__':

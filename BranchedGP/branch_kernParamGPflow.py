@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 float_type = GPflow.settings.dtypes.float_type
 
 
-def PlotSample(X, samples, B=None, lw=3., fs=10, figsizeIn=(5, 5)):
+def PlotSample(X, samples, B=None, lw=5., fs=20, figsizeIn=(5, 5)):
     D = samples.shape[1]  # number of outputs
     assert X.shape[0] == samples.shape[0]
     M = 3  # number of functions
@@ -25,7 +25,7 @@ def PlotSample(X, samples, B=None, lw=3., fs=10, figsizeIn=(5, 5)):
             else:
                 p = ax
             p.plot(t, y, '-+', label=i, markersize=2 * lw)
-            p.text(t[t.size / 2], y[t.size / 2], str(i), fontsize=fs)
+            p.text(t[int(t.size / 2)], y[int(t.size / 2)], str(i), fontsize=fs)
         # Add vertical lines for branch points
         if(B is not None):
             v = p.axis()

@@ -50,8 +50,9 @@ jupyter notebook
 
 | File <br> name | Description | 
 | --- | --- | 
-| Hematopoiesis.ipynb | Application of BGP to hematopoiesis data. |
-| SyntheticData.ipynb | Application of BGP to synthetic data. |
+| Hematopoiesis       | Application of BGP to hematopoiesis data. |
+| SyntheticData       | Application of BGP to synthetic data. |
+| SamplingFromTheModel| Sampling from the BGP model. |
 
 
 
