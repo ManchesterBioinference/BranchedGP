@@ -33,11 +33,11 @@ class TestSparseVariational(unittest.TestCase):
 
 
         samples, L, K = bk.SampleKernel(KbranchParam, XForKernel, D=1, tol=1e-6, retChol=True)
-        samples, L, K = bk.SampleKernel(KbranchParam, XForKernel, D=1, tol=1e-6, retChol=False)
+        samples2 = bk.SampleKernel(KbranchParam, XForKernel, D=1, tol=1e-6, retChol=False)
 
         # Also try the independent kernel
         indKernel = bk.IndKern(GPflow.kernels.RBF(1))
-        samples, L, K = bk.SampleKernel(indKernel, XForKernel, D=1, tol=1e-6, retChol=True)
+        samples3, L, K = bk.SampleKernel(indKernel, XForKernel, D=1, tol=1e-6, retChol=True)
 
         # if you want to plot
         # from matplotlib import pyplot as plt
