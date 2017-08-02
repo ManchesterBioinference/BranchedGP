@@ -65,35 +65,3 @@ def make_matrix(X, BP, eZ0, epsilon=1e-6):
         rows.append(row)
     return tf.multiply(tf.concat(rows, 0, name='multiconcat'), eZ0)
 
-
-if __name__ == "__main__":
-    np.set_printoptions(suppress=True,  precision=2)
-    # X = np.linspace(0, 1, 4, dtype=float)[:, None]
-    X = np.array([0.1, 0.2, 0.3, 0.4])[:, None]
-    BP_tf = tf.placeholder(dtype=float_type, shape=[])
-    eZ0_tf = tf.placeholder(dtype=float_type, shape=(X.shape[0], X.shape[0]*3))
-    pZ0 = np.array([[0.7, 0.3], [0.1, 0.9], [0.5, 0.5], [0.85, 0.15]])
-    eZ0 = expand_pZ0(pZ0)
-    BP = 0.2
-    pZ = tf.Session().run(make_matrix(X, BP_tf, eZ0_tf), feed_dict={BP_tf: BP, eZ0_tf: eZ0})
-    print('pZ0', pZ0)
-    print('eZ0', eZ0)
-    print('pZ', pZ)
-    for r, c in zip(range(0, X.shape[0]), range(0, X.shape[0]*3, 3)):
-        print(r, c)
-        print(X[r], pZ[r, c:c+3], pZ0[r, :])
-        if(X[r] > BP):  # after branch point should be prior
-            assert np.allclose(pZ[r, c+1:c+3], pZ0[r, :], atol=1e-6), 'must be the same! %s-%s' % (str(pZ[r, c:c+3]), str(pZ0[r, :]))
-        else:
-            assert np.allclose(pZ[r, c:c+3], np.array([1., 0., 0.]), atol=1e-6), 'must be the same! %s-%s' % (str(pZ[r, c:c+3]), str(np.array([1., 0., 0.])))
-#     from matplotlib import pyplot as plt
-#     plt.ion()
-#     plt.matshow(pZ)
-    eZ0z = expand_pZ0Zeros(pZ0)
-    r = expand_pZ0PureNumpyZeros(eZ0z, BP, X)
-    assert np.allclose(r, pZ)
-
-    # try another
-    pZ = tf.Session().run(make_matrix(X, BP_tf, eZ0_tf), feed_dict={BP_tf: 0.3, eZ0_tf: eZ0})
-    r = expand_pZ0PureNumpyZeros(eZ0z, 0.3, X)
-    assert np.allclose(r, pZ)

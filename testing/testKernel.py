@@ -39,6 +39,12 @@ class TestSparseVariational(unittest.TestCase):
         indKernel = bk.IndKern(GPflow.kernels.RBF(1))
         samples3, L, K = bk.SampleKernel(indKernel, XForKernel, D=1, tol=1e-6, retChol=True)
 
+        samples4 = KbranchParam.SampleKernel(XForKernel, b=Bvalues)
+
+        XAssignments = bk.GetFunctionIndexSample(t)  # assign to either branch randomly
+        XAssignments[XAssignments[:, 0] <= tree.GetBranchValues(), 1] = 1
+        samples5 = KbranchParam.SampleKernelFromTree(XAssignments, b=tree.GetBranchValues())
+
         # if you want to plot
         # from matplotlib import pyplot as plt
         # plt.ion()

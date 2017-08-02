@@ -44,6 +44,18 @@ def SampleKernel(kern, X, D=1, tol=1e-6, retChol=False):
     else:
         return samples
 
+def GetFunctionIndexSample(Xin):
+    ''' Function to return index list  and input array X repeated as many time as each possible function '''
+    # limited to one dimensional X for now!
+    N = Xin.shape[0]
+    assert Xin.shape[0] == np.size(Xin)
+    XSample = np.zeros((N, 2), dtype=float)
+    functionList = list(range(2, 4))  # can be assigned to function 2 or 3
+    for ix in range(N):
+        XSample[ix, 0] = Xin[ix]
+        XSample[ix, 1] = np.random.choice(functionList)
+    return XSample
+
 
 class BranchKernelParam(GPflow.kernels.Kern):
 
@@ -159,29 +171,20 @@ class IndKern(GPflow.kernels.Kern):
 
     def K(self, X, Y=None):
         if Y is None:
-            t1 = X[:, :-1]
-            i1 = X[:, -1:]
-            Ktt = self.kern.K(t1)
+            Y = X  # hack to avoid duplicating code below
+        t1 = tf.expand_dims(X[:, 0], 1)
+        t2 = tf.expand_dims(Y[:, 0], 1)
+        i1 = tf.expand_dims(X[:, 1], 1)
+        i2 = tf.expand_dims(Y[:, 1], 1)
 
-            i1_matrix = tf.tile(i1, tf.reverse(tf.shape(i1), [0]))
+        Ktt = self.kern.K(t1, t2)
 
-            same_functions = tf.equal(i1_matrix, tf.transpose(i1_matrix))
-            K_s = tf.where(same_functions, Ktt, tf.zeros_like(Ktt))
-            return K_s
-        else:
-            t1 = tf.expand_dims(X[:, 0], 1)
-            t2 = tf.expand_dims(Y[:, 0], 1)
-            i1 = tf.expand_dims(X[:, 1], 1)
-            i2 = tf.expand_dims(Y[:, 1], 1)
+        i1_matrix = tf.tile(i1, tf.reverse(tf.shape(i2), [0]))
+        i2_matrix = tf.tile(i2, tf.reverse(tf.shape(i1), [0]))
 
-            Ktt = self.kern.K(t1, t2)
-
-            i1_matrix = tf.tile(i1, tf.reverse(tf.shape(i2), [0]))
-            i2_matrix = tf.tile(i2, tf.reverse(tf.shape(i1), [0]))
-
-            same_functions = tf.equal(i1_matrix, tf.transpose(i2_matrix))
-            K_s = tf.where(same_functions, Ktt, tf.zeros_like(Ktt))
-            return K_s
+        same_functions = tf.equal(i1_matrix, tf.transpose(i2_matrix))
+        K_s = tf.where(same_functions, Ktt, tf.zeros_like(Ktt))
+        return K_s
 
     def Kdiag(self, X):
         return tf.diag_part(self.kern.K(X))

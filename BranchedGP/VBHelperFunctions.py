@@ -119,3 +119,10 @@ def GetFunctionIndexListGeneral(Xin):
     return (Xnewa, indicesBranch, XSample)
 
 
+def SetXExpandedBranchingPoint(XExpanded, B):
+    ''' Return XExpanded by removing unavailable branches '''
+    # before branching pt, only function 1
+    X1 = XExpanded[np.logical_and(XExpanded[:, 0] <= B, XExpanded[:, 1] == 1).flatten(), :]
+    # after branching pt, only functions 2 and 2
+    X23 = XExpanded[np.logical_and(XExpanded[:, 0] > B, XExpanded[:, 1] != 1).flatten(), :]
+    return np.vstack([X1, X23])
