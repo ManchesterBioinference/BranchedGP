@@ -5,7 +5,8 @@ from GPflow.param import DataHolder
 import tensorflow as tf
 import numpy as np
 from matplotlib import pyplot as plt
-float_type = GPflow.settings.dtypes.float_type
+from GPflow import settings
+float_type = settings.dtypes.float_type
 
 
 def PlotSample(X, samples, B=None, lw=5., fs=20, figsizeIn=(5, 5)):
@@ -142,7 +143,7 @@ class BranchKernelParam(GPflow.kernels.Kern):
                             Br = self.Bv
                         Bs = ((tf.concat([tf.slice(Br, [i - 1, 0], [1, 1]) for i in bint], 0)))
 
-                        kbb = self.kern.K(Bs) + tf.diag(tf.ones(tf.shape(Bs)[:1], dtype=float_type)) * 1e-6
+                        kbb = self.kern.K(Bs) + tf.diag(tf.ones(tf.shape(Bs)[:1], dtype=float_type)) * settings.numerics.jitter_level
                         if(self.fDebug):
                             kbb = tf.Print(kbb, [tf.shape(kbb), kbb], message='kbb=', name='kbb', summarize=10)
                             kbb = tf.Print(kbb, [self.kern.lengthscales], message='lenscales=', name='lenscales', summarize=10)
