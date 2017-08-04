@@ -2,11 +2,9 @@
 import GPflow
 import numpy as np
 import tensorflow as tf
-# import pZ_construction_singleBP
-# from matplotlib import pyplot as plt
-# from GPflow.param import AutoFlow
 from . import assigngp_dense
-float_type = GPflow.settings.dtypes.float_type
+from GPflow import settings
+float_type = settings.dtypes.float_type
 
 
 class AssignGPSparse(assigngp_dense.AssignGP):
@@ -50,7 +48,7 @@ class AssignGPSparse(assigngp_dense.AssignGP):
 
         sigma2 = self.likelihood.variance
         sigma = tf.sqrt(self.likelihood.variance)
-        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=float_type) * 1e-6
+        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=float_type) * settings.numerics.jitter_level
         Kuf = self.kern.K(self.ZExpanded, self.X)
 
         Kdiag = self.kern.Kdiag(self.X)
@@ -84,7 +82,7 @@ class AssignGPSparse(assigngp_dense.AssignGP):
 
         sigma2 = self.likelihood.variance
         sigma = tf.sqrt(sigma2)
-        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=float_type) * 1e-6
+        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=float_type) * settings.numerics.jitter_level
         Kuf = self.kern.K(self.ZExpanded, self.X)
         L = tf.cholesky(Kuu)
 

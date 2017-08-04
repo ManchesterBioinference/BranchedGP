@@ -3,12 +3,8 @@ import GPflow
 import numpy as np
 import tensorflow as tf
 from . import pZ_construction_singleBP
-from matplotlib import pyplot as plt
 from GPflow.param import AutoFlow
 from GPflow.param import DataHolder
-
-# TODO S:
-# 2) tidy up make_pZ_matrix and generalize to multiple latent functions
 from GPflow import settings
 float_type = settings.dtypes.float_type
 int_type = settings.dtypes.int_type
@@ -144,7 +140,7 @@ class AssignGP(GPflow.model.GPModel):
         Phi = (1 - 2e-6) * Phi + 1e-6
         sigma2 = self.likelihood.variance
         tau = 1. / self.likelihood.variance
-        L = tf.cholesky(K) + tf.eye(M, dtype=float_type) * 1e-6
+        L = tf.cholesky(K) + tf.eye(M, dtype=float_type) * settings.numerics.jitter_level
         W = tf.transpose(L) * tf.sqrt(tf.reduce_sum(Phi, 0)) / tf.sqrt(sigma2)
         P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=float_type)
         R = tf.cholesky(P)
@@ -178,7 +174,7 @@ class AssignGP(GPflow.model.GPModel):
         # try squashing Phi to avoid numerical errors
         Phi = (1 - 2e-6) * Phi + 1e-6
         sigma2 = self.likelihood.variance
-        L = tf.cholesky(K) + tf.eye(M, dtype=float_type) * 1e-6
+        L = tf.cholesky(K) + tf.eye(M, dtype=float_type) * settings.numerics.jitter_level
         W = tf.transpose(L) * tf.sqrt(tf.reduce_sum(Phi, 0)) / tf.sqrt(sigma2)
         P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=float_type)
         R = tf.cholesky(P)
