@@ -8,7 +8,7 @@ from BranchedGP import branch_kernParamGPflow as bk
 from GPflow import settings
 float_type = settings.dtypes.float_type
 
-class TestSparseVariational(unittest.TestCase):
+class TestKernelSampling(unittest.TestCase):
     def test(self):
         # assert float_type == tf.float32, 'must be set in gpflowrc'
         N = 3  # how many points per function

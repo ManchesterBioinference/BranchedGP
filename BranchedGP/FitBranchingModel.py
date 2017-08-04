@@ -34,7 +34,7 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
     assert GPy.ndim == 2
     assert GPt.size == GPy.size, 'pseudotime and gene expression data must be the same size'
     assert globalBranching.size == GPy.size, 'state space must be same size as number of cells'
-    assert M >= 2, 'at least 2 inducing points should be given'
+    assert M >= 0, 'at least 0 or more inducing points should be given'
     phiInitial, phiPrior = GetInitialConditionsAndPrior(globalBranching, priorConfidence, infPriorPhi=True)
     # it = np.argsort(GPt)
     # print('GPt and prior', np.hstack([GPt[it][:,None], phiPrior[it,:], phiInitial[it,:]]))

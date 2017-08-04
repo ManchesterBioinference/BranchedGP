@@ -366,34 +366,6 @@ class BinaryBranchingTree:
         else:
             return (Xnewa, indicesBranch)
 
-    def GetConstrainedFunctionIndexList(self, Xin, idxOverwrite, labels):
-        assert Xin.shape[0] == np.size(Xin)
-        df = self.GetFunctionDomains()
-        indicesBranch_Constrained = []
-        XForKernel_Constrained_l = []
-        inew = 0
-        for ix, x in enumerate(Xin):
-            assignTo = (x > df[:, 0]) & (x <= df[:, 1])        # does where equality is matter check tree search?
-            functionList = list(np.flatnonzero(assignTo))
-            idx = []
-            if ix in idxOverwrite:
-                XForKernel_Constrained_l.append([x, labels[idxOverwrite == ix]])  # already 1-based
-                idx.append(inew)
-                inew = inew + 1
-            else:
-                for f in functionList:
-                    # could have 1 or 0 based function list - does kernel care?
-                    XForKernel_Constrained_l.append([x, f + 1])
-                    idx.append(inew)
-                    inew = inew + 1
-            indicesBranch_Constrained.append(idx)
-
-        XForKernel_Constrained = np.array(XForKernel_Constrained_l)
-
-        checkIndices(indicesBranch_Constrained, XForKernel_Constrained[:, 0][:, None], Xin[:, None])
-
-        return (XForKernel_Constrained, indicesBranch_Constrained)
-
     def GetFunctionDomains(self):
         nb = self.GetNumberOfBranchPts()
         m = 2 * nb + 1  # number of functions
