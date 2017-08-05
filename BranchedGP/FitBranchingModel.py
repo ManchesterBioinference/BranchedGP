@@ -1,11 +1,12 @@
 import numpy as np
-from BranchedGP import VBHelperFunctions
-from BranchedGP import BranchingTree as bt
-from BranchedGP import branch_kernParamGPflow as bk
-from BranchedGP import assigngp_denseSparse
-from BranchedGP import assigngp_dense
+from . import VBHelperFunctions
+from . import BranchingTree as bt
+from . import branch_kernParamGPflow as bk
+from . import assigngp_denseSparse
+from . import assigngp_dense
 import GPflow
-import traceback, sys
+import traceback
+import sys
 
 def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
              M=10, likvar=1., kerlen=2., kervar=5., fDebug=False, maxiter=100,
