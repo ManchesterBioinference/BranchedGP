@@ -1,5 +1,5 @@
 # Generic libraries
-import GPflow
+import gpflow
 import numpy as np
 import tensorflow as tf
 import unittest
@@ -43,7 +43,7 @@ class TestSparseVariational(unittest.TestCase):
         (fm, _) = tree.GetFunctionBranchTensor()
         XExpanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(t)
         # Create model
-        Kbranch = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm, b=trueB.copy()) + GPflow.kernels.White(1)
+        Kbranch = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm, b=trueB.copy()) + gpflow.kernels.White(1)
         Kbranch.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
         Kbranch.white.variance.fixed = True  # jitter for numerics
         # Create model

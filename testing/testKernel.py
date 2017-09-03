@@ -1,11 +1,11 @@
 # Generic libraries
-import GPflow
+import gpflow
 import numpy as np
 import unittest
 # Branching files
 from BranchedGP import BranchingTree as bt
 from BranchedGP import branch_kernParamGPflow as bk
-from GPflow import settings
+from gpflow import settings
 float_type = settings.dtypes.float_type
 
 class TestKernelSampling(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestKernelSampling(unittest.TestCase):
         (XForKernel, indicesBranch, Xtrue) = tree.GetFunctionIndexList(t, fReturnXtrue=True)
         # GP flow kernel
         Bvalues = np.expand_dims(np.asarray(tree.GetBranchValues()), 1)
-        KbranchParam = bk.BranchKernelParam(GPflow.kernels.RBF(1), fm, b=Bvalues)
+        KbranchParam = bk.BranchKernelParam(gpflow.kernels.RBF(1), fm, b=Bvalues)
         KbranchParam.kern.lengthscales = 2
         KbranchParam.kern.variance = 1
 
@@ -36,7 +36,7 @@ class TestKernelSampling(unittest.TestCase):
         samples2 = bk.SampleKernel(KbranchParam, XForKernel, D=1, tol=1e-6, retChol=False)
 
         # Also try the independent kernel
-        indKernel = bk.IndKern(GPflow.kernels.RBF(1))
+        indKernel = bk.IndKern(gpflow.kernels.RBF(1))
         samples3, L, K = bk.SampleKernel(indKernel, XForKernel, D=1, tol=1e-6, retChol=True)
 
         samples4 = KbranchParam.SampleKernel(XForKernel, b=Bvalues)

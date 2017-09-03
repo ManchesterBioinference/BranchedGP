@@ -1,9 +1,9 @@
 # coding: utf-8
-import GPflow
+import gpflow
 import numpy as np
 import tensorflow as tf
 from . import assigngp_dense
-from GPflow import settings
+from gpflow import settings
 float_type = settings.dtypes.float_type
 
 
@@ -32,7 +32,7 @@ class AssignGPSparse(assigngp_dense.AssignGP):
         assigngp_dense.AssignGP.__init__(self, t, XExpanded, Y, kern, indices, b, fDebug=fDebug,
                                          phiInitial=phiInitial, phiPrior=phiPrior)
         # Do not treat inducing points as parameters because they should always be fixed.
-        self.ZExpanded = GPflow.param.DataHolder(ZExpanded)  # inducing points for sparse GP. Same as XExpanded
+        self.ZExpanded = gpflow.param.DataHolder(ZExpanded)  # inducing points for sparse GP. Same as XExpanded
         assert ZExpanded.shape[1] == XExpanded.shape[1]
 
     def build_likelihood(self):

@@ -1,11 +1,11 @@
 ''' Module to replace branch_kern with parameterised version'''
 from . import VBHelperFunctions
-import GPflow
-from GPflow.param import DataHolder
+import gpflow
+from gpflow.param import DataHolder
 import tensorflow as tf
 import numpy as np
 from matplotlib import pyplot as plt
-from GPflow import settings
+from gpflow import settings
 float_type = settings.dtypes.float_type
 
 
@@ -58,12 +58,12 @@ def GetFunctionIndexSample(Xin):
     return XSample
 
 
-class BranchKernelParam(GPflow.kernels.Kern):
+class BranchKernelParam(gpflow.kernels.Kern):
 
     def __init__(self, base_kern, branchPtTensor, b, fDebug=False):
         ''' branchPtTensor is tensor of branch points of size F X F X B where F the number of
         functions and B the number of branching points '''
-        GPflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
+        gpflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
         self.kern = base_kern
         self.fm = branchPtTensor
         self.fDebug = fDebug
@@ -164,10 +164,10 @@ class BranchKernelParam(GPflow.kernels.Kern):
         return tf.diag_part(self.kern.K(X))  # diagonal is just single point no branch point relevant
 
 
-class IndKern(GPflow.kernels.Kern):
+class IndKern(gpflow.kernels.Kern):
     ''' an independent output kernel '''
     def __init__(self, base_kern):
-        GPflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
+        gpflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
         self.kern = base_kern
 
     def K(self, X, Y=None):

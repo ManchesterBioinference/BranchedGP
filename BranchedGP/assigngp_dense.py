@@ -1,16 +1,16 @@
 # coding: utf-8
-import GPflow
+import gpflow
 import numpy as np
 import tensorflow as tf
 from . import pZ_construction_singleBP
-from GPflow.param import AutoFlow
-from GPflow.param import DataHolder
-from GPflow import settings
+from gpflow.param import AutoFlow
+from gpflow.param import DataHolder
+from gpflow import settings
 float_type = settings.dtypes.float_type
 int_type = settings.dtypes.int_type
 np_float_type = np.float32 if float_type is tf.float32 else np.float64
 
-class AssignGP(GPflow.model.GPModel):
+class AssignGP(gpflow.model.GPModel):
     """
     Gaussian Process regression, but where the index to which the data are
     assigned is unknown.
@@ -32,15 +32,15 @@ class AssignGP(GPflow.model.GPModel):
     """
 
     def __init__(self, t, XExpanded, Y, kern, indices, b, phiPrior=None, phiInitial=None, fDebug=False, KConst=None):
-        GPflow.model.GPModel.__init__(self, XExpanded, Y, kern,
-                                      likelihood=GPflow.likelihoods.Gaussian(),
-                                      mean_function=GPflow.mean_functions.Zero())
+        gpflow.model.GPModel.__init__(self, XExpanded, Y, kern,
+                                      likelihood=gpflow.likelihoods.Gaussian(),
+                                      mean_function=gpflow.mean_functions.Zero())
         assert len(indices) == t.size, 'indices must be size N'
         assert len(t.shape) == 1, 'pseudotime should be 1D'
         self.N = t.shape[0]
         self.t = t.astype(np_float_type) # could be DataHolder? advantages
         self.indices = indices
-        self.logPhi = GPflow.param.Param(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions
+        self.logPhi = gpflow.param.Param(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions
         if(phiInitial is None):
             phiInitial = np.ones((self.N, 2))*0.5  # dont know anything
             phiInitial[:, 0] = np.random.rand(self.N)
@@ -58,17 +58,17 @@ class AssignGP(GPflow.model.GPModel):
 
     def UpdateBranchingPoint(self, b, phiInitial, prior=None):
         ''' Function to update branching point and optionally reset initial conditions for variational phi'''
-        assert isinstance(self.pZ, GPflow.param.DataHolder), 'Must have DataHolder'
+        assert isinstance(self.pZ, gpflow.param.DataHolder), 'Must have DataHolder'
         assert isinstance(b, np.ndarray)
         assert b.size == 1, 'Must have scalar branching point'
         self.b = b.astype(np_float_type)  # remember branching value
         self.kern.branchkernelparam.Bv = b
-        assert isinstance(self.kern.branchkernelparam.Bv, GPflow.param.DataHolder)
+        assert isinstance(self.kern.branchkernelparam.Bv, gpflow.param.DataHolder)
         assert self.logPhi.fixed is False, 'Phi should not be constant when changing branching location'
         if prior is not None:
             self.eZ0 = pZ_construction_singleBP.expand_pZ0Zeros(prior)
         self.pZ = pZ_construction_singleBP.expand_pZ0PureNumpyZeros(self.eZ0, b, self.t)
-        assert isinstance(self.pZ, GPflow.param.DataHolder), 'Must have DataHolder'
+        assert isinstance(self.pZ, gpflow.param.DataHolder), 'Must have DataHolder'
         self.InitialiseVariationalPhi(phiInitial)
 
     def InitialiseVariationalPhi(self, phiInitialIn):
@@ -119,7 +119,7 @@ class AssignGP(GPflow.model.GPModel):
         if(self.fDebug):
             print('assigngp_dense intercepting optimize call to check model consistency')
         assert self.b == self.kern.branchkernelparam.Bv.value, 'Need to call UpdateBranchingPoint'
-        return GPflow.model.GPModel.optimize(self, **kw)
+        return gpflow.model.GPModel.optimize(self, **kw)
 
     def objectiveFun(self):
         ''' Objective function to minimize - log likelihood -log prior.

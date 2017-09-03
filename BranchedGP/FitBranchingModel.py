@@ -4,7 +4,7 @@ from . import BranchingTree as bt
 from . import branch_kernParamGPflow as bk
 from . import assigngp_denseSparse
 from . import assigngp_dense
-import GPflow
+import gpflow
 import traceback
 import sys
 
@@ -45,7 +45,7 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
     tree = bt.BinaryBranchingTree(0, 1, fDebug=False)
     tree.add(None, 1, np.ones((1, 1)) * ptb)  # B can be anything here
     (fm, _) = tree.GetFunctionBranchTensor()
-    kb = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm, b=np.zeros((1, 1))) + GPflow.kernels.White(1)
+    kb = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm, b=np.zeros((1, 1))) + gpflow.kernels.White(1)
     kb.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
     kb.white.variance.fixed = True  # jitter for numerics
     if(M == 0):
@@ -72,9 +72,9 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
     else:
         if fDebug:
             print('Adding prior logistic on length scale to avoid numerical problems')
-        m.kern.branchkernelparam.kern.lengthscales.prior = GPflow.priors.Gaussian(2, .1)
-        m.kern.branchkernelparam.kern.variance.prior = GPflow.priors.Gaussian(3, 1)
-        m.likelihood.variance.prior = GPflow.priors.Gaussian(0.1, .1)
+        m.kern.branchkernelparam.kern.lengthscales.prior = gpflow.priors.Gaussian(2, .1)
+        m.kern.branchkernelparam.kern.variance.prior = gpflow.priors.Gaussian(3, 1)
+        m.likelihood.variance.prior = gpflow.priors.Gaussian(0.1, .1)
 
     # optimization
     ll = np.zeros(len(bConsider))

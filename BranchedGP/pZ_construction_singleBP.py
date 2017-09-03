@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
-import GPflow
-float_type = GPflow.settings.dtypes.float_type
+import gpflow
+float_type = gpflow.settings.dtypes.float_type
 
 
 def expand_pZ0Zeros(pZ0, epsilon=1e-6):

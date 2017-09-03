@@ -1,5 +1,5 @@
 # Generic libraries
-import GPflow
+import gpflow
 import numpy as np
 import tensorflow as tf
 import unittest
@@ -44,17 +44,17 @@ class TestKL(unittest.TestCase):
 
         # Look at kernels
         fDebug=True
-        Kbranch1 = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm1, b=np.ones((1, 1)) * ptb, fDebug=fDebug)
+        Kbranch1 = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm1, b=np.ones((1, 1)) * ptb, fDebug=fDebug)
         K1 = Kbranch1.compute_K(XExpanded, XExpanded)
 
-        Kbranch2 = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm1, b=np.ones((1, 1)) * 0.20, fDebug=fDebug)
+        Kbranch2 = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm1, b=np.ones((1, 1)) * 0.20, fDebug=fDebug)
         K2 = Kbranch2.compute_K(XExpanded, XExpanded)
 
-        Kbranch3 = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm1, b=np.ones((1, 1)) * 0.22, fDebug=fDebug)
+        Kbranch3 = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm1, b=np.ones((1, 1)) * 0.22, fDebug=fDebug)
         K3 = Kbranch3.compute_K(XExpanded, XExpanded)
 
         # Look at model
-        kb = bk.BranchKernelParam(GPflow.kernels.Matern32(1), fm1, b=np.zeros((1, 1))) + GPflow.kernels.White(1)
+        kb = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm1, b=np.zeros((1, 1))) + gpflow.kernels.White(1)
         kb.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
         kb.white.variance.fixed = True  # jitter for numerics
         # m = assigngp_dense.AssignGP(t, XExpanded, Y, kb, indices, np.ones((1, 1)), phiInitial=phiInitial, phiPrior=phiPrior)
