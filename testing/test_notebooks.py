@@ -28,7 +28,7 @@ class TestNotebooks(unittest.TestCase):
     def test_all_notebooks(self):
         ''' Test all notebooks except blacklist. Blacklisted notebooks take too long.'''
         print('testing all notebooks')
-        blacklist = []
+        blacklist = ['Hematopoiesis.ipynb']
         pythonkernel = 'python'+str(sys.version_info[0])
         this_dir = os.path.dirname(__file__)
         nbpath = os.path.join(this_dir, '../notebooks/')
@@ -37,6 +37,7 @@ class TestNotebooks(unittest.TestCase):
         lfiles = glob.glob(nbpath+"*.ipynb")
         for notebook_filename in lfiles:
             if(os.path.basename(notebook_filename) not in blacklist):
+                print('>> Testing notebook', notebook_filename)
                 t = time.time()
                 self._execNotebook(ep, notebook_filename, nbpath)
                 print(notebook_filename, 'took %g seconds.' % (time.time()-t))
