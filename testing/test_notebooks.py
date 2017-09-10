@@ -28,7 +28,7 @@ class TestNotebooks(unittest.TestCase):
     def test_all_notebooks(self):
         ''' Test all notebooks except blacklist. Blacklisted notebooks take too long.'''
         print('testing all notebooks')
-        blacklist = ['Hematopoiesis.ipynb']
+        blacklist = ['Hematopoiesis.ipynb', 'SamplingFromTheModel.ipynb']
         pythonkernel = 'python'+str(sys.version_info[0])
         this_dir = os.path.dirname(__file__)
         nbpath = os.path.join(this_dir, '../notebooks/')
