@@ -9,9 +9,11 @@ Alexis Boukouvalas, James Hensman, Magnus Rattray, bioRxiv, 2017.](http://www.bi
 [![Build Status](https://travis-ci.org/ManchesterBioinference/BranchedGP.svg?branch=master)](https://travis-ci.org/ManchesterBioinference/BranchedGP)
 [![codecov](https://codecov.io/gh/ManchesterBioinference/BranchedGP/branch/master/graph/badge.svg)](https://codecov.io/gh/ManchesterBioinference/BranchedGP)
 
-![BGP performance](images/VAMP5_BGPAssignmentProbability.png?raw=true "Branching probabilities")
-
-<img src="images/VAMP5_BGPAssignmentProbability.png" width="200" height="200" />
+# Example
+An example of what the model can provide is shown below.
+   1. The posterior cell assignment is shown in top subpanel: each cell is assigned a probability of belonging to a  branch.
+   1. In the bottom subpanel the posterior branching time is shown: the probability of branching at a particular pseudotime.
+<img src="images/VAMP5_BGPAssignmentProbability.png" width="400" height="400" align="middle"/>
 
 # Install
 If you have any problems with installation see the script at the bottom of the page for a detailed setup guide from a new python environment. 
