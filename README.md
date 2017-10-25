@@ -9,6 +9,10 @@ Alexis Boukouvalas, James Hensman, Magnus Rattray, bioRxiv, 2017.](http://www.bi
 [![Build Status](https://travis-ci.org/ManchesterBioinference/BranchedGP.svg?branch=master)](https://travis-ci.org/ManchesterBioinference/BranchedGP)
 [![codecov](https://codecov.io/gh/ManchesterBioinference/BranchedGP/branch/master/graph/badge.svg)](https://codecov.io/gh/ManchesterBioinference/BranchedGP)
 
+![BGP performance](images/VAMP5_BGPAssignmentProbability.png?raw=true "Branching probabilities")
+
+<img src="images/VAMP5_BGPAssignmentProbability.png" width="200" height="200" />
+
 # Install
 If you have any problems with installation see the script at the bottom of the page for a detailed setup guide from a new python environment. 
 
@@ -58,7 +62,11 @@ jupyter notebook
 | SamplingFromTheModel| Sampling from the BGP model. |
 
 
+# Comparison to monocle-BEAM
 
+In the paper we compare the BGP model to the BEAM method proposed
+in monocle 2. In ```monocle/runMonocle.R``` the R script for performing
+Monocle and BEAM on the hematopoiesis data is included.
 # List of python library files
 | File <br> name | Description | 
 | --- | --- | 
