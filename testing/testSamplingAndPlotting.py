@@ -8,6 +8,7 @@ from BranchedGP import BranchingTree as bt
 from BranchedGP import branch_kernParamGPflow as bk
 import unittest
 from BranchedGP import FitBranchingModel
+import tensorflow as tf
 
 class TestSamplingAndPlotting(unittest.TestCase):
     def test(self):
@@ -36,7 +37,9 @@ class TestSamplingAndPlotting(unittest.TestCase):
         d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
                                        maxiter=20, priorConfidence=0.80, M=10)
         bmode = BgridSearch[np.argmax(d['loglik'])]
-        assert bmode == branchingPoint, bmode
+        print('tensorflow version', tf.__version__, 'GPflow version', gpflow.__version__)
+        print('TestSamplingAndPlotting:: Log likelihood', d['loglik'], 'BgridSearch', BgridSearch)
+        assert bmode == branchingPoint, 'Identified mode %f' % bmode
         # Plot model
         pred = d['prediction']  # prediction object from GP
         _=bplot.plotBranchModel(bmode, XForKernel[:, 0], samples, pred['xtest'], pred['mu'], pred['var'],
