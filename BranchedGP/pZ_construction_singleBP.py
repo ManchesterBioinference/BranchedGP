@@ -1,8 +1,12 @@
 import numpy as np
 import tensorflow as tf
 import gpflow
-float_type = gpflow.settings.dtypes.float_type
-
+from gpflow.params import DataHolder
+from gpflow.params import Parameter
+from gpflow.decors import params_as_tensors, autoflow
+from gpflow.mean_functions import Zero
+from gpflow.decors import autoflow
+from gpflow import settings
 
 def expand_pZ0Zeros(pZ0, epsilon=1e-6):
     assert pZ0.shape[1] == 2, 'Should have exactly two cols got %g ' % pZ0.shape[1]
@@ -52,13 +56,13 @@ def make_matrix(X, BP, eZ0, epsilon=1e-6):
         n = tf.cast(tf.greater(x, BP), tf.int32) + 1
         # n == 1 when x <= BP
         # n == 2 when x > BP
-        row = [tf.zeros(count + n - 1, dtype=float_type) + epsilon]  # all entries until count are zero
+        row = [tf.zeros(count + n - 1, dtype=settings.tf_float) + epsilon]  # all entries until count are zero
         # add 1's for possible entries
-        probs = tf.ones(n, dtype=float_type)
+        probs = tf.ones(n, dtype=settings.tf_float)
         row.append(probs)
-        row.append(tf.zeros(2 - 2 * (n - 1), dtype=float_type) + epsilon)  # append zero
+        row.append(tf.zeros(2 - 2 * (n - 1), dtype=settings.tf_float) + epsilon)  # append zero
         count += 3
-        row.append(tf.zeros(num_columns - count, dtype=float_type) + epsilon)
+        row.append(tf.zeros(num_columns - count, dtype=settings.tf_float) + epsilon)
         # ensure things are correctly shaped
         row = tf.concat(row, 0, name='singleconcat')
         row = tf.expand_dims(row, 0)
