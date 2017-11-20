@@ -9,8 +9,9 @@ from gpflow.params import Parameter
 from gpflow.mean_functions import Zero
 from gpflow import settings
 from gpflow.decors import params_as_tensors, autoflow
+from gpflow.models.model import GPModel
 
-class AssignGP(gpflow.models.model.GPModel):
+class AssignGP(GPModel):
     """
     Gaussian Process regression, but where the index to which the data are
     assigned is unknown.
@@ -32,7 +33,7 @@ class AssignGP(gpflow.models.model.GPModel):
     """
 
     def __init__(self, t, XExpanded, Y, kern, indices, b, phiPrior=None, phiInitial=None, fDebug=False, KConst=None):
-        gpflow.model.GPModel.__init__(self, XExpanded, Y, kern,
+        GPModel.__init__(self, XExpanded, Y, kern,
                                       likelihood=gpflow.likelihoods.Gaussian(),
                                       mean_function=Zero())
         assert len(indices) == t.size, 'indices must be size N'
@@ -40,7 +41,7 @@ class AssignGP(gpflow.models.model.GPModel):
         self.N = t.shape[0]
         self.t = t.astype(settings.np_float) # could be DataHolder? advantages
         self.indices = indices
-        self.logPhi = gpflow.param.Param(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions
+        self.logPhi = Parameter(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions
         if(phiInitial is None):
             phiInitial = np.ones((self.N, 2))*0.5  # dont know anything
             phiInitial[:, 0] = np.random.rand(self.N)
@@ -64,7 +65,7 @@ class AssignGP(gpflow.models.model.GPModel):
         self.b = b.astype(settings.np_float)  # remember branching value
         self.kern.branchkernelparam.Bv = b
         assert isinstance(self.kern.branchkernelparam.Bv, DataHolder)
-        assert self.logPhi.fixed is False, 'Phi should not be constant when changing branching location'
+        assert self.logPhi.trainable is True, 'Phi should not be constant when changing branching location'
         if prior is not None:
             self.eZ0 = pZ_construction_singleBP.expand_pZ0Zeros(prior)
         self.pZ = pZ_construction_singleBP.expand_pZ0PureNumpyZeros(self.eZ0, b, self.t)
@@ -119,7 +120,7 @@ class AssignGP(gpflow.models.model.GPModel):
         if(self.fDebug):
             print('assigngp_dense intercepting optimize call to check model consistency')
         assert self.b == self.kern.branchkernelparam.Bv.value, 'Need to call UpdateBranchingPoint'
-        return gpflow.model.GPModel.optimize(self, **kw)
+        return GPModel.optimize(self, **kw)  # TODO: Wont work I think UNDONE
 
     def objectiveFun(self):
         ''' Objective function to minimize - log likelihood -log prior.

@@ -47,7 +47,7 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
     (fm, _) = tree.GetFunctionBranchTensor()
     kb = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm, b=np.zeros((1, 1))) + gpflow.kernels.White(1)
     kb.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
-    kb.white.variance.fixed = True  # jitter for numerics
+    kb.white.variance.set_trainable(False)  # jitter for numerics
     if(M == 0):
         m = assigngp_dense.AssignGP(GPt, XExpanded, GPy, kb, indices,
                                                 np.ones((1, 1)) * ptb, phiInitial=phiInitial,
@@ -59,16 +59,16 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
         m = assigngp_denseSparse.AssignGPSparse(GPt, XExpanded, GPy, kb, indices,
                                                 np.ones((1, 1)) * ptb, ZExpanded, phiInitial=phiInitial, phiPrior=phiPrior)
         if fixInducingPoints:
-            m.ZExpanded.fixed = True
+            m.ZExpanded.set_trainable(False)
     # Initialise hyperparameters
     m.likelihood.variance = likvar
     m.kern.branchkernelparam.kern.lengthscales = kerlen
     m.kern.branchkernelparam.kern.variance = kervar
     if(fixHyperparameters):
         print('Fixing hyperparameters')
-        m.kern.branchkernelparam.kern.lengthscales.fixed = True
-        m.likelihood.variance.fixed = True
-        m.kern.branchkernelparam.kern.variance.fixed = True
+        m.kern.branchkernelparam.kern.lengthscales.set_trainable(False)
+        m.likelihood.variance.set_trainable(False)
+        m.kern.branchkernelparam.kern.variance.set_trainable(False)
     else:
         if fDebug:
             print('Adding prior logistic on length scale to avoid numerical problems')

@@ -56,7 +56,7 @@ class TestKL(unittest.TestCase):
         # Look at model
         kb = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm1, b=np.zeros((1, 1))) + gpflow.kernels.White(1)
         kb.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
-        kb.white.variance.fixed = True  # jitter for numerics
+        kb.white.variance.set_trainable(False)  # jitter for numerics
         # m = assigngp_dense.AssignGP(t, XExpanded, Y, kb, indices, np.ones((1, 1)), phiInitial=phiInitial, phiPrior=phiPrior)
         m = assigngp_dense.AssignGP(t, XExpanded, Y, kb, indices, np.ones((1, 1)), phiInitial=phiInitial, phiPrior=phiPrior, KConst=K1, fDebug=True)
 
