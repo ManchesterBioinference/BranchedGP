@@ -30,7 +30,7 @@ class TestSamplingAndPlotting(unittest.TestCase):
         # Plot the sample
         bk.PlotSample(XForKernel, samples, B=Bvalues)
         # Fit model
-        BgridSearch = [0.1, branchingPoint, 1.1]
+        BgridSearch = [0.001, branchingPoint, 1.1]
         globalBranchingLabels = XForKernel[:, 1]  # use correct labels for tests
         # could add a mistake
         print('Sparse model')
@@ -51,11 +51,6 @@ class TestSamplingAndPlotting(unittest.TestCase):
         print('Try dense model')
         d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
                                        maxiter=20, priorConfidence=0.80, M=0)
-        bmode = BgridSearch[np.argmax(d['loglik'])]
-        assert bmode == branchingPoint, bmode
-        print('Try sparse model with fixed inducing points')
-        d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
-                                       maxiter=20, priorConfidence=0.80, M=20, fixInducingPoints=True)
         bmode = BgridSearch[np.argmax(d['loglik'])]
         assert bmode == branchingPoint, bmode
         print('Try sparse model with fixed hyperparameters')

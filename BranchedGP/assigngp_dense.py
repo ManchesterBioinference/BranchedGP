@@ -111,6 +111,7 @@ class AssignGP(GPModel):
         return phi
 
     @autoflow()
+    @gpflow.params_as_tensors
     def GetPhiExpanded(self):
         ''' Shortcut function to get Phi matrix out.'''
         return tf.nn.softmax(self.logPhi)

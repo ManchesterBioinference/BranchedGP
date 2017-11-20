@@ -26,7 +26,7 @@ pip install tensorflow
 ```
 git clone https://github.com/GPflow/GPflow.git
 cd GPflow    
-python setup.py install
+pip install .
 cd
 ```
     
@@ -83,41 +83,10 @@ Monocle and BEAM on the hematopoiesis data is included.
 # Running in a cluster
 When running BranchingGP in a cluster it may be useful to constrain the number of cores used. To do this insert this code at the beginning of your script.
 ```
-from GPflow import settings
+from gpflow import settings
 settings.session.intra_op_parallelism_threads = NUMCORES
 settings.session.inter_op_parallelism_threads = NUMCORES
 ```
 
-# Python 2.7 Compatibility testing
-This gives a detailed breakdown of all the steps requires. It sets up a conda environment but direct installation is also possible.
-```
-conda create --yes -n condaenv2test python=2.7
-conda install --yes -n condaenv2test pip
-conda install --yes -n condaenv2test scipy
-conda install --yes -n condaenv2test nose
-source activate condaenv2test
-pip install tensorflow
-pip install pandas
-pip install nose-timer
-pip install matplotlib
-pip install nbformat
-pip install nbconvert
-pip install jupyter_client
-mkdir ~/python2test
-cd ~/python2test
-git clone https://github.com/GPflow/GPflow.git
-cd GPflow    
-python setup.py install
-cd ~/python2test
-git clone https://github.com/ManchesterBioinference/BranchedGP
-cd BranchedGP
-python setup.py install
-cd ~/python2test
-cd BranchedGP/testing
-conda install --yes nb_conda
-conda install --yes ipykernel
-nosetests --pdb-failures --pdb --with-timer
-source deactivate
-```
 
 
