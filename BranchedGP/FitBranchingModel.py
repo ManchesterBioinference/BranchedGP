@@ -84,7 +84,7 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
     for ib, b in enumerate(bConsider):
         m.UpdateBranchingPoint(np.ones((1, 1)) * b, phiInitial)
         try:
-            m.optimize(disp=fDebug, maxiter=maxiter)
+            gpflow.train.ScipyOptimizer().minimize(m, maxiter=maxiter)
             # remember winning hyperparameter
             hyps.append({'likvar':  m.likelihood.variance.value, 'kerlen':  m.kern.branchkernelparam.kern.lengthscales.value,
                     'kervar': m.kern.branchkernelparam.kern.variance.value})

@@ -115,13 +115,6 @@ class AssignGP(GPModel):
         ''' Shortcut function to get Phi matrix out.'''
         return tf.nn.softmax(self.logPhi)
 
-    def optimize(self, **kw):
-        ''' Catch optimize call to make sure we have correct Phi '''
-        if(self.fDebug):
-            print('assigngp_dense intercepting optimize call to check model consistency')
-        assert self.b == self.kern.branchkernelparam.Bv.value, 'Need to call UpdateBranchingPoint'
-        return GPModel.optimize(self, **kw)  # TODO: Wont work I think UNDONE
-
     def objectiveFun(self):
         ''' Objective function to minimize - log likelihood -log prior.
         Unlike _objective, no gradient calculation is performed.'''
