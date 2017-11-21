@@ -30,29 +30,27 @@ class TestSamplingAndPlotting(unittest.TestCase):
         # Plot the sample
         bk.PlotSample(XForKernel, samples, B=Bvalues)
         # Fit model
-        BgridSearch = [0.001, branchingPoint, 1.1]
+        BgridSearch = [0.0001, branchingPoint, 1.1]
         globalBranchingLabels = XForKernel[:, 1]  # use correct labels for tests
         # could add a mistake
         print('Sparse model')
         d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
-                                       maxiter=20, priorConfidence=0.80, M=10)
+                                       maxiter=40, priorConfidence=0.80, M=10)
         bmode = BgridSearch[np.argmax(d['loglik'])]
         print('tensorflow version', tf.__version__, 'GPflow version', gpflow.__version__)
-        print('TestSamplingAndPlotting:: Log likelihood', d['loglik'], 'BgridSearch', BgridSearch)
-        assert bmode == branchingPoint, 'Identified mode %f' % bmode
+        stre = 'TestSamplingAndPlotting:: Log likelihood %.2f BgridSearch=%s' % (d['loglik'], str(BgridSearch))
+        assert bmode == branchingPoint, 'mode=%.3f, %s' % (bmode, stre)
         # Plot model
         pred = d['prediction']  # prediction object from GP
         _=bplot.plotBranchModel(bmode, XForKernel[:, 0], samples, pred['xtest'], pred['mu'], pred['var'],
                                 d['Phi'], fPlotPhi=True, fColorBar=True, fPlotVar = True)
 
-
         _=bplot.PlotBGPFit(samples, XForKernel[:, 0], BgridSearch, d)
-
-        print('Try dense model')
         d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
-                                       maxiter=20, priorConfidence=0.80, M=0)
+                                       maxiter=40, priorConfidence=0.80, M=0)
         bmode = BgridSearch[np.argmax(d['loglik'])]
-        assert bmode == branchingPoint, bmode
+        stre = 'TestSamplingAndPlotting:: Log likelihood %.2f BgridSearch=%s' % (d['loglik'], str(BgridSearch))
+        assert bmode == branchingPoint, 'mode=%.3f, %s' % (bmode, stre)
         print('Try sparse model with fixed hyperparameters')
         d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
                                        maxiter=20, priorConfidence=0.80, M=15,
