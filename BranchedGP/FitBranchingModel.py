@@ -10,7 +10,7 @@ import sys
 
 def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
              M=10, likvar=1., kerlen=2., kervar=5., fDebug=False, maxiter=100,
-             fPredict=True, fixHyperparameters=False, fixInducingPoints=False):
+             fPredict=True, fixHyperparameters=False):
     """
     Fit BGP model
     :param bConsider: list of candidate branching points
@@ -26,7 +26,6 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
     :param maxiter: maximum number of iterations for optimisation
     :param fPredict: compute predictive mean and variance
     :param fixHyperparameters: should kernel hyperparameters be kept fixed or optimised?
-    :param fixInducingPoints: should inducing points be fixed or optimised?
     :return: dictionary of log likelihood, GPflow model, Phi matrix, predictive set of points,
     mean and variance, hyperparameter values, posterior on branching time
     """
@@ -45,36 +44,36 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
     tree = bt.BinaryBranchingTree(0, 1, fDebug=False)
     tree.add(None, 1, np.ones((1, 1)) * ptb)  # B can be anything here
     (fm, _) = tree.GetFunctionBranchTensor()
-    kb = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm, b=np.zeros((1, 1))) + gpflow.kernels.White(1)
-    kb.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
-    kb.white.variance.fixed = True  # jitter for numerics
-    if(M == 0):
-        m = assigngp_dense.AssignGP(GPt, XExpanded, GPy, kb, indices,
-                                                np.ones((1, 1)) * ptb, phiInitial=phiInitial,
-                                                phiPrior=phiPrior)
-    else:
-        ZExpanded = np.ones((M, 2))
-        ZExpanded[:, 0] = np.linspace(0, 1, M, endpoint=False)
-        ZExpanded[:, 1] = np.array([i for j in range(M) for i in range(1, 4)])[:M]
-        m = assigngp_denseSparse.AssignGPSparse(GPt, XExpanded, GPy, kb, indices,
-                                                np.ones((1, 1)) * ptb, ZExpanded, phiInitial=phiInitial, phiPrior=phiPrior)
-        if fixInducingPoints:
-            m.ZExpanded.fixed = True
-    # Initialise hyperparameters
-    m.likelihood.variance = likvar
-    m.kern.branchkernelparam.kern.lengthscales = kerlen
-    m.kern.branchkernelparam.kern.variance = kervar
-    if(fixHyperparameters):
-        print('Fixing hyperparameters')
-        m.kern.branchkernelparam.kern.lengthscales.fixed = True
-        m.likelihood.variance.fixed = True
-        m.kern.branchkernelparam.kern.variance.fixed = True
-    else:
-        if fDebug:
-            print('Adding prior logistic on length scale to avoid numerical problems')
-        m.kern.branchkernelparam.kern.lengthscales.prior = gpflow.priors.Gaussian(2, .1)
-        m.kern.branchkernelparam.kern.variance.prior = gpflow.priors.Gaussian(3, 1)
-        m.likelihood.variance.prior = gpflow.priors.Gaussian(0.1, .1)
+    with gpflow.defer_build():
+        kb = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm, b=np.zeros((1, 1))) + gpflow.kernels.White(1)
+        kb.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
+        kb.white.variance.set_trainable(False)  # jitter for numerics
+        if(M == 0):
+            m = assigngp_dense.AssignGP(GPt, XExpanded, GPy, kb, indices,
+                                                    np.ones((1, 1)) * ptb, phiInitial=phiInitial,
+                                                    phiPrior=phiPrior)
+        else:
+            ZExpanded = np.ones((M, 2))
+            ZExpanded[:, 0] = np.linspace(0, 1, M, endpoint=False)
+            ZExpanded[:, 1] = np.array([i for j in range(M) for i in range(1, 4)])[:M]
+            m = assigngp_denseSparse.AssignGPSparse(GPt, XExpanded, GPy, kb, indices,
+                                                    np.ones((1, 1)) * ptb, ZExpanded, phiInitial=phiInitial, phiPrior=phiPrior)
+        # Initialise hyperparameters
+        m.likelihood.variance = likvar
+        m.kern.branchkernelparam.kern.lengthscales = kerlen
+        m.kern.branchkernelparam.kern.variance = kervar
+        if(fixHyperparameters):
+            print('Fixing hyperparameters')
+            m.kern.branchkernelparam.kern.lengthscales.set_trainable(False)
+            m.likelihood.variance.set_trainable(False)
+            m.kern.branchkernelparam.kern.variance.set_trainable(False)
+        else:
+            if fDebug:
+                print('Adding prior logistic on length scale to avoid numerical problems')
+            m.kern.branchkernelparam.kern.lengthscales.prior = gpflow.priors.Gaussian(2, .1)
+            m.kern.branchkernelparam.kern.variance.prior = gpflow.priors.Gaussian(3, 1)
+            m.likelihood.variance.prior = gpflow.priors.Gaussian(0.1, .1)
+        m.compile()
 
     # optimization
     ll = np.zeros(len(bConsider))
@@ -84,7 +83,7 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
     for ib, b in enumerate(bConsider):
         m.UpdateBranchingPoint(np.ones((1, 1)) * b, phiInitial)
         try:
-            m.optimize(disp=fDebug, maxiter=maxiter)
+            gpflow.train.ScipyOptimizer().minimize(m, maxiter=maxiter)
             # remember winning hyperparameter
             hyps.append({'likvar':  m.likelihood.variance.value, 'kerlen':  m.kern.branchkernelparam.kern.lengthscales.value,
                     'kervar': m.kern.branchkernelparam.kern.variance.value})

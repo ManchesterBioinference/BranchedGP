@@ -1,13 +1,15 @@
 ''' Module to replace branch_kern with parameterised version'''
 from . import VBHelperFunctions
 import gpflow
-from gpflow.param import DataHolder
 import tensorflow as tf
 import numpy as np
 from matplotlib import pyplot as plt
+from gpflow.params import DataHolder
+from gpflow.params import Parameter
+from gpflow.mean_functions import Zero
+from gpflow.decors import autoflow
 from gpflow import settings
-float_type = settings.dtypes.float_type
-
+from gpflow.decors import params_as_tensors, autoflow
 
 def PlotSample(X, samples, B=None, lw=5., fs=20, figsizeIn=(5, 5)):
     D = samples.shape[1]  # number of outputs
@@ -85,6 +87,7 @@ class BranchKernelParam(gpflow.kernels.Kern):
         assert np.all(XTree[XTree[:, 0] <= b, 1] == 1), 'Before branch point trunk is function 1.'
         return SampleKernel(self, XTree, tol=tol)
 
+    @params_as_tensors
     def K(self, X, Y=None):
         if Y is None:
             Y = X  # hack to avoid duplicating code below
@@ -143,7 +146,7 @@ class BranchKernelParam(gpflow.kernels.Kern):
                             Br = self.Bv
                         Bs = ((tf.concat([tf.slice(Br, [i - 1, 0], [1, 1]) for i in bint], 0)))
 
-                        kbb = self.kern.K(Bs) + tf.diag(tf.ones(tf.shape(Bs)[:1], dtype=float_type)) * settings.numerics.jitter_level
+                        kbb = self.kern.K(Bs) + tf.diag(tf.ones(tf.shape(Bs)[:1], dtype=settings.tf_float)) * settings.numerics.jitter_level
                         if(self.fDebug):
                             kbb = tf.Print(kbb, [tf.shape(kbb), kbb], message='kbb=', name='kbb', summarize=10)
                             kbb = tf.Print(kbb, [self.kern.lengthscales], message='lenscales=', name='lenscales', summarize=10)
@@ -160,6 +163,7 @@ class BranchKernelParam(gpflow.kernels.Kern):
                         K_s = tf.where(t12F, K_crosss, K_s, name='selectIndex')
         return K_s
 
+    @params_as_tensors
     def Kdiag(self, X):
         return tf.diag_part(self.kern.K(X))  # diagonal is just single point no branch point relevant
 
@@ -170,6 +174,7 @@ class IndKern(gpflow.kernels.Kern):
         gpflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
         self.kern = base_kern
 
+    @params_as_tensors
     def K(self, X, Y=None):
         if Y is None:
             Y = X  # hack to avoid duplicating code below
@@ -187,6 +192,7 @@ class IndKern(gpflow.kernels.Kern):
         K_s = tf.where(same_functions, Ktt, tf.zeros_like(Ktt))
         return K_s
 
+    @params_as_tensors
     def Kdiag(self, X):
         return tf.diag_part(self.kern.K(X))
 

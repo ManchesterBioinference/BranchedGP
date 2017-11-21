@@ -56,7 +56,7 @@ class TestSparseVariational(unittest.TestCase):
         Kbranch = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm, b=trueB.copy()) + gpflow.kernels.White(1)
         Kbranch.branchkernelparam.kern.variance = 1
         Kbranch.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
-        Kbranch.white.variance.fixed = True  # jitter for numerics
+        Kbranch.white.variance.set_trainable(False)  # jitter for numerics
         print('Kbranch matrix', Kbranch.compute_K(XExpanded, XExpanded))
         print('Branching K free parameters', Kbranch.branchkernelparam)
         print('Branching K branching parameter', Kbranch.branchkernelparam.Bv.value)

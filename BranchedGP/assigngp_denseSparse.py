@@ -4,7 +4,8 @@ import numpy as np
 import tensorflow as tf
 from . import assigngp_dense
 from gpflow import settings
-float_type = settings.dtypes.float_type
+from gpflow.params import DataHolder
+from gpflow.decors import params_as_tensors, autoflow
 
 
 class AssignGPSparse(assigngp_dense.AssignGP):
@@ -32,15 +33,16 @@ class AssignGPSparse(assigngp_dense.AssignGP):
         assigngp_dense.AssignGP.__init__(self, t, XExpanded, Y, kern, indices, b, fDebug=fDebug,
                                          phiInitial=phiInitial, phiPrior=phiPrior)
         # Do not treat inducing points as parameters because they should always be fixed.
-        self.ZExpanded = gpflow.param.DataHolder(ZExpanded)  # inducing points for sparse GP. Same as XExpanded
+        self.ZExpanded = DataHolder(ZExpanded)  # inducing points for sparse GP. Same as XExpanded
         assert ZExpanded.shape[1] == XExpanded.shape[1]
 
-    def build_likelihood(self):
+    @params_as_tensors
+    def _build_likelihood(self):
         if self.fDebug:
             print('assignegp_denseSparse compiling model (build_likelihood)')
-        N = tf.cast(tf.shape(self.Y)[0], dtype=float_type)
+        N = tf.cast(tf.shape(self.Y)[0], dtype=settings.tf_float)
         M = tf.shape(self.ZExpanded)[0]
-        D = tf.cast(tf.shape(self.Y)[1], dtype=float_type)
+        D = tf.cast(tf.shape(self.Y)[1], dtype=settings.tf_float)
 
         Phi = tf.nn.softmax(self.logPhi)
         # try squashing Phi to avoid numerical errors
@@ -48,7 +50,7 @@ class AssignGPSparse(assigngp_dense.AssignGP):
 
         sigma2 = self.likelihood.variance
         sigma = tf.sqrt(self.likelihood.variance)
-        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=float_type) * settings.numerics.jitter_level
+        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=settings.tf_float) * settings.numerics.jitter_level
         Kuf = self.kern.K(self.ZExpanded, self.X)
 
         Kdiag = self.kern.Kdiag(self.X)
@@ -56,7 +58,7 @@ class AssignGPSparse(assigngp_dense.AssignGP):
         A = tf.reduce_sum(Phi, 0)
         LiKuf = tf.matrix_triangular_solve(L, Kuf)
         W = LiKuf * tf.sqrt(A) / sigma
-        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=float_type)
+        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.tf_float)
         traceTerm = -0.5 * tf.reduce_sum(Kdiag * A) / sigma2 + 0.5 * tf.reduce_sum(tf.square(W))
         R = tf.cholesky(P)
         tmp = tf.matmul(LiKuf, tf.matmul(tf.transpose(Phi), self.Y))
@@ -73,7 +75,8 @@ class AssignGPSparse(assigngp_dense.AssignGP):
 
         return self.bound
 
-    def build_predict(self, Xnew, full_cov=False):
+    @params_as_tensors
+    def _build_predict(self, Xnew, full_cov=False):
         M = tf.shape(self.ZExpanded)[0]
 
         Phi = tf.nn.softmax(self.logPhi)
@@ -82,14 +85,14 @@ class AssignGPSparse(assigngp_dense.AssignGP):
 
         sigma2 = self.likelihood.variance
         sigma = tf.sqrt(sigma2)
-        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=float_type) * settings.numerics.jitter_level
+        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=settings.tf_float) * settings.numerics.jitter_level
         Kuf = self.kern.K(self.ZExpanded, self.X)
         L = tf.cholesky(Kuu)
 
         p = tf.reduce_sum(Phi, 0)
         LiKuf = tf.matrix_triangular_solve(L, Kuf)
         W = LiKuf * tf.sqrt(p) / sigma
-        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=float_type)
+        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.tf_float)
         R = tf.cholesky(P)
         tmp = tf.matmul(LiKuf, tf.matmul(tf.transpose(Phi), self.Y))
         c = tf.matrix_triangular_solve(R, tmp, lower=True) / sigma2

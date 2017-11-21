@@ -6,11 +6,9 @@ import unittest
 from BranchedGP import BranchingTree as bt
 from BranchedGP import branch_kernParamGPflow as bk
 from gpflow import settings
-float_type = settings.dtypes.float_type
 
 class TestKernelSampling(unittest.TestCase):
     def test(self):
-        # assert float_type == tf.float32, 'must be set in gpflowrc'
         N = 3  # how many points per function
         tree = bt.BinaryBranchingTree(0, 10, fDebug=False)  # set to true to print debug messages
         tree.add(None, 1, 0.5)  # single branching point

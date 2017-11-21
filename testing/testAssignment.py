@@ -45,7 +45,7 @@ class TestSparseVariational(unittest.TestCase):
         # Create model
         Kbranch = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm, b=trueB.copy()) + gpflow.kernels.White(1)
         Kbranch.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
-        Kbranch.white.variance.fixed = True  # jitter for numerics
+        Kbranch.white.variance.set_trainable(False)  # jitter for numerics
         # Create model
         phiPrior = np.ones((N, 2))*0.5  # dont know anything
         phiInitial = np.ones((N, 2))*0.5  # dont know anything
@@ -54,11 +54,11 @@ class TestSparseVariational(unittest.TestCase):
         m = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices,
                                     Kbranch.branchkernelparam.Bv.value, phiPrior=phiPrior, phiInitial=phiInitial)
         InitKernParams(m)
-        m.likelihood.variance.fixed = True
+        m.likelihood.variance.set_trainable(False)
         print('Model before initialisation\n', m, '\n===========================')
-        m.optimize(disp=0, maxiter=100)
-        m.likelihood.variance.fixed = False
-        m.optimize(disp=0, maxiter=100)
+        gpflow.train.ScipyOptimizer().minimize(m, maxiter=100)
+        m.likelihood.variance.set_trainable(True)
+        gpflow.train.ScipyOptimizer().minimize(m, maxiter=100)
         print('Model after initialisation\n', m, '\n===========================')
         ttestl, mul, varl = VBHelperFunctions.predictBranchingModel(m)
         _, _, covl = VBHelperFunctions.predictBranchingModel(m, full_cov=True)

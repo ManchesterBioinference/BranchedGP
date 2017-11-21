@@ -3,14 +3,15 @@ import gpflow
 import numpy as np
 import tensorflow as tf
 from . import pZ_construction_singleBP
-from gpflow.param import AutoFlow
-from gpflow.param import DataHolder
-from gpflow import settings
-float_type = settings.dtypes.float_type
-int_type = settings.dtypes.int_type
-np_float_type = np.float32 if float_type is tf.float32 else np.float64
 
-class AssignGP(gpflow.model.GPModel):
+from gpflow.params import DataHolder
+from gpflow.params import Parameter
+from gpflow.mean_functions import Zero
+from gpflow import settings
+from gpflow.decors import params_as_tensors, autoflow
+from gpflow.models.model import GPModel
+
+class AssignGP(GPModel):
     """
     Gaussian Process regression, but where the index to which the data are
     assigned is unknown.
@@ -32,15 +33,15 @@ class AssignGP(gpflow.model.GPModel):
     """
 
     def __init__(self, t, XExpanded, Y, kern, indices, b, phiPrior=None, phiInitial=None, fDebug=False, KConst=None):
-        gpflow.model.GPModel.__init__(self, XExpanded, Y, kern,
+        GPModel.__init__(self, XExpanded, Y, kern,
                                       likelihood=gpflow.likelihoods.Gaussian(),
-                                      mean_function=gpflow.mean_functions.Zero())
+                                      mean_function=Zero())
         assert len(indices) == t.size, 'indices must be size N'
         assert len(t.shape) == 1, 'pseudotime should be 1D'
         self.N = t.shape[0]
-        self.t = t.astype(np_float_type) # could be DataHolder? advantages
+        self.t = t.astype(settings.np_float) # could be DataHolder? advantages
         self.indices = indices
-        self.logPhi = gpflow.param.Param(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions
+        self.logPhi = Parameter(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions
         if(phiInitial is None):
             phiInitial = np.ones((self.N, 2))*0.5  # dont know anything
             phiInitial[:, 0] = np.random.rand(self.N)
@@ -58,17 +59,17 @@ class AssignGP(gpflow.model.GPModel):
 
     def UpdateBranchingPoint(self, b, phiInitial, prior=None):
         ''' Function to update branching point and optionally reset initial conditions for variational phi'''
-        assert isinstance(self.pZ, gpflow.param.DataHolder), 'Must have DataHolder'
+        assert isinstance(self.pZ, DataHolder), 'Must have DataHolder'
         assert isinstance(b, np.ndarray)
         assert b.size == 1, 'Must have scalar branching point'
-        self.b = b.astype(np_float_type)  # remember branching value
+        self.b = b.astype(settings.np_float)  # remember branching value
         self.kern.branchkernelparam.Bv = b
-        assert isinstance(self.kern.branchkernelparam.Bv, gpflow.param.DataHolder)
-        assert self.logPhi.fixed is False, 'Phi should not be constant when changing branching location'
+        assert isinstance(self.kern.branchkernelparam.Bv, DataHolder)
+        assert self.logPhi.trainable is True, 'Phi should not be constant when changing branching location'
         if prior is not None:
             self.eZ0 = pZ_construction_singleBP.expand_pZ0Zeros(prior)
         self.pZ = pZ_construction_singleBP.expand_pZ0PureNumpyZeros(self.eZ0, b, self.t)
-        assert isinstance(self.pZ, gpflow.param.DataHolder), 'Must have DataHolder'
+        assert isinstance(self.pZ, DataHolder), 'Must have DataHolder'
         self.InitialiseVariationalPhi(phiInitial)
 
     def InitialiseVariationalPhi(self, phiInitialIn):
@@ -109,30 +110,25 @@ class AssignGP(gpflow.model.GPModel):
         assert np.all(phi <= 1+tolError)
         return phi
 
-    @AutoFlow()
+    @autoflow()
+    @gpflow.params_as_tensors
     def GetPhiExpanded(self):
         ''' Shortcut function to get Phi matrix out.'''
         return tf.nn.softmax(self.logPhi)
-
-    def optimize(self, **kw):
-        ''' Catch optimize call to make sure we have correct Phi '''
-        if(self.fDebug):
-            print('assigngp_dense intercepting optimize call to check model consistency')
-        assert self.b == self.kern.branchkernelparam.Bv.value, 'Need to call UpdateBranchingPoint'
-        return gpflow.model.GPModel.optimize(self, **kw)
 
     def objectiveFun(self):
         ''' Objective function to minimize - log likelihood -log prior.
         Unlike _objective, no gradient calculation is performed.'''
         return -self.compute_log_likelihood()-self.compute_log_prior()
 
-    def build_likelihood(self):
+    @params_as_tensors
+    def _build_likelihood(self):
         print('assignegp_dense compiling model (build_likelihood)')
-        N = tf.cast(tf.shape(self.Y)[0], dtype=float_type)
+        N = tf.cast(tf.shape(self.Y)[0], dtype=settings.tf_float)
         M = tf.shape(self.X)[0]
-        D = tf.cast(tf.shape(self.Y)[1], dtype=float_type)
+        D = tf.cast(tf.shape(self.Y)[1], dtype=settings.tf_float)
         if(self.KConst is not None):
-            K = tf.cast(self.KConst, float_type)
+            K = tf.cast(self.KConst, settings.tf_float)
         else:
             K = self.kern.K(self.X)
         Phi = tf.nn.softmax(self.logPhi)
@@ -140,9 +136,9 @@ class AssignGP(gpflow.model.GPModel):
         Phi = (1 - 2e-6) * Phi + 1e-6
         sigma2 = self.likelihood.variance
         tau = 1. / self.likelihood.variance
-        L = tf.cholesky(K) + tf.eye(M, dtype=float_type) * settings.numerics.jitter_level
+        L = tf.cholesky(K) + tf.eye(M, dtype=settings.tf_float) * settings.numerics.jitter_level
         W = tf.transpose(L) * tf.sqrt(tf.reduce_sum(Phi, 0)) / tf.sqrt(sigma2)
-        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=float_type)
+        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.tf_float)
         R = tf.cholesky(P)
         PhiY = tf.matmul(tf.transpose(Phi), self.Y)
         LPhiY = tf.matmul(tf.transpose(L), PhiY)
@@ -167,16 +163,17 @@ class AssignGP(gpflow.model.GPModel):
             a5 = tf.Print(a5, [a5, Phi], message='a5 and Phi=', summarize=10)
         return a1+a2+a3+a4+a5
 
-    def build_predict(self, Xnew, full_cov=False):
+    @params_as_tensors
+    def _build_predict(self, Xnew, full_cov=False):
         M = tf.shape(self.X)[0]
         K = self.kern.K(self.X)
         Phi = tf.nn.softmax(self.logPhi)
         # try squashing Phi to avoid numerical errors
         Phi = (1 - 2e-6) * Phi + 1e-6
         sigma2 = self.likelihood.variance
-        L = tf.cholesky(K) + tf.eye(M, dtype=float_type) * settings.numerics.jitter_level
+        L = tf.cholesky(K) + tf.eye(M, dtype=settings.tf_float) * settings.numerics.jitter_level
         W = tf.transpose(L) * tf.sqrt(tf.reduce_sum(Phi, 0)) / tf.sqrt(sigma2)
-        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=float_type)
+        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.tf_float)
         R = tf.cholesky(P)
         PhiY = tf.matmul(tf.transpose(Phi), self.Y)
         LPhiY = tf.matmul(tf.transpose(L), PhiY)
