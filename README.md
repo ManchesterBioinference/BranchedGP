@@ -32,7 +32,7 @@ cd
     
 See [GPFlow](https://github.com/GPflow/GPflow) page for more detailed instructions.
 
-   - Installed Branched GP package
+   - Install Branched GP package
 ```
 git clone https://github.com/ManchesterBioinference/BranchedGP
 cd BranchedGP
