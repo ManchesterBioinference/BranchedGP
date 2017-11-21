@@ -9,7 +9,7 @@ before_script: # configure a headless display to test plot generation
   - "sh -e /etc/init.d/xvfb start"
   - sleep 3 # give xvfb some time to start
 install:
-  - pip install numpy scipy pandas pytest nbformat nbconvert jupyter_client jupyter matplotlib pytest-xdist pytest-cov codecov nose
+  - pip install numpy scipy pandas pytest nbformat nbconvert jupyter_client jupyter matplotlib pytest-xdist pytest-cov codecov nose nose-timer
   - pip install https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.4.0-cp36-cp36m-linux_x86_64.whl
   # Replace dep1 dep2 ... with your dependencies
   # - conda create -q -n test-environment python=3.5 numpy scipy pandas nose nbformat nbconvert jupyter_client jupyter matplotlib
