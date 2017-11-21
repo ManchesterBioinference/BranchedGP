@@ -38,8 +38,8 @@ class TestSamplingAndPlotting(unittest.TestCase):
                                        maxiter=40, priorConfidence=0.80, M=10)
         bmode = BgridSearch[np.argmax(d['loglik'])]
         print('tensorflow version', tf.__version__, 'GPflow version', gpflow.__version__)
-        stre = 'TestSamplingAndPlotting:: Log likelihood %.2f BgridSearch=%s' % (d['loglik'], str(BgridSearch))
-        assert bmode == branchingPoint, 'mode=%.3f, %s' % (bmode, stre)
+        print('TestSamplingAndPlotting:: Sparse Log likelihood', d['loglik'], 'BgridSearch', BgridSearch)
+        assert bmode == branchingPoint, bmode
         # Plot model
         pred = d['prediction']  # prediction object from GP
         _=bplot.plotBranchModel(bmode, XForKernel[:, 0], samples, pred['xtest'], pred['mu'], pred['var'],
@@ -49,8 +49,8 @@ class TestSamplingAndPlotting(unittest.TestCase):
         d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
                                        maxiter=40, priorConfidence=0.80, M=0)
         bmode = BgridSearch[np.argmax(d['loglik'])]
-        stre = 'TestSamplingAndPlotting:: Log likelihood %.2f BgridSearch=%s' % (d['loglik'], str(BgridSearch))
-        assert bmode == branchingPoint, 'mode=%.3f, %s' % (bmode, stre)
+        print('TestSamplingAndPlotting:: Dense Log likelihood', d['loglik'], 'BgridSearch', BgridSearch)
+        assert bmode == branchingPoint, bmode
         print('Try sparse model with fixed hyperparameters')
         d = FitBranchingModel.FitModel(BgridSearch, XForKernel[:, 0], samples, globalBranchingLabels,
                                        maxiter=20, priorConfidence=0.80, M=15,
