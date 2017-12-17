@@ -10,6 +10,7 @@ from gpflow.mean_functions import Zero
 from gpflow.decors import autoflow
 from gpflow import settings
 from gpflow.decors import params_as_tensors, autoflow
+from gpflow.kernels import Kernel
 
 def PlotSample(X, samples, B=None, lw=5., fs=20, figsizeIn=(5, 5)):
     D = samples.shape[1]  # number of outputs
@@ -60,12 +61,12 @@ def GetFunctionIndexSample(Xin):
     return XSample
 
 
-class BranchKernelParam(gpflow.kernels.Kern):
+class BranchKernelParam(Kernel):
 
     def __init__(self, base_kern, branchPtTensor, b, fDebug=False):
         ''' branchPtTensor is tensor of branch points of size F X F X B where F the number of
         functions and B the number of branching points '''
-        gpflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
+        Kernel.__init__(self, input_dim=base_kern.input_dim + 1)
         self.kern = base_kern
         self.fm = branchPtTensor
         self.fDebug = fDebug
@@ -168,10 +169,10 @@ class BranchKernelParam(gpflow.kernels.Kern):
         return tf.diag_part(self.kern.K(X))  # diagonal is just single point no branch point relevant
 
 
-class IndKern(gpflow.kernels.Kern):
+class IndKern(Kernel):
     ''' an independent output kernel '''
     def __init__(self, base_kern):
-        gpflow.kernels.Kern.__init__(self, input_dim=base_kern.input_dim + 1)
+        Kernel.__init__(self, input_dim=base_kern.input_dim + 1)
         self.kern = base_kern
 
     @params_as_tensors
