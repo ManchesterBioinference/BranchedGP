@@ -40,7 +40,6 @@ class TestObjectiveMin(unittest.TestCase):
         BgridSearch = [ptb, 0.1, 0.4, np.round(ptb,1), np.round(ptb+0.01,2), 0.7, 1.1]
         d = FitBranchingModel.FitModel(BgridSearch, t, Y, globalBranchingLabels,
                                                   maxiter=50, priorConfidence=0.65, kervar=1., kerlen=1., likvar=0.01)
-        m = d['model']
         iw = np.argmax(d['loglik'])
         Bmode = BgridSearch[iw]
         # Check winner is the truth

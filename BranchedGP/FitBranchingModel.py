@@ -113,7 +113,7 @@ def FitModel(bConsider, GPt, GPy, globalBranching, priorConfidence=0.80,
     if fDebug:
         print('BGP Maximum at b=%.2f' % bConsider[iw], 'CI= [%.2f, %.2f]' %(postB['B_CI'][0], postB['B_CI'][1]))
     assert np.allclose(bConsider[iw], postB['Bmode']), '%s-%s' % str(postB['B_CI'], bConsider[iw])
-    return {'loglik': ll, 'model': m, 'Phi': Phi_l[iw],
+    return {'loglik': ll, 'Phi': Phi_l[iw], # 'model': m,
             'prediction': {'xtest': ttestl_l[iw], 'mu': mul_l[iw], 'var': varl_l[iw]},
             'hyperparameters': hyps[iw], 'posteriorB': postB}
 
