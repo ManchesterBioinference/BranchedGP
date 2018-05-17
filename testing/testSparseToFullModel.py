@@ -16,9 +16,9 @@ class TestSparseVariational(unittest.TestCase):
     def InitParams(self, m):
         m.likelihood.variance = 0.1
         # set lengthscale to maximum
-        m.kern.branchkernelparam.kern.lengthscales = 1.
+        m.kern.kernels[0].kern.lengthscales = 1.
         # set process variance to average
-        m.kern.branchkernelparam.kern.variance = 1.
+        m.kern.kernels[0].kern.variance = 1.
 
     def test_sparse(self):
         ls, lf = self.runSparseModel()
@@ -54,12 +54,12 @@ class TestSparseVariational(unittest.TestCase):
         print('XExpanded', XExpanded.shape)
         print('indices', len(indices))        # Create model
         Kbranch = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm, b=trueB.copy()) + gpflow.kernels.White(1)
-        Kbranch.branchkernelparam.kern.variance = 1
-        Kbranch.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
-        Kbranch.white.variance.set_trainable(False)  # jitter for numerics
+        Kbranch.kernels[0].kern.variance = 1
+        Kbranch.kernels[1].variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
+        Kbranch.kernels[1].variance.set_trainable(False)  # jitter for numerics
         print('Kbranch matrix', Kbranch.compute_K(XExpanded, XExpanded))
-        print('Branching K free parameters', Kbranch.branchkernelparam)
-        print('Branching K branching parameter', Kbranch.branchkernelparam.Bv.value)
+        print('Branching K free parameters', Kbranch.kernels[0])
+        print('Branching K branching parameter', Kbranch.kernels[0].Bv.value)
         if(M is not None):
             ir = np.random.choice(XExpanded.shape[0], M)
             ZExpanded = XExpanded[ir, :]
@@ -68,12 +68,12 @@ class TestSparseVariational(unittest.TestCase):
 
         phiInitial =  np.ones((N, 2))*0.5  # dont know anything
         mV = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices,
-                                                 Kbranch.branchkernelparam.Bv.value, ZExpanded, phiInitial=phiInitial,
+                                                 Kbranch.kernels[0].Bv.value, ZExpanded, phiInitial=phiInitial,
                                                  fDebug=fDebug)
         self.InitParams(mV)
 
         mVFull = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices,
-                                         Kbranch.branchkernelparam.Bv.value, fDebug=fDebug, phiInitial=phiInitial)
+                                         Kbranch.kernels[0].Bv.value, fDebug=fDebug, phiInitial=phiInitial)
         self.InitParams(mVFull)
 
         lsparse = mV.compute_log_likelihood()

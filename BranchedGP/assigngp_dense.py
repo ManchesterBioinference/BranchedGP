@@ -63,8 +63,9 @@ class AssignGP(GPModel):
         assert isinstance(b, np.ndarray)
         assert b.size == 1, 'Must have scalar branching point'
         self.b = b.astype(settings.np_float)  # remember branching value
-        self.kern.branchkernelparam.Bv = b
-        assert isinstance(self.kern.branchkernelparam.Bv, DataHolder)
+        assert self.kern.kernels[0].name == 'BranchKernelParam'
+        self.kern.kernels[0].Bv = b
+        assert isinstance(self.kern.kernels[0].Bv, DataHolder)
         assert self.logPhi.trainable is True, 'Phi should not be constant when changing branching location'
         if prior is not None:
             self.eZ0 = pZ_construction_singleBP.expand_pZ0Zeros(prior)
@@ -78,7 +79,7 @@ class AssignGP(GPModel):
         the equality is placed i.e. if x<=b trunk and if x>b branch or vice versa. We use the
          former convention.'''
         assert np.allclose(phiInitialIn.sum(1), 1), 'probs must sum to 1 %s' % str(phiInitialIn)
-        assert self.b == self.kern.branchkernelparam.Bv.value, 'Need to call UpdateBranchingPoint'
+        assert self.b == self.kern.kernels[0].Bv.value, 'Need to call UpdateBranchingPoint'
         N = self.Y.value.shape[0]
         assert phiInitialIn.shape[0] == N
         assert phiInitialIn.shape[1] == 2  # run OMGP with K=2 trajectories
@@ -100,7 +101,7 @@ class AssignGP(GPModel):
 
     def GetPhi(self):
         ''' Get Phi matrix, collapsed for each possible entry '''
-        assert self.b == self.kern.branchkernelparam.Bv.value, 'Need to call UpdateBranchingPoint'
+        assert self.b == self.kern.kernels[0].Bv.value, 'Need to call UpdateBranchingPoint'
         phiExpanded = self.GetPhiExpanded()
         l = [phiExpanded[i, self.indices[i]] for i in range(len(self.indices))]
         phi = np.asarray(l)
@@ -195,6 +196,6 @@ class AssignGP(GPModel):
         return mean, var
 
     def build_KL(self, Phi):
-        Bv_s = tf.squeeze(self.kern.branchkernelparam.Bv, squeeze_dims=[1])
+        Bv_s = tf.squeeze(self.kern.kernels[0].Bv, squeeze_dims=[1])
         # pZ = pZ_construction_singleBP.make_matrix(self.t, Bv_s, self.phiPrior)
         return tf.reduce_sum(Phi * tf.log(Phi)) - tf.reduce_sum(Phi * tf.log(self.pZ))

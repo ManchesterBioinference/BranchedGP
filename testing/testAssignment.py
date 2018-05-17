@@ -11,8 +11,8 @@ from BranchedGP import assigngp_dense
 
 
 def InitKernParams(ms):
-    ms.kern.branchkernelparam.kern.variance = 2
-    ms.kern.branchkernelparam.kern.lengthscales = 5
+    ms.kern.kernels[0].kern.variance = 2
+    ms.kern.kernels[0].kern.lengthscales = 5
     ms.likelihood.variance = 0.01
 
 class TestSparseVariational(unittest.TestCase):
@@ -44,15 +44,15 @@ class TestSparseVariational(unittest.TestCase):
         XExpanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(t)
         # Create model
         Kbranch = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm, b=trueB.copy()) + gpflow.kernels.White(1)
-        Kbranch.white.variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
-        Kbranch.white.variance.set_trainable(False)  # jitter for numerics
+        Kbranch.kernels[1].variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
+        Kbranch.kernels[1].variance.set_trainable(False)  # jitter for numerics
         # Create model
         phiPrior = np.ones((N, 2))*0.5  # dont know anything
         phiInitial = np.ones((N, 2))*0.5  # dont know anything
         phiInitial[:, 0] = np.random.rand(N)
         phiInitial[:, 1] = 1-phiInitial[:, 0]
         m = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices,
-                                    Kbranch.branchkernelparam.Bv.value, phiPrior=phiPrior, phiInitial=phiInitial)
+                                    Kbranch.kernels[0].Bv.value, phiPrior=phiPrior, phiInitial=phiInitial)
         InitKernParams(m)
         m.likelihood.variance.set_trainable(False)
         print('Model before initialisation\n', m, '\n===========================')
@@ -74,13 +74,13 @@ class TestSparseVariational(unittest.TestCase):
         assert np.allclose(PhiOptimised[idxA, 2], 1),  'PhiOptimised idxA=%s' % str(PhiOptimised[idxA, :])
         assert np.allclose(PhiOptimised[idxB, 1], 1),  'PhiOptimised idxB=%s' % str(PhiOptimised[idxB, :])
         # reset model and test informative KL prior
-        m.UpdateBranchingPoint(Kbranch.branchkernelparam.Bv.value, phiInitial)  # reset initial phi
+        m.UpdateBranchingPoint(Kbranch.kernels[0].Bv.value, phiInitial)  # reset initial phi
         InitKernParams(m)
         ll_flatprior = m.compute_log_likelihood()
         phiInfPrior = np.ones((N, 2))*0.5  # dont know anything
         phiInfPrior[-1, :] = [0.99, 0.01]
         # phiInfPrior[-2, :] = [0.01, 0.99]
-        m.UpdateBranchingPoint(Kbranch.branchkernelparam.Bv.value, phiInitial, prior=phiInfPrior)
+        m.UpdateBranchingPoint(Kbranch.kernels[0].Bv.value, phiInitial, prior=phiInfPrior)
         ll_betterprior = m.compute_log_likelihood()
         assert ll_betterprior > ll_flatprior, '%f <> %f' % (ll_betterprior, ll_flatprior)
 
