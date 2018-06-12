@@ -6,6 +6,7 @@ The model is described in the paper
 ["BGP: Branched Gaussian processes for identifying gene-specific branching dynamics in single cell data", 
 Alexis Boukouvalas, James Hensman, Magnus Rattray, bioRxiv, 2017.](http://www.biorxiv.org/content/early/2017/08/01/166868).
 
+This is now published in [Genome Biology](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-018-1440-2).
 [![Build Status](https://travis-ci.org/ManchesterBioinference/BranchedGP.svg?branch=master)](https://travis-ci.org/ManchesterBioinference/BranchedGP)
 [![codecov](https://codecov.io/gh/ManchesterBioinference/BranchedGP/branch/master/graph/badge.svg)](https://codecov.io/gh/ManchesterBioinference/BranchedGP)
 
@@ -39,6 +40,15 @@ cd BranchedGP
 python setup.py install
 cd
 ```
+# Quick start
+For a quick introduction see the `notebooks/Hematopoiesis.ipynb` notebook.
+Therein we demonstrate how to fit the model and compute
+the log Bayes factor for two genes.
+
+The Bayes factor in particular is calculated by calling `CalculateBranchingEvidence`
+after fitting the model using `FitModel`.
+
+This notebook should take a total of 6 minutes to run.
 
 # Tests
 To run the tests should takes < 3min.
