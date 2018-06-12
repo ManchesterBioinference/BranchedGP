@@ -92,7 +92,7 @@ def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., f
 def predictBranchingModel(m, full_cov=False):
     ''' return prediction of branching model '''
     pt = m.t
-    B = m.kern.kernels[0].Bv.value.flatten()
+    B = m.kern.kern_list[0].Bv.value.flatten()
     l = np.min(pt)
     u = np.max(pt)
     mul = list()
