@@ -16,7 +16,8 @@ def CalculateBranchingEvidence(d, Bsearch=None):
     p = pn/pn.sum()  # normalize
 
     # Calculate log likelihood ratio by averaging out
-    Nb = o.size
+    o = d['loglik']
+    Nb = o.size - 1
     if Nb != len(Bsearch) - 1:
         raise NameError('Passed in wrong length of Bsearch is %g- should be %g' % (len(Bsearch), Nb))
     obj = o[:-1]
