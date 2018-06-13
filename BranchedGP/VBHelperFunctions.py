@@ -16,8 +16,7 @@ def CalculateBranchingEvidence(d, Bsearch=None):
     p = pn/pn.sum()  # normalize
 
     # Calculate log likelihood ratio by averaging out
-    o = d['loglik']
-    Nb = o.size - 1
+    Nb = o.size
     if Nb != len(Bsearch) - 1:
         raise NameError('Passed in wrong length of Bsearch is %g- should be %g' % (len(Bsearch), Nb))
     obj = o[:-1]
@@ -93,7 +92,7 @@ def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., f
 def predictBranchingModel(m, full_cov=False):
     ''' return prediction of branching model '''
     pt = m.t
-    B = m.kern.kern_list[0].Bv.value.flatten()
+    B = m.kern.kernels[0].Bv.value.flatten()
     l = np.min(pt)
     u = np.max(pt)
     mul = list()
