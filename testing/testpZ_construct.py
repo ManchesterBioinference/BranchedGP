@@ -11,8 +11,8 @@ class TestpZ(unittest.TestCase):
         np.set_printoptions(suppress=True,  precision=2)
         X = np.linspace(0, 1, 4, dtype=float)[:, None]
         X = np.sort(X, 0)
-        BP_tf = tf.placeholder(settings.tf_float, shape=[])
-        eZ0_tf = tf.placeholder(settings.tf_float, shape=(X.shape[0], X.shape[0]*3))
+        BP_tf = tf.placeholder(settings.float_type, shape=[])
+        eZ0_tf = tf.placeholder(settings.float_type, shape=(X.shape[0], X.shape[0]*3))
         pZ0 = np.array([[0.7, 0.3], [0.1, 0.9], [0.5, 0.5], [1, 0]])
         eZ0 = pZ_construction_singleBP.expand_pZ0(pZ0)
         for BP in [0, 0.2, 0.5, 1]:
@@ -34,8 +34,8 @@ class TestpZ(unittest.TestCase):
         np.set_printoptions(suppress=True,  precision=6)
         # X = np.linspace(0, 1, 4, dtype=float)[:, None]
         X = np.array([0.1, 0.2, 0.3, 0.4])[:, None]
-        BP_tf = tf.placeholder(dtype=settings.tf_float, shape=[])
-        eZ0_tf = tf.placeholder(dtype=settings.tf_float, shape=(X.shape[0], X.shape[0]*3))
+        BP_tf = tf.placeholder(dtype=settings.float_type, shape=[])
+        eZ0_tf = tf.placeholder(dtype=settings.float_type, shape=(X.shape[0], X.shape[0]*3))
         pZ0 = np.array([[0.7, 0.3], [0.1, 0.9], [0.5, 0.5], [0.85, 0.15]])
         eZ0 = pZ_construction_singleBP.expand_pZ0(pZ0)
         BP = 0.2

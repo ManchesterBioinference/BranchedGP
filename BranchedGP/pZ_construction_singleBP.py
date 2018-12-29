@@ -56,13 +56,13 @@ def make_matrix(X, BP, eZ0, epsilon=1e-6):
         n = tf.cast(tf.greater(x, BP), tf.int32) + 1
         # n == 1 when x <= BP
         # n == 2 when x > BP
-        row = [tf.zeros(count + n - 1, dtype=settings.tf_float) + epsilon]  # all entries until count are zero
+        row = [tf.zeros(count + n - 1, dtype=settings.float_type) + epsilon]  # all entries until count are zero
         # add 1's for possible entries
-        probs = tf.ones(n, dtype=settings.tf_float)
+        probs = tf.ones(n, dtype=settings.float_type)
         row.append(probs)
-        row.append(tf.zeros(2 - 2 * (n - 1), dtype=settings.tf_float) + epsilon)  # append zero
+        row.append(tf.zeros(2 - 2 * (n - 1), dtype=settings.float_type) + epsilon)  # append zero
         count += 3
-        row.append(tf.zeros(num_columns - count, dtype=settings.tf_float) + epsilon)
+        row.append(tf.zeros(num_columns - count, dtype=settings.float_type) + epsilon)
         # ensure things are correctly shaped
         row = tf.concat(row, 0, name='singleconcat')
         row = tf.expand_dims(row, 0)

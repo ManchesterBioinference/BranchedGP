@@ -60,19 +60,21 @@ def PlotBGPFit(GPy, GPt, Bsearch, d, figsize=(5, 5), height_ratios= [5, 1], colo
 
 
 def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., fs=10, labels=None,
-                    fPlotPhi=True, fPlotVar=False, ax=None, fColorBar=True, colorarray = ['darkolivegreen', 'peru', 'mediumvioletred']):
+                    fPlotPhi=True, fPlotVar=False, ax=None, fColorBar=True,
+                    colorarray = ['darkolivegreen', 'peru', 'mediumvioletred'], d=0):
     ''' Plotting code that does not require access to the model but takes as input predictions. '''
     if(ax is None):
         fig = plt.figure(figsize=figsizeIn)
         ax = fig.gca()
     else:
         fig = plt.gcf()
-    d = 0  # constraint code to be 1D for now
     for f in range(3):
         mu = mul[f]
         var = varl[f]
         ttest = ttestl[f]
         col = colorarray[f]  # mean.get_color()
+        if mu.size == 1:
+            print('h')
         mean, = ax.plot(ttest, mu[:, d], linewidth=lw, color=col)
         if(fPlotVar):
             ax.plot(ttest.flatten(), mu[:, d] + 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
@@ -90,10 +92,13 @@ def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., f
     return fig
 
 
-def predictBranchingModel(m, full_cov=False):
+def predictBranchingModel(m, Bi=None, full_cov=False):
     ''' return prediction of branching model '''
     pt = m.t
-    B = m.kern.kernels[0].Bv.value.flatten()
+    if Bi is None:
+        B = m.kern.kernels[0].Bv.value.flatten()
+    else:
+        B = Bi
     l = np.min(pt)
     u = np.max(pt)
     mul = list()

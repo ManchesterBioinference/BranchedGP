@@ -39,7 +39,7 @@ class AssignGP(GPModel):
         assert len(indices) == t.size, 'indices must be size N'
         assert len(t.shape) == 1, 'pseudotime should be 1D'
         self.N = t.shape[0]
-        self.t = t.astype(settings.np_float) # could be DataHolder? advantages
+        self.t = t.astype(settings.float_type) # could be DataHolder? advantages
         self.indices = indices
         self.logPhi = Parameter(np.random.randn(t.shape[0], t.shape[0] * 3))  # 1 branch point => 3 functions
         if(phiInitial is None):
@@ -62,7 +62,7 @@ class AssignGP(GPModel):
         assert isinstance(self.pZ, DataHolder), 'Must have DataHolder'
         assert isinstance(b, np.ndarray)
         assert b.size == 1, 'Must have scalar branching point'
-        self.b = b.astype(settings.np_float)  # remember branching value
+        self.b = b.astype(settings.float_type)  # remember branching value
         assert self.kern.kernels[0].name == 'BranchKernelParam'
         self.kern.kernels[0].Bv = b
         assert isinstance(self.kern.kernels[0].Bv, DataHolder)
@@ -125,11 +125,11 @@ class AssignGP(GPModel):
     @params_as_tensors
     def _build_likelihood(self):
         print('assignegp_dense compiling model (build_likelihood)')
-        N = tf.cast(tf.shape(self.Y)[0], dtype=settings.tf_float)
+        N = tf.cast(tf.shape(self.Y)[0], dtype=settings.float_type)
         M = tf.shape(self.X)[0]
-        D = tf.cast(tf.shape(self.Y)[1], dtype=settings.tf_float)
+        D = tf.cast(tf.shape(self.Y)[1], dtype=settings.float_type)
         if(self.KConst is not None):
-            K = tf.cast(self.KConst, settings.tf_float)
+            K = tf.cast(self.KConst, settings.float_type)
         else:
             K = self.kern.K(self.X)
         Phi = tf.nn.softmax(self.logPhi)
@@ -137,9 +137,9 @@ class AssignGP(GPModel):
         Phi = (1 - 2e-6) * Phi + 1e-6
         sigma2 = self.likelihood.variance
         tau = 1. / self.likelihood.variance
-        L = tf.cholesky(K) + tf.eye(M, dtype=settings.tf_float) * settings.numerics.jitter_level
+        L = tf.cholesky(K) + tf.eye(M, dtype=settings.float_type) * settings.numerics.jitter_level
         W = tf.transpose(L) * tf.sqrt(tf.reduce_sum(Phi, 0)) / tf.sqrt(sigma2)
-        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.tf_float)
+        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.float_type)
         R = tf.cholesky(P)
         PhiY = tf.matmul(tf.transpose(Phi), self.Y)
         LPhiY = tf.matmul(tf.transpose(L), PhiY)
@@ -172,9 +172,9 @@ class AssignGP(GPModel):
         # try squashing Phi to avoid numerical errors
         Phi = (1 - 2e-6) * Phi + 1e-6
         sigma2 = self.likelihood.variance
-        L = tf.cholesky(K) + tf.eye(M, dtype=settings.tf_float) * settings.numerics.jitter_level
+        L = tf.cholesky(K) + tf.eye(M, dtype=settings.float_type) * settings.numerics.jitter_level
         W = tf.transpose(L) * tf.sqrt(tf.reduce_sum(Phi, 0)) / tf.sqrt(sigma2)
-        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.tf_float)
+        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.float_type)
         R = tf.cholesky(P)
         PhiY = tf.matmul(tf.transpose(Phi), self.Y)
         LPhiY = tf.matmul(tf.transpose(L), PhiY)
@@ -196,6 +196,6 @@ class AssignGP(GPModel):
         return mean, var
 
     def build_KL(self, Phi):
-        Bv_s = tf.squeeze(self.kern.kernels[0].Bv, squeeze_dims=[1])
+        Bv_s = tf.squeeze(self.kern.kernels[0].Bv, axis=[1])
         # pZ = pZ_construction_singleBP.make_matrix(self.t, Bv_s, self.phiPrior)
         return tf.reduce_sum(Phi * tf.log(Phi)) - tf.reduce_sum(Phi * tf.log(self.pZ))

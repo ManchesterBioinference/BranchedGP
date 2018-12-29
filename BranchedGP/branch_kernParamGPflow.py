@@ -147,7 +147,7 @@ class BranchKernelParam(Kernel):
                             Br = self.Bv
                         Bs = ((tf.concat([tf.slice(Br, [i - 1, 0], [1, 1]) for i in bint], 0)))
 
-                        kbb = self.kern.K(Bs) + tf.diag(tf.ones(tf.shape(Bs)[:1], dtype=settings.tf_float)) * settings.numerics.jitter_level
+                        kbb = self.kern.K(Bs) + tf.diag(tf.ones(tf.shape(Bs)[:1], dtype=settings.float_type)) * settings.numerics.jitter_level
                         if(self.fDebug):
                             kbb = tf.Print(kbb, [tf.shape(kbb), kbb], message='kbb=', name='kbb', summarize=10)
                             kbb = tf.Print(kbb, [self.kern.lengthscales], message='lenscales=', name='lenscales', summarize=10)

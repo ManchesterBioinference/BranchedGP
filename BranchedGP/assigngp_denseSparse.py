@@ -40,9 +40,9 @@ class AssignGPSparse(assigngp_dense.AssignGP):
     def _build_likelihood(self):
         if self.fDebug:
             print('assignegp_denseSparse compiling model (build_likelihood)')
-        N = tf.cast(tf.shape(self.Y)[0], dtype=settings.tf_float)
+        N = tf.cast(tf.shape(self.Y)[0], dtype=settings.float_type)
         M = tf.shape(self.ZExpanded)[0]
-        D = tf.cast(tf.shape(self.Y)[1], dtype=settings.tf_float)
+        D = tf.cast(tf.shape(self.Y)[1], dtype=settings.float_type)
 
         Phi = tf.nn.softmax(self.logPhi)
         # try squashing Phi to avoid numerical errors
@@ -50,7 +50,7 @@ class AssignGPSparse(assigngp_dense.AssignGP):
 
         sigma2 = self.likelihood.variance
         sigma = tf.sqrt(self.likelihood.variance)
-        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=settings.tf_float) * settings.numerics.jitter_level
+        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=settings.float_type) * settings.numerics.jitter_level
         Kuf = self.kern.K(self.ZExpanded, self.X)
 
         Kdiag = self.kern.Kdiag(self.X)
@@ -58,7 +58,7 @@ class AssignGPSparse(assigngp_dense.AssignGP):
         A = tf.reduce_sum(Phi, 0)
         LiKuf = tf.matrix_triangular_solve(L, Kuf)
         W = LiKuf * tf.sqrt(A) / sigma
-        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.tf_float)
+        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.float_type)
         traceTerm = -0.5 * tf.reduce_sum(Kdiag * A) / sigma2 + 0.5 * tf.reduce_sum(tf.square(W))
         R = tf.cholesky(P)
         tmp = tf.matmul(LiKuf, tf.matmul(tf.transpose(Phi), self.Y))
@@ -85,14 +85,14 @@ class AssignGPSparse(assigngp_dense.AssignGP):
 
         sigma2 = self.likelihood.variance
         sigma = tf.sqrt(sigma2)
-        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=settings.tf_float) * settings.numerics.jitter_level
+        Kuu = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=settings.float_type) * settings.numerics.jitter_level
         Kuf = self.kern.K(self.ZExpanded, self.X)
         L = tf.cholesky(Kuu)
 
         p = tf.reduce_sum(Phi, 0)
         LiKuf = tf.matrix_triangular_solve(L, Kuf)
         W = LiKuf * tf.sqrt(p) / sigma
-        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.tf_float)
+        P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.float_type)
         R = tf.cholesky(P)
         tmp = tf.matmul(LiKuf, tf.matmul(tf.transpose(Phi), self.Y))
         c = tf.matrix_triangular_solve(R, tmp, lower=True) / sigma2
