@@ -42,7 +42,7 @@ after fitting the model using `FitModel`.
 This notebook should take a total of 6 minutes to run.
 
 # Tests
-To run the tests should takes < 3min.
+To run the tests takes about 10 minutes.
 ```
 cd BranchedGP/testing
 nosetests --pdb-failures --pdb --with-timer
