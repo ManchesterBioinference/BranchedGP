@@ -73,8 +73,6 @@ def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., f
         var = varl[f]
         ttest = ttestl[f]
         col = colorarray[f]  # mean.get_color()
-        if mu.size == 1:
-            print('h')
         mean, = ax.plot(ttest, mu[:, d], linewidth=lw, color=col)
         if(fPlotVar):
             ax.plot(ttest.flatten(), mu[:, d] + 2 * np.sqrt(var.flatten()), '--', color=col, linewidth=lw)
