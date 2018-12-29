@@ -10,6 +10,9 @@ This is now published in [Genome Biology](https://genomebiology.biomedcentral.co
 [![Build Status](https://travis-ci.org/ManchesterBioinference/BranchedGP.svg?branch=master)](https://travis-ci.org/ManchesterBioinference/BranchedGP)
 [![codecov](https://codecov.io/gh/ManchesterBioinference/BranchedGP/branch/master/graph/badge.svg)](https://codecov.io/gh/ManchesterBioinference/BranchedGP)
 
+The package builds on the [GPFlow](https://github.com/GPflow/GPflow) project which allows for
+scalable inference of Gaussian processes using TensorFlow.
+
 # Example
 An example of what the model can provide is shown below.
    1. The posterior cell assignment is shown in top subpanel: each cell is assigned a probability of belonging to a  branch.
@@ -17,29 +20,17 @@ An example of what the model can provide is shown below.
 <img src="images/VAMP5_BGPAssignmentProbability.png" width="400" height="400" align="middle"/>
 
 # Install
-If you have any problems with installation see the script at the bottom of the page for a detailed setup guide from a new python environment. 
-
-   - Install tensorflow
-```
-pip install tensorflow
-```
-   - Install GPflow
-```
-git clone https://github.com/GPflow/GPflow.git
-cd GPflow    
-pip install .
-cd
-```
-    
-See [GPFlow](https://github.com/GPflow/GPflow) page for more detailed instructions.
-
-   - Install Branched GP package
+To install Branched GP package and all its requirements.
 ```
 git clone https://github.com/ManchesterBioinference/BranchedGP
 cd BranchedGP
+pip install -r requirements.txt
 python setup.py install
-cd
 ```
+
+or do `pip install -e .` for a development setup where the 
+the current directory is used for installation rather than copied.
+
 # Quick start
 For a quick introduction see the `notebooks/Hematopoiesis.ipynb` notebook.
 Therein we demonstrate how to fit the model and compute
@@ -53,8 +44,6 @@ This notebook should take a total of 6 minutes to run.
 # Tests
 To run the tests should takes < 3min.
 ```
-pip install nose
-pip install nose-timer
 cd BranchedGP/testing
 nosetests --pdb-failures --pdb --with-timer
 ```
