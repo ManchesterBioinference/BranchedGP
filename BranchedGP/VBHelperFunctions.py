@@ -101,10 +101,12 @@ def predictBranchingModel(m, full_cov=False):
     ttestl = list()
     for f in range(1, 4):
         if(f == 1):
-            ttest = np.linspace(l, B, 100)[:, None]  # root
+            ttest = np.linspace(l, B, 100)#[:, None]  # root
         else:
-            ttest = np.linspace(B, u, 100)[:, None]
+            ttest = np.linspace(B, u, 100)#[:, None]
         Xtest = np.hstack((ttest, ttest * 0 + f))
+        # print('*************************************************************************')
+        # print('Inside predictBranchingModel ...')
         if full_cov:
             mu, var = m.predict_f_full_cov(Xtest)
         else:
