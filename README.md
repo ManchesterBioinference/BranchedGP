@@ -1,9 +1,9 @@
 # BranchedGP
 
-BranchedGP is a package for building Branching Gaussian process models in python, using [TensorFlow](github.com/tensorflow) and [GPFlow](https://github.com/GPflow/GPflow). 
+BranchedGP is a package for building Branching Gaussian process models in python, using [TensorFlow](github.com/tensorflow) and [GPFlow](https://github.com/GPflow/GPflow).
 The model is described in the paper
 
-["BGP: Branched Gaussian processes for identifying gene-specific branching dynamics in single cell data", 
+["BGP: Branched Gaussian processes for identifying gene-specific branching dynamics in single cell data",
 Alexis Boukouvalas, James Hensman, Magnus Rattray, bioRxiv, 2017.](http://www.biorxiv.org/content/early/2017/08/01/166868).
 
 This is now published in [Genome Biology](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-018-1440-2).
@@ -16,30 +16,11 @@ An example of what the model can provide is shown below.
    1. In the bottom subpanel the posterior branching time is shown: the probability of branching at a particular pseudotime.
 <img src="images/VAMP5_BGPAssignmentProbability.png" width="400" height="400" align="middle"/>
 
-# Install
-If you have any problems with installation see the script at the bottom of the page for a detailed setup guide from a new python environment. 
+# Setup
 
-   - Install tensorflow
-```
-pip install tensorflow
-```
-   - Install GPflow
-```
-git clone https://github.com/GPflow/GPflow.git
-cd GPflow    
-pip install .
-cd
-```
-    
-See [GPFlow](https://github.com/GPflow/GPflow) page for more detailed instructions.
+This project requires Python3.7 or earlier (TensorFlow 1 requirement).
+Create a virtual environment, activate it and run `make install`.
 
-   - Install Branched GP package
-```
-git clone https://github.com/ManchesterBioinference/BranchedGP
-cd BranchedGP
-python setup.py install
-cd
-```
 # Quick start
 For a quick introduction see the `notebooks/Hematopoiesis.ipynb` notebook.
 Therein we demonstrate how to fit the model and compute
@@ -50,25 +31,8 @@ after fitting the model using `FitModel`.
 
 This notebook should take a total of 6 minutes to run.
 
-# Tests
-To run the tests should takes < 3min.
-```
-pip install nose
-pip install nose-timer
-cd BranchedGP/testing
-nosetests --pdb-failures --pdb --with-timer
-```
-
-
-# List of notebooks
-To run the notebooks
-```
-cd BranchedGP/notebooks
-jupyter notebook
-```
-
-| File <br> name | Description | 
-| --- | --- | 
+| File <br> name | Description |
+| --- | --- |
 | Hematopoiesis       | Application of BGP to hematopoiesis data. |
 | SyntheticData       | Application of BGP to synthetic data. |
 | SamplingFromTheModel| Sampling from the BGP model. |
@@ -80,9 +44,9 @@ In the paper we compare the BGP model to the BEAM method proposed
 in monocle 2. In ```monocle/runMonocle.R``` the R script for performing
 Monocle and BEAM on the hematopoiesis data is included.
 # List of python library files
-| File <br> name | Description | 
-| --- | --- | 
-| FitBranchingModel.py | Main file for user to call BGP fit, see function FitModel | 
+| File <br> name | Description |
+| --- | --- |
+| FitBranchingModel.py | Main file for user to call BGP fit, see function FitModel |
 | pZ_construction_singleBP.py | Construct prior on assignments; use by variational code. |
 | assigngp_dense.py | Variational inference code to infer function labels. |
 | assigngp_denseSparse.py | Sparse inducing point variational inference code to infer function labels. |
@@ -90,13 +54,10 @@ Monocle and BEAM on the hematopoiesis data is included.
 | BranchingTree.py | Code to generate branching tree. |
 | VBHelperFunctions.py | Plotting code. |
 
-# Running in a cluster
-When running BranchingGP in a cluster it may be useful to constrain the number of cores used. To do this insert this code at the beginning of your script.
-```
-from gpflow import settings
-settings.session.intra_op_parallelism_threads = NUMCORES
-settings.session.inter_op_parallelism_threads = NUMCORES
-```
 
+# Common tasks
 
-
+* Tests: `make test`
+* Install dependencies (into an active virtual environment): `make install`
+* Format code: `make format`
+* Run a jupyter notebook server: `make jupyter_server`
