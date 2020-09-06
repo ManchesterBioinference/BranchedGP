@@ -3,3 +3,5 @@
 *.ipynb_check*
 .venv/
 .idea/
+/.coverage
+/coverage.xml
