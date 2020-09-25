@@ -22,9 +22,9 @@ class TestSamplingAndPlotting(unittest.TestCase):
         # Specify the kernel and its hyperparameters
         # These determine how smooth and variable the branching functions are
         Bvalues = np.expand_dims(np.asarray(tree.GetBranchValues()), 1)
-        KbranchParam = bk.BranchKernelParam(gpflow.kernels.RBF(1), fm, b=Bvalues)
-        KbranchParam.kern.lengthscales = 2
-        KbranchParam.kern.variance = 1
+        KbranchParam = bk.BranchKernelParam(gpflow.kernels.SquaredExponential(), fm, b=Bvalues)
+        KbranchParam.kern.lengthscales.assign(2.)
+        KbranchParam.kern.variance.assign(1.)
         # Sample the kernel
         samples = bk.SampleKernel(KbranchParam, XForKernel)
         # Plot the sample
@@ -58,7 +58,7 @@ class TestSamplingAndPlotting(unittest.TestCase):
 
         # You can rerun the same code as many times as you want and get different sample paths
         # We can also sample independent functions. This is the assumption in the overlapping mixtures of GPs model (OMGP) discussed in the paper.
-        indKernel = bk.IndKern(gpflow.kernels.RBF(1))
+        indKernel = bk.IndKern(gpflow.kernels.SquaredExponential())
         samplesInd = bk.SampleKernel(indKernel, XForKernel)
 
 if __name__ == '__main__':

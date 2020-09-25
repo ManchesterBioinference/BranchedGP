@@ -15,7 +15,7 @@ class TestObjectiveMin(unittest.TestCase):
         np.set_printoptions(suppress=True,  precision=5)
         seed = 43
         np.random.seed(seed=seed)  # easy peasy reproducibeasy
-        tf.set_random_seed(seed)
+        tf.random.set_seed(seed)
         # Data generation
         N = 20
         t = np.linspace(0, 1, N)

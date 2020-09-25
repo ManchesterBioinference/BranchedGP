@@ -4,12 +4,7 @@ import gpflow
 import tensorflow as tf
 import numpy as np
 from matplotlib import pyplot as plt
-from gpflow.params import DataHolder
-from gpflow.params import Parameter
-from gpflow.mean_functions import Zero
-from gpflow.decors import autoflow
-from gpflow import settings
-from gpflow.decors import params_as_tensors, autoflow
+
 from gpflow.kernels import Kernel
 
 def PlotSample(X, samples, B=None, lw=5., fs=20, figsizeIn=(5, 5)):
@@ -40,7 +35,7 @@ def PlotSample(X, samples, B=None, lw=5., fs=20, figsizeIn=(5, 5)):
 
 def SampleKernel(kern, X, D=1, tol=1e-6, retChol=False):
     ''' Sample GP, D is number of independent output dimensions '''
-    K = kern.compute_K(X, X)  # NxM
+    K = kern.K(X, X)  # NxM
     L = np.linalg.cholesky(K + np.eye(K.shape[0]) * tol)
     samples = L.dot(np.random.randn(L.shape[0], D))
     if(retChol):
@@ -66,20 +61,19 @@ class BranchKernelParam(Kernel):
     def __init__(self, base_kern, branchPtTensor, b, fDebug=False):
         ''' branchPtTensor is tensor of branch points of size F X F X B where F the number of
         functions and B the number of branching points '''
-        Kernel.__init__(self, input_dim=base_kern.input_dim + 1)
+        super().__init__()
         self.kern = base_kern
         self.fm = branchPtTensor
         self.fDebug = fDebug
         assert isinstance(b, np.ndarray)
         assert self.fm.shape[0] == self.fm.shape[1]
         assert self.fm.shape[2] > 0
-        self.Bv = DataHolder(b)
-
+        self.Bv = b
 
     def SampleKernel(self, XExpanded, b=None, tol=1e-6):
         if(b is not None):
             self.Bv = np.ones((1, 1))*b
-        XTree = VBHelperFunctions.SetXExpandedBranchingPoint(XExpanded, self.Bv.value)
+        XTree = VBHelperFunctions.SetXExpandedBranchingPoint(XExpanded, self.Bv)
         return SampleKernel(self, XTree, tol=tol), XTree
 
     def SampleKernelFromTree(self, XTree, b, tol=1e-6):
@@ -88,7 +82,6 @@ class BranchKernelParam(Kernel):
         assert np.all(XTree[XTree[:, 0] <= b, 1] == 1), 'Before branch point trunk is function 1.'
         return SampleKernel(self, XTree, tol=tol)
 
-    @params_as_tensors
     def K(self, X, Y=None):
         if Y is None:
             Y = X  # hack to avoid duplicating code below
@@ -101,9 +94,12 @@ class BranchKernelParam(Kernel):
         i2s_r = tf.expand_dims(Y[:, 1], 1)
         if(self.fDebug):
             snl = 10  # how many entries to print
-            i1s = tf.Print(i1s_r, [tf.shape(i1s_r), i1s_r], message='i1s=',
+            i1s = i1s_r
+            i2s = i2s_r
+
+            tf.print([tf.shape(i1s_r), i1s_r],
                            name='i1sdebug', summarize=snl)  # will print message
-            i2s = tf.Print(i2s_r, [tf.shape(i2s_r), i2s_r], message='i2s=',
+            tf.print([tf.shape(i2s_r), i2s_r],
                            name='i2sdebug', summarize=snl)  # will print message
         else:
             i1s = i1s_r
@@ -142,40 +138,39 @@ class BranchKernelParam(Kernel):
                         # Get the actual values of the Bs = B[index of relevant branching points]
                         bint = bnan.astype(int)  # convert to int - set of indexes
                         if(self.fDebug):
-                            Br = tf.Print(self.Bv, [tf.shape(self.Bv), self.Bv], message='Bv=', name='Bv', summarize=3)  # will print message
+                            Br = self.Bv
+                            tf.print([tf.shape(self.Bv), self.Bv], name='Bv', summarize=3)  # will print message
                         else:
                             Br = self.Bv
                         Bs = ((tf.concat([tf.slice(Br, [i - 1, 0], [1, 1]) for i in bint], 0)))
 
-                        kbb = self.kern.K(Bs) + tf.diag(tf.ones(tf.shape(Bs)[:1], dtype=settings.float_type)) * settings.numerics.jitter_level
+                        kbb = self.kern.K(Bs) + tf.linalg.diag(tf.ones(tf.shape(Bs)[:1], dtype=gpflow.default_float())) * gpflow.default_jitter()
                         if(self.fDebug):
-                            kbb = tf.Print(kbb, [tf.shape(kbb), kbb], message='kbb=', name='kbb', summarize=10)
-                            kbb = tf.Print(kbb, [self.kern.lengthscales], message='lenscales=', name='lenscales', summarize=10)
-                            kbb = tf.Print(kbb, [self.kern.variance], message='variance=', name='lenscales', summarize=10)
-                            kbb = tf.Print(kbb, [Bs], message='Bs=', name='Bs', summarize=10)
+                            tf.print([tf.shape(kbb), kbb], name='kbb', summarize=10)
+                            tf.print([self.kern.lengthscales.numpy()], name='lenscales', summarize=10)
+                            tf.print([self.kern.variance.numpy()], name='lenscales', summarize=10)
+                            tf.print([Bs], name='Bs', summarize=10)
 
-                        Kbbs_inv = tf.matrix_inverse(kbb, name='invKbb')  # B X B
+                        Kbbs_inv = tf.linalg.inv(kbb, name='invKbb')  # B X B
                         Kb1s = self.kern.K(t1s, Bs)  # N*m X B
                         Kb2s = self.kern.K(t2s, Bs)  # N*m X B
 
-                        a = tf.matmul(Kb1s, Kbbs_inv)
-                        K_crosss = tf.matmul(a, tf.transpose(Kb2s), name='Kt1_Bi_invBB_KBt2')
+                        a = tf.linalg.matmul(Kb1s, Kbbs_inv)
+                        K_crosss = tf.linalg.matmul(a, tf.transpose(Kb2s), name='Kt1_Bi_invBB_KBt2')
 
                         K_s = tf.where(t12F, K_crosss, K_s, name='selectIndex')
         return K_s
 
-    @params_as_tensors
-    def Kdiag(self, X):
-        return tf.diag_part(self.kern.K(X))  # diagonal is just single point no branch point relevant
+    def K_diag(self, X):
+        return tf.linalg.diag_part(self.kern.K(X))  # diagonal is just single point no branch point relevant
 
 
 class IndKern(Kernel):
     ''' an independent output kernel '''
     def __init__(self, base_kern):
-        Kernel.__init__(self, input_dim=base_kern.input_dim + 1)
+        super().__init__()
         self.kern = base_kern
 
-    @params_as_tensors
     def K(self, X, Y=None):
         if Y is None:
             Y = X  # hack to avoid duplicating code below
@@ -193,8 +188,7 @@ class IndKern(Kernel):
         K_s = tf.where(same_functions, Ktt, tf.zeros_like(Ktt))
         return K_s
 
-    @params_as_tensors
-    def Kdiag(self, X):
-        return tf.diag_part(self.kern.K(X))
+    def K_diag(self, X):
+        return tf.linalg.diag_part(self.kern.K(X))
 
 

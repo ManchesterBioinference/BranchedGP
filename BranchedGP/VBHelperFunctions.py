@@ -69,8 +69,8 @@ def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., f
         fig = plt.gcf()
     d = 0  # constraint code to be 1D for now
     for f in range(3):
-        mu = mul[f]
-        var = varl[f]
+        mu = mul[f].numpy()
+        var = varl[f].numpy()
         ttest = ttestl[f]
         col = colorarray[f]  # mean.get_color()
         mean, = ax.plot(ttest, mu[:, d], linewidth=lw, color=col)
@@ -93,7 +93,7 @@ def plotBranchModel(B, pt, Y, ttestl, mul, varl, Phi, figsizeIn=(5, 5), lw=3., f
 def predictBranchingModel(m, full_cov=False):
     ''' return prediction of branching model '''
     pt = m.t
-    B = m.kern.kernels[0].Bv.value.flatten()
+    B = m.kernel.kernels[0].Bv.flatten()
     l = np.min(pt)
     u = np.max(pt)
     mul = list()
@@ -105,10 +105,8 @@ def predictBranchingModel(m, full_cov=False):
         else:
             ttest = np.linspace(B, u, 100)#[:, None]
         Xtest = np.hstack((ttest, ttest * 0 + f))
-        # print('*************************************************************************')
-        # print('Inside predictBranchingModel ...')
         if full_cov:
-            mu, var = m.predict_f_full_cov(Xtest)
+            mu, var = m.predict_f(Xtest, full_cov)
         else:
             mu, var = m.predict_f(Xtest)
         # print('mu', mu)

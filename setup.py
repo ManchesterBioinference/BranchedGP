@@ -10,7 +10,7 @@ MAINTAINER_EMAIL = "alexis.boukouvalas@gmail.com"
 DOWNLOAD_URL = 'https://github.com/ManchesterBioinference/BranchedGP'
 LICENSE = 'MIT'
 
-VERSION = '1.0'
+VERSION = '2.0'
 
 setup(
     name=NAME,
@@ -30,5 +30,5 @@ setup(
         "tensorflow==1.15.4",
         "gpflow==1.5.1",
     ],
-    python_requires=">=3.3,<3.8",
+    python_requires=">=3.3",
 )
