@@ -12,7 +12,6 @@ def checkIndices(indices, XForKernel, Xtrue):
 
 # Utility functions useful to encode/decode function identifiers
 
-
 def GenFunctionName(branchPoint, branchNumber=0):
     assert branchPoint > 0  # Branch id should be non-zero positive
     assert branchNumber == 0 or branchNumber == 1

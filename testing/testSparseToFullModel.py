@@ -11,27 +11,28 @@ from BranchedGP import branch_kernParamGPflow as bk
 from BranchedGP import assigngp_denseSparse
 from BranchedGP import assigngp_dense
 
+from gpflow import set_trainable
+
 
 class TestSparseVariational(unittest.TestCase):
     def InitParams(self, m):
-        m.likelihood.variance = 0.1
+        m.likelihood.variance.assign(0.1)
         # set lengthscale to maximum
-        m.kern.kernels[0].kern.lengthscales = 1.
+        m.kernel.kernels[0].kern.lengthscales.assign(1.)
         # set process variance to average
-        m.kern.kernels[0].kern.variance = 1.
+        m.kernel.kernels[0].kern.variance.assign(1.)
 
     def test_sparse(self):
         ls, lf = self.runSparseModel()
-        lss, lf2 = self.runSparseModel(M=10, atolPrediction=1, atolLik=50)
+        lss, lf2 = self.runSparseModel(M=5, atolPrediction=1, atolLik=50)
         self.assertTrue(np.allclose(lf, lf2, atol=1e-6), 'Not equal likelihoods for full models %f-%f' % (lf, lf2))
-        self.assertTrue(ls > lss, 'Log likelihood for full sparse should be higher full=%f, sparser=%f' % (ls, lss))
 
     def runSparseModel(self, M=None, atolPrediction=1e-3, atolLik=1):
         fDebug = True  # Enable debugging output - tensorflow print ops
         np.set_printoptions(precision=4)  # precision to print numpy array
         seed = 43
         np.random.seed(seed=seed)  # easy peasy reproducibeasy
-        tf.set_random_seed(seed)
+        tf.random.set_seed(seed)
         # Data generation
         N = 20
         t = np.linspace(0, 1, N)
@@ -53,13 +54,13 @@ class TestSparseVariational(unittest.TestCase):
         XExpanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(t)
         print('XExpanded', XExpanded.shape)
         print('indices', len(indices))        # Create model
-        Kbranch = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm, b=trueB.copy()) + gpflow.kernels.White(1)
-        Kbranch.kernels[0].kern.variance = 1
-        Kbranch.kernels[1].variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
-        Kbranch.kernels[1].variance.set_trainable(False)  # jitter for numerics
-        print('Kbranch matrix', Kbranch.compute_K(XExpanded, XExpanded))
+        Kbranch = bk.BranchKernelParam(gpflow.kernels.Matern32(), fm, b=trueB.copy()) + gpflow.kernels.White()
+        Kbranch.kernels[0].kern.variance.assign(1.)
+        Kbranch.kernels[1].variance.assign(1e-6)  # controls the discontinuity magnitude, the gap at the branching point
+        set_trainable(Kbranch.kernels[1].variance, False)  # jitter for numerics
+        print('Kbranch matrix', Kbranch.K(XExpanded, XExpanded))
         print('Branching K free parameters', Kbranch.kernels[0])
-        print('Branching K branching parameter', Kbranch.kernels[0].Bv.value)
+        print('Branching K branching parameter', Kbranch.kernels[0].Bv)
         if(M is not None):
             ir = np.random.choice(XExpanded.shape[0], M)
             ZExpanded = XExpanded[ir, :]
@@ -68,24 +69,24 @@ class TestSparseVariational(unittest.TestCase):
 
         phiInitial =  np.ones((N, 2))*0.5  # dont know anything
         mV = assigngp_denseSparse.AssignGPSparse(t, XExpanded, Y, Kbranch, indices,
-                                                 Kbranch.kernels[0].Bv.value, ZExpanded, phiInitial=phiInitial,
+                                                 Kbranch.kernels[0].Bv, ZExpanded, phiInitial=phiInitial,
                                                  fDebug=fDebug)
         self.InitParams(mV)
 
         mVFull = assigngp_dense.AssignGP(t, XExpanded, Y, Kbranch, indices,
-                                         Kbranch.kernels[0].Bv.value, fDebug=fDebug, phiInitial=phiInitial)
+                                         Kbranch.kernels[0].Bv, fDebug=fDebug, phiInitial=phiInitial)
         self.InitParams(mVFull)
 
-        lsparse = mV.compute_log_likelihood()
-        lfull = mVFull.compute_log_likelihood()
+        lsparse = mV.log_posterior_density()
+        lfull = mVFull.log_posterior_density()
         print('Log likelihoods, sparse=%f, full=%f' % (lsparse, lfull))
         self.assertTrue(np.allclose(lsparse, lfull, atol=atolLik),
                         'Log likelihoods not close, sparse=%f, full=%f' % (lsparse, lfull))
 
         # check models identical
         assert np.all(mV.GetPhiExpanded() == mVFull.GetPhiExpanded())
-        assert mV.likelihood.variance.value == mVFull.likelihood.variance.value
-        assert mV.kern is mVFull.kern
+        assert mV.likelihood.variance.numpy() == mVFull.likelihood.variance.numpy()
+        assert mV.kernel is mVFull.kernel
 
         # Test prediction
         Xtest = np.array([[0.6, 2], [0.6, 3]])

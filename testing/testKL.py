@@ -10,13 +10,15 @@ from BranchedGP import branch_kernParamGPflow as bk
 from BranchedGP import assigngp_dense
 from BranchedGP import FitBranchingModel
 
+from gpflow import set_trainable
+
 class TestKL(unittest.TestCase):
     def test(self):
         fDebug = True  # Enable debugging output - tensorflow print ops
         np.set_printoptions(suppress=True,  precision=5)
         seed = 43
         np.random.seed(seed=seed)  # easy peasy reproducibeasy
-        tf.set_random_seed(seed)
+        tf.random.set_seed(seed)
         # Data generation
         N = 20
         t = np.linspace(0, 1, N)
@@ -44,28 +46,28 @@ class TestKL(unittest.TestCase):
 
         # Look at kernels
         fDebug=True
-        Kbranch1 = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm1, b=np.ones((1, 1)) * ptb, fDebug=fDebug)
-        K1 = Kbranch1.compute_K(XExpanded, XExpanded)
+        Kbranch1 = bk.BranchKernelParam(gpflow.kernels.Matern32(), fm1, b=np.ones((1, 1)) * ptb, fDebug=fDebug)
+        K1 = Kbranch1.K(XExpanded, XExpanded)
 
-        Kbranch2 = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm1, b=np.ones((1, 1)) * 0.20, fDebug=fDebug)
-        K2 = Kbranch2.compute_K(XExpanded, XExpanded)
+        Kbranch2 = bk.BranchKernelParam(gpflow.kernels.Matern32(), fm1, b=np.ones((1, 1)) * 0.20, fDebug=fDebug)
+        K2 = Kbranch2.K(XExpanded, XExpanded)
 
-        Kbranch3 = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm1, b=np.ones((1, 1)) * 0.22, fDebug=fDebug)
-        K3 = Kbranch3.compute_K(XExpanded, XExpanded)
+        Kbranch3 = bk.BranchKernelParam(gpflow.kernels.Matern32(), fm1, b=np.ones((1, 1)) * 0.22, fDebug=fDebug)
+        K3 = Kbranch3.K(XExpanded, XExpanded)
 
         # Look at model
-        kb = bk.BranchKernelParam(gpflow.kernels.Matern32(1), fm1, b=np.zeros((1, 1))) + gpflow.kernels.White(1)
-        kb.kernels[1].variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
-        kb.kernels[1].variance.set_trainable(False)  # jitter for numerics
+        kb = bk.BranchKernelParam(gpflow.kernels.Matern32(), fm1, b=np.zeros((1, 1))) + gpflow.kernels.White()
+        kb.kernels[1].variance.assign(1e-6)  # controls the discontinuity magnitude, the gap at the branching point
+        set_trainable(kb.kernels[1].variance, False)  # jitter for numerics
         # m = assigngp_dense.AssignGP(t, XExpanded, Y, kb, indices, np.ones((1, 1)), phiInitial=phiInitial, phiPrior=phiPrior)
         m = assigngp_dense.AssignGP(t, XExpanded, Y, kb, indices, np.ones((1, 1)), phiInitial=phiInitial, phiPrior=phiPrior, KConst=K1, fDebug=True)
 
         m.UpdateBranchingPoint(np.ones((1, 1)) * ptb, phiInitial.copy())
-        ptbLL = m.compute_log_likelihood()
+        ptbLL = m.log_posterior_density()
         m.UpdateBranchingPoint(np.ones((1, 1)) * 0.20, phiInitial.copy())
-        eLL = m.compute_log_likelihood()
+        eLL = m.log_posterior_density()
         m.UpdateBranchingPoint(np.ones((1, 1)) * 0.22, phiInitial.copy())
-        lll = m.compute_log_likelihood()
+        lll = m.log_posterior_density()
         print(eLL, ptbLL, lll)
         assert eLL < ptbLL
         assert np.allclose(ptbLL, lll)

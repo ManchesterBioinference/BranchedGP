@@ -5,7 +5,6 @@ import unittest
 # Branching files
 from BranchedGP import BranchingTree as bt
 from BranchedGP import branch_kernParamGPflow as bk
-from gpflow import settings
 
 class TestKernelSampling(unittest.TestCase):
     def test(self):
@@ -22,19 +21,19 @@ class TestKernelSampling(unittest.TestCase):
         (XForKernel, indicesBranch, Xtrue) = tree.GetFunctionIndexList(t, fReturnXtrue=True)
         # GP flow kernel
         Bvalues = np.expand_dims(np.asarray(tree.GetBranchValues()), 1)
-        KbranchParam = bk.BranchKernelParam(gpflow.kernels.RBF(1), fm, b=Bvalues)
-        KbranchParam.kern.lengthscales = 2
-        KbranchParam.kern.variance = 1
+        KbranchParam = bk.BranchKernelParam(gpflow.kernels.SquaredExponential(), fm, b=Bvalues)
+        KbranchParam.kern.lengthscales.assign(2)
+        KbranchParam.kern.variance.assign(1)
 
-        K = KbranchParam.compute_K(Xtrue, Xtrue)
-        assert KbranchParam.Bv.value == 0.5
+        K = KbranchParam.K(Xtrue, Xtrue)
+        assert KbranchParam.Bv == 0.5
 
 
         samples, L, K = bk.SampleKernel(KbranchParam, XForKernel, D=1, tol=1e-6, retChol=True)
         samples2 = bk.SampleKernel(KbranchParam, XForKernel, D=1, tol=1e-6, retChol=False)
 
         # Also try the independent kernel
-        indKernel = bk.IndKern(gpflow.kernels.RBF(1))
+        indKernel = bk.IndKern(gpflow.kernels.SquaredExponential())
         samples3, L, K = bk.SampleKernel(indKernel, XForKernel, D=1, tol=1e-6, retChol=True)
 
         samples4 = KbranchParam.SampleKernel(XForKernel, b=Bvalues)
