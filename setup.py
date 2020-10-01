@@ -30,4 +30,5 @@ setup(
         "tensorflow==1.15.3",
         "gpflow==1.5.1",
     ],
+    python_requires=">=3.3,<3.8",
 )
