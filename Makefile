@@ -9,8 +9,16 @@ install:
 test:
 	nosetests $(TEST_PATH)
 
+
 jupyter_server:
 	jupyter notebook $(NOTEBOOK_PATH)
+
+sync_notebooks:
+	jupytext --sync $(NOTEBOOK_PATH)/*.ipynb
+
+check_notebooks_synced:
+	jupytext --test-strict -x $(NOTEBOOK_PATH)/*.ipynb --to py:percent
+
 
 freeze_requirements:
 	pip freeze > $(TEST_REQUIREMENTS)
