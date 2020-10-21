@@ -1,8 +1,9 @@
 *.pyc
 *~
 *.ipynb_check*
-.venv/
-.idea/
+/.venv/
+/.oldvenv/
+/.idea/
 /.coverage
 /coverage.xml
 /build/
