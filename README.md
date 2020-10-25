@@ -1,6 +1,8 @@
 # BranchedGP
 
 BranchedGP is a package for building Branching Gaussian process models in python, using [TensorFlow](github.com/tensorflow) and [GPFlow](https://github.com/GPflow/GPflow).
+You can install it via `pip install BranchedGP`.
+
 The model is described in the paper
 
 ["BGP: Branched Gaussian processes for identifying gene-specific branching dynamics in single cell data",
@@ -16,10 +18,6 @@ An example of what the model can provide is shown below.
    1. In the bottom subpanel the posterior branching time is shown: the probability of branching at a particular pseudotime.
 <img src="images/VAMP5_BGPAssignmentProbability.png" width="400" height="400" align="middle"/>
 
-# Setup
-
-This project requires Python3.7 or earlier (TensorFlow 1 requirement).
-Create a virtual environment, activate it and run `make install`.
 
 # Quick start
 For a quick introduction see the `notebooks/Hematopoiesis.ipynb` notebook.
@@ -55,7 +53,21 @@ Monocle and BEAM on the hematopoiesis data is included.
 | VBHelperFunctions.py | Plotting code. |
 
 
-# Common tasks
+# Development setup
+
+This project requires Python3.7 or earlier (TensorFlow 1 requirement).
+Create a virtual environment, activate it and run `make install`.
+
+## Notebooks
+
+We use [Jupytext](https://github.com/mwouts/jupytext) to help version
+Jupyter notebooks.
+See in particular the documentation on [paired notebooks](https://jupytext.readthedocs.io/en/latest/#paired-notebooks).
+
+If Jupyter shows you a warning about the notebook being out of sync with
+the master script, run `make sync_notebooks`.
+
+## Common tasks
 
 * Tests: `make test`
 * Install dependencies (into an active virtual environment): `make install`
