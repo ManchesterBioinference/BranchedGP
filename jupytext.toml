@@ -1,0 +1,4 @@
+default_jupytext_formats = "ipynb,py:percent"
+
+default_notebook_metadata_filter = "all"
+default_cell_metadata_filter = "all"
