@@ -62,10 +62,18 @@ Create a virtual environment, activate it and run `make install`.
 
 We use [Jupytext](https://github.com/mwouts/jupytext) to help version
 Jupyter notebooks.
-See in particular the documentation on [paired notebooks](https://jupytext.readthedocs.io/en/latest/#paired-notebooks).
+Each notebook corresponds to a Python script, which is easy to review.
+See also in the Jupytext documentation on
+[paired notebooks](https://jupytext.readthedocs.io/en/latest/#paired-notebooks).
 
-If Jupyter shows you a warning about the notebook being out of sync with
-the master script, run `make sync_notebooks`.
+### Troubleshooting
+
+* If Jupyter shows you a warning about the notebook being out of sync with
+  the master script, run `make sync_notebooks`.
+* If you add a new notebook, run `make pair_notebooks`.
+  This will produce the paired script
+  (or notebook if you're starting from a script).
+
 
 ## Common tasks
 
