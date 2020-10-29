@@ -58,26 +58,50 @@ Monocle and BEAM on the hematopoiesis data is included.
 This project requires Python3.7 or earlier (TensorFlow 1 requirement).
 Create a virtual environment, activate it and run `make install`.
 
-## Notebooks
-
-We use [Jupytext](https://github.com/mwouts/jupytext) to help version
-Jupyter notebooks.
-Each notebook corresponds to a Python script, which is easy to review.
-See also in the Jupytext documentation on
-[paired notebooks](https://jupytext.readthedocs.io/en/latest/#paired-notebooks).
-
-### Troubleshooting
-
-* If Jupyter shows you a warning about the notebook being out of sync with
-  the master script, run `make sync_notebooks`.
-* If you add a new notebook, run `make pair_notebooks`.
-  This will produce the paired script
-  (or notebook if you're starting from a script).
-
-
 ## Common tasks
 
 * Tests: `make test`
 * Install dependencies (into an active virtual environment): `make install`
 * Format code: `make format`
 * Run a jupyter notebook server: `make jupyter_server`
+
+# Contributing
+
+We welcome any and all contributions to the BranchedGP repo.
+Feel free to create issues or PRs into the repo and someone will
+take a look and review.
+
+## Notebooks
+
+We use [Jupytext](https://github.com/mwouts/jupytext) to help version
+Jupyter notebooks.
+Each notebook corresponds to a Python script, which is easy to review.
+See also the Jupytext documentation on
+[paired notebooks](https://jupytext.readthedocs.io/en/latest/#paired-notebooks).
+
+Note that Jupytext should be automatically installed in
+your virtual environment if you follow the instructions above.
+
+### Updating an existing notebook
+
+We want our notebooks to always work.
+Therefore, before committing any changes to a notebook,
+we ask contributors to re-run the notebook from scratch.
+
+The Jupytext extension should automatically sync the notebook
+to the paired script.
+If you're unsure, you can always check
+via `make check_notebooks_synced`
+and manually run `make sync_notebooks` if needed.
+
+### Adding a new notebook
+
+Follow your usual procedure, but run `make pair_notebooks` afterwards.
+This will produce the paired script
+(or notebook if you're starting from a script).
+Commit both the notebook as well as the paired notebook.
+
+### Syncing notebooks
+
+If Jupyter shows you a warning about the notebook being
+out of sync with the master script, run `make sync_notebooks`.
