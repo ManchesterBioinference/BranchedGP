@@ -32,3 +32,6 @@ jobs:
 
     - name: Run tests
       run: make test
+
+    - name: Check notebooks are synced with script representations
+      run: make check_notebooks_synced
