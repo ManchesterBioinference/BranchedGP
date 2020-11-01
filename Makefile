@@ -1,3 +1,13 @@
+# BranchedGP Makefile
+#
+# We use this makefile to collect commonly used commands in one location.
+# A "rule" or a "command" is defined via:
+#
+# rule:
+#     <shell commands for this 'rule'>
+#
+# Invoke by running `make rule`. See also https://www.gnu.org/software/make/.
+
 ####################
 # Common constants #
 ####################
