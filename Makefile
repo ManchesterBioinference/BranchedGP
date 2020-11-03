@@ -63,7 +63,7 @@ check_isort:
 check_format: check_black check_isort
 
 isort:
-	isort --recursive $(ALL_CODE_PATHS)
+	isort $(ALL_CODE_PATHS)
 
 black:
 	black $(ALL_CODE_PATHS)
