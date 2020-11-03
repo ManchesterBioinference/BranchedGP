@@ -15,6 +15,8 @@
 TEST_PATH=testing
 TEST_REQUIREMENTS=test_requirements.txt
 NOTEBOOK_PATH=notebooks
+PACKAGE_PATH=BranchedGP
+ALL_CODE_PATHS=$(TEST_PATH) $(NOTEBOOK_PATH) $(PACKAGE_PATH)
 
 
 ##################################
@@ -53,25 +55,25 @@ test:
 	nosetests $(TEST_PATH)
 
 check_black:
-	black --check .
+	black --check $(ALL_CODE_PATHS)
 
 check_isort:
-	isort --diff .
+	isort --diff $(ALL_CODE_PATHS)
 
 check_format: check_black check_isort
 
 isort:
-	isort --skip-glob=.tox --recursive .
+	isort --recursive $(ALL_CODE_PATHS)
 
 black:
-	black .
+	black $(ALL_CODE_PATHS)
 
 format: isort black
 
 lint:
-	flake8 --max-line-length 120 BranchedGP
+	flake8 --max-line-length 120 $(ALL_CODE_PATHS)
 
 mypy:
-	mypy --ignore-missing-imports BranchedGP
+	mypy --ignore-missing-imports $(ALL_CODE_PATHS)
 
 static_checks: mypy lint
