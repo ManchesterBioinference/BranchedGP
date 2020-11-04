@@ -105,3 +105,12 @@ Commit both the notebook as well as the paired notebook.
 
 If Jupyter shows you a warning about the notebook being
 out of sync with the master script, run `make sync_notebooks`.
+
+## Formatting code
+
+We automatically check that all contributions are formatted
+according to the recommendations by
+[black](https://black.readthedocs.io/en/stable/) and
+[isort](https://pycqa.github.io/isort/).
+If your changes fail these checks, all you need to do is run
+`make format` and commit the changes.
