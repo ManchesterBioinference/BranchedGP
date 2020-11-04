@@ -35,15 +35,18 @@
 # This notebook shows how to sample from a BGP model
 
 # %%
-import pandas as pd
-import numpy as np
 import pickle
-from matplotlib import pyplot as plt
+
 import gpflow
-from BranchedGP import VBHelperFunctions as bplot
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+
 from BranchedGP import BranchingTree as bt
+from BranchedGP import VBHelperFunctions as bplot
 from BranchedGP import branch_kernParamGPflow as bk
-plt.style.use('ggplot')
+
+plt.style.use("ggplot")
 # %matplotlib inline
 
 # %% [markdown]
@@ -52,7 +55,9 @@ plt.style.use('ggplot')
 
 # %%
 branchingPoint = 0.5
-tree = bt.BinaryBranchingTree(0, 10, fDebug=False)  # set to true to print debug messages
+tree = bt.BinaryBranchingTree(
+    0, 10, fDebug=False
+)  # set to true to print debug messages
 tree.add(None, 1, branchingPoint)  # single branching point
 (fm, fmb) = tree.GetFunctionBranchTensor()
 

@@ -41,10 +41,15 @@
 # This notebook shows how to build a BGP model and plot the posterior model fit and posterior branching times.
 
 # %%
-import pandas as pd
+import time
+
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
-plt.style.use('ggplot')
+
+import BranchedGP
+
+plt.style.use("ggplot")
 # %matplotlib inline
 
 # %% [markdown]
@@ -52,8 +57,8 @@ plt.style.use('ggplot')
 # We have also performed Monocle2 (version 2.1) - DDRTree on this data. The results loaded include the Monocle estimated pseudotime, branching assignment (state) and the DDRTree latent dimensions.
 
 # %%
-Y = pd.read_csv('singlecelldata/hematoData.csv', index_col=[0])
-monocle = pd.read_csv('singlecelldata/hematoMonocle.csv', index_col=[0])
+Y = pd.read_csv("singlecelldata/hematoData.csv", index_col=[0])
+monocle = pd.read_csv("singlecelldata/hematoMonocle.csv", index_col=[0])
 
 # %%
 Y.head()
@@ -63,18 +68,24 @@ monocle.head()
 
 # %%
 # Plot Monocle DDRTree space
-genelist = ['FLT3','KLF1','MPO']
+genelist = ["FLT3", "KLF1", "MPO"]
 f, ax = plt.subplots(1, len(genelist), figsize=(10, 5), sharex=True, sharey=True)
 for ig, g in enumerate(genelist):
-        y = Y[g].values
-        yt = np.log(1+y/y.max())
-        yt = yt/yt.max()
-        h = ax[ig].scatter(monocle['DDRTreeDim1'], monocle['DDRTreeDim2'],
-                       c=yt, s=50, alpha=1.0, vmin=0, vmax=1)
-        ax[ig].set_title(g)
+    y = Y[g].values
+    yt = np.log(1 + y / y.max())
+    yt = yt / yt.max()
+    h = ax[ig].scatter(
+        monocle["DDRTreeDim1"],
+        monocle["DDRTreeDim2"],
+        c=yt,
+        s=50,
+        alpha=1.0,
+        vmin=0,
+        vmax=1,
+    )
+    ax[ig].set_title(g)
 
 # %%
-import BranchedGP, time
 def PlotGene(label, X, Y, s=3, alpha=1.0, ax=None):
     fig = None
     if ax is None:
@@ -91,27 +102,41 @@ def PlotGene(label, X, Y, s=3, alpha=1.0, ax=None):
 #
 
 # %%
-def FitGene(g, ns=20): # for quick results subsample data
+def FitGene(g, ns=20):  # for quick results subsample data
     t = time.time()
-    Bsearch = list(np.linspace(0.05, 0.95, 5)) + [1.1]  # set of candidate branching points
-    GPy = (Y[g].iloc[::ns].values - Y[g].iloc[::ns].values.mean())[:, None]  # remove mean from gene expression data
-    GPt = monocle['StretchedPseudotime'].values[::ns]
-    globalBranching = monocle['State'].values[::ns].astype(int)
+    Bsearch = list(np.linspace(0.05, 0.95, 5)) + [
+        1.1
+    ]  # set of candidate branching points
+    GPy = (Y[g].iloc[::ns].values - Y[g].iloc[::ns].values.mean())[
+        :, None
+    ]  # remove mean from gene expression data
+    GPt = monocle["StretchedPseudotime"].values[::ns]
+    globalBranching = monocle["State"].values[::ns].astype(int)
     d = BranchedGP.FitBranchingModel.FitModel(Bsearch, GPt, GPy, globalBranching)
-    print(g, 'BGP inference completed in %.1f seconds.' %  (time.time()-t))
+    print(g, "BGP inference completed in %.1f seconds." % (time.time() - t))
     # plot BGP
-    fig,ax=BranchedGP.VBHelperFunctions.PlotBGPFit(GPy, GPt, Bsearch, d, figsize=(10,10))
+    fig, ax = BranchedGP.VBHelperFunctions.PlotBGPFit(
+        GPy, GPt, Bsearch, d, figsize=(10, 10)
+    )
     # overplot data
-    f, a=PlotGene(monocle['State'].values, monocle['StretchedPseudotime'].values, Y[g].values-Y[g].iloc[::ns].values.mean(), 
-                  ax=ax[0], s=10, alpha=0.5)
+    f, a = PlotGene(
+        monocle["State"].values,
+        monocle["StretchedPseudotime"].values,
+        Y[g].values - Y[g].iloc[::ns].values.mean(),
+        ax=ax[0],
+        s=10,
+        alpha=0.5,
+    )
     # Calculate Bayes factor of branching vs non-branching
-    bf = BranchedGP.VBHelperFunctions.CalculateBranchingEvidence(d)['logBayesFactor']
+    bf = BranchedGP.VBHelperFunctions.CalculateBranchingEvidence(d)["logBayesFactor"]
 
-    fig.suptitle('%s log Bayes factor of branching %.1f' % (g, bf))    
+    fig.suptitle("%s log Bayes factor of branching %.1f" % (g, bf))
     return d, fig, ax
-d, fig, ax = FitGene('MPO')
+
+
+d, fig, ax = FitGene("MPO")
 
 # %%
-d_c, fig_c, ax_c = FitGene('CTSG')
+d_c, fig_c, ax_c = FitGene("CTSG")
 
 # %%
