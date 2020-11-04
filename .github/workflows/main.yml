@@ -35,3 +35,6 @@ jobs:
 
     - name: Check notebooks are synced with script representations
       run: make check_notebooks_synced
+
+    - name: Check code is correctly formatted
+      run: make check_format
