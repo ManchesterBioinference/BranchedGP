@@ -114,3 +114,10 @@ according to the recommendations by
 [isort](https://pycqa.github.io/isort/).
 If your changes fail these checks, all you need to do is run
 `make format` and commit the changes.
+
+## Static checks
+
+We automatically check our code conforms to the coding standards
+enforced by [flake8](https://flake8.pycqa.org/en/latest/manpage.html) and 
+[MyPy](http://mypy-lang.org/).
+You can check if your changes conform with these checks via `make static_checks`.
