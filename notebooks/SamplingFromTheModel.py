@@ -35,15 +35,11 @@
 # This notebook shows how to sample from a BGP model
 
 # %%
-import pickle
-
 import gpflow
 import numpy as np
-import pandas as pd
 from matplotlib import pyplot as plt
 
 from BranchedGP import BranchingTree as bt
-from BranchedGP import VBHelperFunctions as bplot
 from BranchedGP import branch_kernParamGPflow as bk
 
 plt.style.use("ggplot")

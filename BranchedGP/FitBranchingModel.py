@@ -1,10 +1,7 @@
-import sys
-import traceback
-
 import gpflow
 import numpy as np
 import tensorflow_probability as tfp
-from gpflow.utilities import print_summary, set_trainable, to_default_float
+from gpflow.utilities import set_trainable, to_default_float
 
 from . import BranchingTree as bt
 from . import VBHelperFunctions, assigngp_dense, assigngp_denseSparse
@@ -142,13 +139,8 @@ def FitModel(
                 }
             )
             ll[ib] = m.log_posterior_density()
-        except:
-            print("Failure", "Unexpected error:", sys.exc_info()[0])
-            print("-" * 60)
-            traceback.print_exc(file=sys.stdout)
-            print("Exception caused by model")
-            print(m)
-            print("-" * 60)
+        except Exception as ex:
+            print(f"Unexpected error: {ex} {'-' * 60}\nCaused by model: {m} {'-' * 60}")
             ll[0] = np.nan
             # return model so can inspect model
             return {

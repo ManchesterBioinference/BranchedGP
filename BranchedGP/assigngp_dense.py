@@ -10,7 +10,7 @@ from . import pZ_construction_singleBP
 class AssignGP(
     gpflow.models.model.GPModel, gpflow.models.InternalDataTrainingLossMixin
 ):
-    """
+    r"""
     Gaussian Process regression, but where the index to which the data are
     assigned is unknown.
 
