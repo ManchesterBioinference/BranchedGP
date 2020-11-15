@@ -38,3 +38,6 @@ jobs:
 
     - name: Check code is correctly formatted
       run: make check_format
+
+    - name: Check code passes the static checks
+      run: make static_checks
