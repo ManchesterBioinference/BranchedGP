@@ -154,8 +154,7 @@ def predictBranchingModel(m, full_cov=False):
             ttest = np.linspace(B, u, 100)  # [:, None]
         Xtest = np.hstack((ttest, ttest * 0 + f))
         mu, var = m.predict_f(Xtest, full_cov=full_cov)
-        idx = np.isnan(mu)
-        # print('munan', mu[idx], var[idx], ttest[idx])
+
         assert np.all(np.isfinite(mu)), "All elements should be finite but are " + str(
             mu
         )

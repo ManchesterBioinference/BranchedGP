@@ -16,9 +16,7 @@ def expand_pZ0Zeros(pZ0, epsilon=1e-6):
 
 
 def expand_pZ0PureNumpyZeros(eZ0, BP, X, epsilon=1e-6):
-    N = X.size
     r = eZ0.copy()
-    count = 0
     i = np.flatnonzero(X <= BP)
     # mark trunk as [1, 0, 0]
     r[i, i * 3] = 1

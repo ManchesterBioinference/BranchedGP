@@ -1,11 +1,8 @@
-import pickle
 import unittest
 
 import gpflow
 import numpy as np
-import pandas as pd
 import tensorflow as tf
-from matplotlib import pyplot as plt
 
 from BranchedGP import BranchingTree as bt
 from BranchedGP import FitBranchingModel
@@ -112,9 +109,10 @@ class TestSamplingAndPlotting(unittest.TestCase):
         )
 
         # You can rerun the same code as many times as you want and get different sample paths
-        # We can also sample independent functions. This is the assumption in the overlapping mixtures of GPs model (OMGP) discussed in the paper.
+        # We can also sample independent functions.
+        # This is the assumption in the overlapping mixtures of GPs model (OMGP) discussed in the paper.
         indKernel = bk.IndKern(gpflow.kernels.SquaredExponential())
-        samplesInd = bk.SampleKernel(indKernel, XForKernel)
+        _ = bk.SampleKernel(indKernel, XForKernel)
 
 
 if __name__ == "__main__":

@@ -1,19 +1,17 @@
 # Generic libraries
 import unittest
 
-import gpflow
 import numpy as np
 import tensorflow as tf
 
 # Branching files
-from BranchedGP import FitBranchingModel, VBHelperFunctions
+from BranchedGP import FitBranchingModel
 
 
 class TestObjectiveMin(unittest.TestCase):
     def test(self):
         # Test VB bound is valid objective function.
 
-        fDebug = True  # Enable debugging output - tensorflow print ops
         np.set_printoptions(suppress=True, precision=5)
         seed = 43
         np.random.seed(seed=seed)  # easy peasy reproducibeasy

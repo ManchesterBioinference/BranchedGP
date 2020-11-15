@@ -7,7 +7,7 @@ from . import assigngp_dense
 
 
 class AssignGPSparse(assigngp_dense.AssignGP):
-    """
+    r"""
     Gaussian Process sparse regression, but where the index to which the data are
     assigned is unknown.
 
