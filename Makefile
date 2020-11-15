@@ -62,13 +62,19 @@ check_isort:
 
 check_format: check_black check_isort
 
-isort:
-	isort $(ALL_CODE_PATHS)
+isort_code:
+	isort $(PACKAGE_PATH) $(TEST_PATH)
 
-black:
-	black $(ALL_CODE_PATHS)
+isort_notebooks:
+	jupytext --pipe 'isort - --treat-comment-as-code "# %%" --float-to-top' $(NOTEBOOK_PATH)/*.ipynb
 
-format: isort black
+black_code:
+	black $(PACKAGE_PATH) $(TEST_PATH)
+
+black_notebooks:
+	jupytext --sync --pipe black $(NOTEBOOK_PATH)/*.ipynb
+
+format: isort_code black_code isort_notebooks black_notebooks
 
 lint:
 	flake8 --max-line-length 120 $(ALL_CODE_PATHS)
