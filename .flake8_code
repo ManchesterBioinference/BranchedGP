@@ -1,0 +1,8 @@
+[flake8]
+
+ignore = E203,W503,E741
+# E203 and W503 conflict with black
+# E741 suggests that "l" is not a good variable name. Whilst true, it's not obvious what other name would be better.
+#   To be revisited.
+
+max-line-length = 120

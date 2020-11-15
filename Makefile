@@ -77,10 +77,13 @@ black_notebooks:
 
 format: isort_code black_code isort_notebooks black_notebooks
 
-lint:
-	flake8 --max-line-length 120 $(ALL_CODE_PATHS)
+lint_code:
+	flake8 --config .flake8_code $(PACKAGE_PATH) $(TEST_PATH)
+
+lint_notebooks:
+	flake8 --config .flake8_notebooks $(NOTEBOOK_PATH)
 
 mypy:
 	mypy --ignore-missing-imports $(ALL_CODE_PATHS)
 
-static_checks: mypy lint
+static_checks: mypy lint_code lint_notebooks

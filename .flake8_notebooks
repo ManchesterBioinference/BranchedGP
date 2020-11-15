@@ -1,0 +1,11 @@
+[flake8]
+
+ignore = E203,W503,E501,E741,E402,E302
+# E203, W503 and E501 conflict with black
+# E741 suggests that "l" is not a good variable name. Whilst true, it's not obvious what other name would be better.
+#   To be revisited.
+# E402 is about imports not being at the top of the file. For notebooks we want to relax this requirement.
+# E302 is about how many blank lines you should have between statements. It's acceptable to relax this for notebooks.
+
+
+max-line-length = 120
