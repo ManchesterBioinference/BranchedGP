@@ -25,6 +25,7 @@ ALL_CODE_PATHS=$(TEST_PATH) $(NOTEBOOK_PATH) $(PACKAGE_PATH)
 
 install:
 	pip install -r $(TEST_REQUIREMENTS)
+	pip install -e .
 
 freeze_requirements:
 	pip freeze > $(TEST_REQUIREMENTS)
