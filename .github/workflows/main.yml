@@ -28,7 +28,7 @@ jobs:
         python-version: 3.7
 
     - name: Install dependencies
-      run: pip install -r test_requirements.txt
+      run: make install
 
     - name: Run tests
       run: make test
