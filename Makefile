@@ -52,7 +52,7 @@ check_notebooks_synced:
 #############################################
 
 test:
-	nosetests $(TEST_PATH)
+	pytest $(TEST_PATH)
 
 check_black:
 	black --check $(ALL_CODE_PATHS)
