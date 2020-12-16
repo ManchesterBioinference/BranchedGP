@@ -27,7 +27,7 @@ setup(
     packages=['BranchedGP'],
     package_data={},
     install_requires=[
-        "tensorflow>=2,<3",
+        "tensorflow>=2.4,<3",
         "gpflow>=2,<3",
         "matplotlib",
     ],
