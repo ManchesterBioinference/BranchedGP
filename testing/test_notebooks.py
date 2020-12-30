@@ -9,10 +9,8 @@ import unittest
 
 import nbformat
 from nbconvert.preprocessors.execute import CellExecutionError, ExecutePreprocessor
-from nose.plugins.attrib import attr
 
 
-@attr(speed="slow")
 class TestNotebooks(unittest.TestCase):
     def _execNotebook(self, ep, notebook_filename, nbpath):
         with open(notebook_filename) as f:
