@@ -12,8 +12,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
+  setup:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -30,11 +29,30 @@ jobs:
     - name: Install dependencies
       run: make install
 
-    - name: Run tests
-      run: make test
+  test:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run tests
+        run: make test
 
-    - name: Check notebooks are synced with script representations
-      run: make check_notebooks_synced
+  check_notebooks_synced:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check notebooks are synced with script representations
+        run: make check_notebooks_synced
 
-    - name: Check code is correctly formatted
-      run: make check_format
+  check_format:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check code is correctly formatted
+        run: make check_format
+
+  static_checks:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check code passes the static checks
+        run: make static_checks
