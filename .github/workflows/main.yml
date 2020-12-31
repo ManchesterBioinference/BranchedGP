@@ -33,6 +33,8 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+
       - name: Run tests
         run: make test
 
@@ -40,6 +42,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Check notebooks are synced with script representations
         run: make check_notebooks_synced
 
