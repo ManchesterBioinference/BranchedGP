@@ -53,7 +53,7 @@ markdown-it-py==0.5.6
 MarkupSafe==1.1.1
 matplotlib==3.3.2
 mccabe==0.6.1
-mistune==0.8.4
+mistune==2.0.3
 multidict==4.7.6
 multipledispatch==0.6.0
 mypy==0.790
