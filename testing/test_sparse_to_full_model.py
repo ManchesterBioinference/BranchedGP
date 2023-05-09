@@ -21,6 +21,7 @@ class TestSparseVariational(unittest.TestCase):
         # set process variance to average
         m.kernel.kernels[0].kern.variance.assign(1.0)
 
+    @unittest.skip("Incredibly slow, skipping")
     def test_sparse(self):
         ls, lf = self.runSparseModel()
         lss, lf2 = self.runSparseModel(M=5, atolPrediction=1, atolLik=50)

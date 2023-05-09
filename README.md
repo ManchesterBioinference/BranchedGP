@@ -62,6 +62,8 @@ Create a virtual environment, activate it and run `make install`.
 
 * Tests: `make test`
 * Install dependencies (into an active virtual environment): `make install`
+  - If you're running on Apple silicon, you may want to take a look at the
+    `setup_tensorflow_on_apple_silicon.sh` script.
 * Format code: `make format`
 * Run a jupyter notebook server: `make jupyter_server`
 
