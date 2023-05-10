@@ -2,12 +2,12 @@
 Toy function to generate toy data
 """
 import dataclasses
-from typing import Sequence, Optional, Tuple
+from typing import Optional, Sequence, Tuple
 
-from matplotlib.figure import Figure
 import numpy as np
 import scipy.ndimage
 from matplotlib import pyplot as plt
+from matplotlib.figure import Figure
 
 Colours = Tuple[str, str, str]
 # 0th colour corresponds to the pre-branching point colour
@@ -26,7 +26,7 @@ AxesMatrix = np.ndarray  # Just a helper type to indicate plots arranged in a ma
 
 
 class GeneExpressionDataValidationError(ValueError):
-    """ Raised when data provided to construct BranchedData is internally inconsistent. """
+    """Raised when data provided to construct BranchedData is internally inconsistent."""
 
 
 @dataclasses.dataclass(frozen=True)
@@ -81,15 +81,15 @@ class GeneExpressionData:
         #  with what the state labels say
 
     def plot(
-            self,
-            fig: Optional[Figure] = None,
-            axa: Optional[AxesMatrix] = None,
-            colours: Colours = DEFAULT_COLOURS,
-            alpha: float = 0.4,
-            marker_size_in_points: int = 40,
-            max_samples_per_gene: int = 100,
-            axa_per_row: int = 5,
-            y_limits: Optional[Tuple[float, float]] = None,
+        self,
+        fig: Optional[Figure] = None,
+        axa: Optional[AxesMatrix] = None,
+        colours: Colours = DEFAULT_COLOURS,
+        alpha: float = 0.4,
+        marker_size_in_points: int = 40,
+        max_samples_per_gene: int = 100,
+        axa_per_row: int = 5,
+        y_limits: Optional[Tuple[float, float]] = None,
     ) -> Tuple[Figure, AxesMatrix]:
         """
         Plot gene expressions on the provided axa and return the axa.
@@ -98,7 +98,9 @@ class GeneExpressionData:
         """
         if axa is None or fig is None:
             num_subplots = self.num_genes
-            fig, axa = self._get_axa_grid(num_subplots=num_subplots, axa_per_row=axa_per_row)
+            fig, axa = self._get_axa_grid(
+                num_subplots=num_subplots, axa_per_row=axa_per_row
+            )
 
         gene_labels = self.gene_labels or (f"gene {i}" for i in range(self.num_genes))
 
@@ -132,14 +134,14 @@ class GeneExpressionData:
         return fig, axa
 
     def plot_rolling_means(
-            self,
-            fig: Figure,
-            axa: AxesMatrix,
-            colours: Colours = DEFAULT_COLOURS,
-            rolling_window_length: int = 10,
-            line_width: int = 3,
+        self,
+        fig: Figure,
+        axa: AxesMatrix,
+        colours: Colours = DEFAULT_COLOURS,
+        rolling_window_length: int = 10,
+        line_width: int = 3,
     ) -> Tuple[Figure, AxesMatrix]:
-        """ Plot smoothed lines for the gene expressions. """
+        """Plot smoothed lines for the gene expressions."""
         gene_labels = self.gene_labels or (f"gene {i}" for i in range(self.num_genes))
         axa_per_row = axa.shape[1]
 
@@ -159,7 +161,10 @@ class GeneExpressionData:
 
                 ax.plot(
                     self.t[state_mask][sorted_idx],
-                    rolling_avg(self.Y[state_mask, gene_idx][sorted_idx], window_length=rolling_window_length),
+                    rolling_avg(
+                        self.Y[state_mask, gene_idx][sorted_idx],
+                        window_length=rolling_window_length,
+                    ),
                     c=colour,
                     linewidth=line_width,
                 )
@@ -197,7 +202,9 @@ class GeneExpressionData:
 
 @dataclasses.dataclass(frozen=True)
 class BranchedData(GeneExpressionData):
-    branching_points: Sequence[float]  # True branching point locations. K elements expected.
+    branching_points: Sequence[
+        float
+    ]  # True branching point locations. K elements expected.
 
     def __post_init__(self) -> None:
         self._validate()
@@ -212,17 +219,17 @@ class BranchedData(GeneExpressionData):
             )
 
     def plot(
-            self,
-            fig: Optional[Figure] = None,
-            axa: Optional[AxesMatrix] = None,
-            colours: Optional[Colours] = None,
-            alpha: float = 0.4,
-            marker_size_in_points: int = 40,
-            true_bp_location_line: str = "--b",
-            max_num_genes: int = 100,
-            max_samples_per_gene: int = 100,
-            axa_per_row: int = 5,
-            y_limits: Optional[Tuple[float, float]] = None,
+        self,
+        fig: Optional[Figure] = None,
+        axa: Optional[AxesMatrix] = None,
+        colours: Optional[Colours] = None,
+        alpha: float = 0.4,
+        marker_size_in_points: int = 40,
+        true_bp_location_line: str = "--b",
+        max_num_genes: int = 100,
+        max_samples_per_gene: int = 100,
+        axa_per_row: int = 5,
+        y_limits: Optional[Tuple[float, float]] = None,
     ) -> Tuple[Figure, AxesMatrix]:
         """
         Plot gene expression on the provided axa, colour-code the different states and
@@ -235,7 +242,9 @@ class BranchedData(GeneExpressionData):
         colours = colours or DEFAULT_COLOURS
         if axa is None or fig is None:
             num_subplots = min([max_num_genes, self.num_genes])
-            fig, axa = self._get_axa_grid(num_subplots=num_subplots, axa_per_row=axa_per_row)
+            fig, axa = self._get_axa_grid(
+                num_subplots=num_subplots, axa_per_row=axa_per_row
+            )
 
         gene_labels = self.gene_labels or (f"gene {i}" for i in range(self.num_genes))
 
@@ -250,7 +259,9 @@ class BranchedData(GeneExpressionData):
                 if i == 1:  # the trunk is really indicated by the branching time
                     state_mask = self.t <= gene_branching_point
                 else:
-                    state_mask = np.logical_and(self.state == i, self.t >= gene_branching_point)
+                    state_mask = np.logical_and(
+                        self.state == i, self.t >= gene_branching_point
+                    )
 
                 ax.scatter(
                     self.t[state_mask],
@@ -277,7 +288,9 @@ class BranchedData(GeneExpressionData):
 
 
 class ToyBranchedData(BranchedData):
-    def __init__(self, B=(0.1, 0.5, 0.8), N=20, gene_labels: Optional[Sequence[str]] = None):
+    def __init__(
+        self, B=(0.1, 0.5, 0.8), N=20, gene_labels: Optional[Sequence[str]] = None
+    ):
         t = np.linspace(0, 1, N)
         Y = np.zeros((N, len(B)))
 
@@ -288,10 +301,12 @@ class ToyBranchedData(BranchedData):
         for ib, b in enumerate(B):
             idx2 = np.logical_and(t > b, state == 2)
             idx3 = np.logical_and(t > b, state == 3)
-            Y[idx2, ib] = t[idx2]**2 - b**2
-            Y[idx3, ib] = -t[idx3]**2 + b**2
+            Y[idx2, ib] = t[idx2] ** 2 - b**2
+            Y[idx3, ib] = -t[idx3] ** 2 + b**2
 
-        super().__init__(t=t, Y=Y, branching_points=B, state=state, gene_labels=gene_labels)
+        super().__init__(
+            t=t, Y=Y, branching_points=B, state=state, gene_labels=gene_labels
+        )
 
 
 class ToyGeneExpressionData(GeneExpressionData):
@@ -306,8 +321,8 @@ class ToyGeneExpressionData(GeneExpressionData):
         for ib, b in enumerate(B):
             idx2 = np.logical_and(t > b, state == 2)
             idx3 = np.logical_and(t > b, state == 3)
-            Y[idx2, ib] = t[idx2]**2 - b**2
-            Y[idx3, ib] = -t[idx3]**2 + b**2
+            Y[idx2, ib] = t[idx2] ** 2 - b**2
+            Y[idx3, ib] = -t[idx3] ** 2 + b**2
 
         super().__init__(t=t, Y=Y, state=state, gene_labels=None)
 
@@ -324,12 +339,12 @@ class ToyWigglyBranchedData(BranchedData):
     """
 
     def __init__(
-            self,
-            branching_points: Sequence[float],
-            num_data_points: int,
-            wiggle_frequency: Optional[float] = 5. * 2 * np.pi,
-            wiggle_amplitude: Optional[float] = 0.1,
-            separation_amplitude: Optional[float] = 3.,
+        self,
+        branching_points: Sequence[float],
+        num_data_points: int,
+        wiggle_frequency: Optional[float] = 5.0 * 2 * np.pi,
+        wiggle_amplitude: Optional[float] = 0.1,
+        separation_amplitude: Optional[float] = 3.0,
     ) -> None:
         """
         :param branching_points: the location of the branching points
@@ -339,7 +354,9 @@ class ToyWigglyBranchedData(BranchedData):
         :param separation_amplitude: how quickly the branches move away from each other
         """
         for b in branching_points:
-            assert 0 <= b <= 1, f"Branching points should all be in [0, 1], instead got {branching_points}."
+            assert (
+                0 <= b <= 1
+            ), f"Branching points should all be in [0, 1], instead got {branching_points}."
 
         # Data generation
         N = num_data_points
@@ -358,13 +375,15 @@ class ToyWigglyBranchedData(BranchedData):
             idx2 = np.logical_and(t > b, state == 2)
             idx3 = np.logical_and(t > b, state == 3)
 
-            Y[idx2, ib] = baseline_wiggles[idx2] - t[:sum(idx2)] * separation_amplitude
-            Y[idx3, ib] = baseline_wiggles[idx3] + t[:sum(idx3)] * separation_amplitude
+            Y[idx2, ib] = baseline_wiggles[idx2] - t[: sum(idx2)] * separation_amplitude
+            Y[idx3, ib] = baseline_wiggles[idx3] + t[: sum(idx3)] * separation_amplitude
 
-        super().__init__(t=t, Y=Y, state=state, gene_labels=None, branching_points=branching_points)
+        super().__init__(
+            t=t, Y=Y, state=state, gene_labels=None, branching_points=branching_points
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ToyBranchedData(B=np.linspace(0.1, 0.9, 10)).plot()
     ToyGeneExpressionData().plot()
     ToyWigglyBranchedData([0.3, 0.5], 50).plot()

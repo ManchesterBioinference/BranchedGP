@@ -1,18 +1,20 @@
 import logging
 from collections import deque
-from typing import Sequence, Mapping, List
+from typing import List, Mapping, Sequence
 
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 
-from .VBHelperFunctions import GetFunctionIndexListGeneral
 from .assigngp import AssignGP
 from .data_generation import BranchedData, GeneExpressionData
+from .VBHelperFunctions import GetFunctionIndexListGeneral
 
 LOG = logging.getLogger("sampling")
 
 
-def sample_prior_as_branched_data(model: AssignGP, num_data_points: int = 100) -> BranchedData:
+def sample_prior_as_branched_data(
+    model: AssignGP, num_data_points: int = 100
+) -> BranchedData:
     """
     Sample from the model's prior (that is, ignore the data).
 
@@ -36,7 +38,7 @@ def sample_prior_as_branched_data(model: AssignGP, num_data_points: int = 100) -
     f_id = 1
     g_id = 2
 
-    min_bp = 1.
+    min_bp = 1.0
     ys = []
     for d in range(D):
         # Due to the construction of x_expanded, we know that
@@ -56,9 +58,9 @@ def sample_prior_as_branched_data(model: AssignGP, num_data_points: int = 100) -
         branch_idx[::2] += 1
         sampled_g_and_h = sample[branch_idx, d]
 
-        y_sample = np.row_stack(tuple(
-            arr.reshape((-1, 1)) for arr in [trunk, sampled_g_and_h] if arr.size
-        ))
+        y_sample = np.row_stack(
+            tuple(arr.reshape((-1, 1)) for arr in [trunk, sampled_g_and_h] if arr.size)
+        )
         ys.append(y_sample)
 
         if b < min_bp:
@@ -68,7 +70,9 @@ def sample_prior_as_branched_data(model: AssignGP, num_data_points: int = 100) -
             branch_mask = np.zeros(shape=branch_mask.shape, dtype=bool)
             branch_mask[branch_idx] = 1  # convert the indices into a mask
 
-            x_after_bp = np.where(x_expanded[:, 0] >= b)[0]  # assumes x_expanded[:, 0] is ascending
+            x_after_bp = np.where(x_expanded[:, 0] >= b)[
+                0
+            ]  # assumes x_expanded[:, 0] is ascending
             if len(x_after_bp):
                 bp_idx = x_after_bp[0]
             else:
@@ -92,10 +96,10 @@ def sample_prior_as_branched_data(model: AssignGP, num_data_points: int = 100) -
 
 # TODO: the following can be used in above
 def convert_latent_samples_to_branched_data(
-        sample: np.ndarray,
-        x_expanded: np.ndarray,
-        branching_points: Sequence[float],
-        noise: float,
+    sample: np.ndarray,
+    x_expanded: np.ndarray,
+    branching_points: Sequence[float],
+    noise: float,
 ) -> BranchedData:
     """
     Convert f, g, h samples to BranchedData.
@@ -104,11 +108,14 @@ def convert_latent_samples_to_branched_data(
     to where the branching points lie.
     """
     N3, D = sample.shape
-    assert len(branching_points) == D, \
-        f"Expected a branching point per gene. " \
+    assert len(branching_points) == D, (
+        f"Expected a branching point per gene. "
         f"Instead got {D} genes, but {len(branching_points)} branching points"
-    assert x_expanded.shape == (N3, 2), \
-        f"Expected x_expanded to have shape {(N3, 2)}. Instead got {x_expanded.shape}"
+    )
+    assert x_expanded.shape == (
+        N3,
+        2,
+    ), f"Expected x_expanded to have shape {(N3, 2)}. Instead got {x_expanded.shape}"
 
     # The sample above is of f, g, h over the whole of x_new.
     # We now need to produce a sample from the branching process Y.
@@ -117,7 +124,7 @@ def convert_latent_samples_to_branched_data(
     f_id = 1
     g_id = 2
 
-    min_bp = 1.
+    min_bp = 1.0
     ys = []
     for d in range(D):
         # Due to the construction of x_expanded, we know that
@@ -137,9 +144,9 @@ def convert_latent_samples_to_branched_data(
         branch_idx[::2] += 1
         sampled_g_and_h = sample[branch_idx, d]
 
-        y_sample = np.row_stack(tuple(
-            arr.reshape((-1, 1)) for arr in [trunk, sampled_g_and_h] if arr.size
-        ))
+        y_sample = np.row_stack(
+            tuple(arr.reshape((-1, 1)) for arr in [trunk, sampled_g_and_h] if arr.size)
+        )
         ys.append(y_sample)
 
         if b < min_bp:
@@ -149,7 +156,9 @@ def convert_latent_samples_to_branched_data(
             branch_mask = np.zeros(shape=branch_mask.shape, dtype=bool)
             branch_mask[branch_idx] = 1  # convert the indices into a mask
 
-            bp_idx = np.where(x_expanded[:, 0] >= b)[0][0]  # assumes x_expanded[:, 0] is ascending
+            bp_idx = np.where(x_expanded[:, 0] >= b)[0][
+                0
+            ]  # assumes x_expanded[:, 0] is ascending
             state_mask = np.concatenate((trunk_mask[:bp_idx], branch_mask[bp_idx:]))
 
     y = np.column_stack(ys)
@@ -198,11 +207,15 @@ def filter_single_crossing(samples: np.ndarray, t: np.ndarray) -> np.ndarray:
             crossings = np.logical_xor(g_above_h[1:], g_above_h[:-1]).sum()
 
             if crossings > 1:
-                LOG.debug(f"Discarding sample {s} due to multiple crossings in gene {d}")
+                LOG.debug(
+                    f"Discarding sample {s} due to multiple crossings in gene {d}"
+                )
                 continue
             elif crossings == 0:
-                LOG.debug(f"No crossings detected in sample {s}, gene {d}. "
-                          f"Are you sure the sample is from a branching process?")
+                LOG.debug(
+                    f"No crossings detected in sample {s}, gene {d}. "
+                    f"Are you sure the sample is from a branching process?"
+                )
             else:
                 genes_with_good_samples.append(s)
 
@@ -216,7 +229,9 @@ Stack = List
 GenesToSamples = Mapping[int, Stack[np.ndarray]]
 
 
-def filter_single_crossing_per_dimension(samples: np.ndarray, t: np.ndarray) -> GenesToSamples:
+def filter_single_crossing_per_dimension(
+    samples: np.ndarray, t: np.ndarray
+) -> GenesToSamples:
     """
     :param samples: [S, 3*N, D] where S is the number of samples,
                     3*N is the number of points in x_expanded and D is the number of genes.
@@ -246,11 +261,15 @@ def filter_single_crossing_per_dimension(samples: np.ndarray, t: np.ndarray) -> 
             crossings = np.logical_xor(g_above_h[1:], g_above_h[:-1]).sum()
 
             if crossings > 1:
-                LOG.debug(f"Discarding sample {s} due to multiple crossings in gene {d}")
+                LOG.debug(
+                    f"Discarding sample {s} due to multiple crossings in gene {d}"
+                )
                 continue
             elif crossings == 0:
-                LOG.debug(f"No crossings detected in sample {s}, gene {d}. "
-                          f"Are you sure the sample is from a branching process?")
+                LOG.debug(
+                    f"No crossings detected in sample {s}, gene {d}. "
+                    f"Are you sure the sample is from a branching process?"
+                )
             else:
                 ret[d].append(samples[s, :, d])
 
@@ -268,23 +287,29 @@ def patch_dimension_samples(genes_to_samples: GenesToSamples) -> np.ndarray:
     """
     D = len(genes_to_samples.keys())
 
-    at_least_one_sample_per_gene = all(len(gene_samples) for gene_samples in genes_to_samples.values())
+    at_least_one_sample_per_gene = all(
+        len(gene_samples) for gene_samples in genes_to_samples.values()
+    )
 
-    patched_samples: List[np.ndarray] = []  # each element in the list is a valid sample from the full model
+    patched_samples: List[
+        np.ndarray
+    ] = []  # each element in the list is a valid sample from the full model
     while at_least_one_sample_per_gene:
         gene_samples = [genes_to_samples[i].pop() for i in range(D)]
         patched_samples.append(np.array(gene_samples).T)
 
-        at_least_one_sample_per_gene = all(len(gene_samples) for gene_samples in genes_to_samples.values())
+        at_least_one_sample_per_gene = all(
+            len(gene_samples) for gene_samples in genes_to_samples.values()
+        )
 
     return np.array(patched_samples)
 
 
 def get_synthetic_noisy_branched_data(
-        model: AssignGP,
-        num_samples: int,
-        x_pts: int = 50,
-        max_draws: int = 1_000,
+    model: AssignGP,
+    num_samples: int,
+    x_pts: int = 50,
+    max_draws: int = 1_000,
 ) -> Sequence[BranchedData]:
     x_new = np.linspace(0, 1, x_pts)
     x_expanded, indices, _ = GetFunctionIndexListGeneral(x_new)
@@ -294,7 +319,9 @@ def get_synthetic_noisy_branched_data(
     branched_data_list = []
 
     samples_drawn = 0
-    continue_drawing_samples = len(branched_data_list) < num_samples and samples_drawn < max_draws
+    continue_drawing_samples = (
+        len(branched_data_list) < num_samples and samples_drawn < max_draws
+    )
 
     num_genes = model.Y.shape[1]
     genes_to_samples: GenesToSamples = {i: [] for i in range(num_genes)}
@@ -312,7 +339,9 @@ def get_synthetic_noisy_branched_data(
         # We can do this since all draws are from the same model
 
         valid_samples = patch_dimension_samples(genes_to_samples)
-        print(f"{samples_drawn} samples drawn, {len(branched_data_list)} valid samples constructed")
+        print(
+            f"{samples_drawn} samples drawn, {len(branched_data_list)} valid samples constructed"
+        )
 
         for sample in valid_samples:
             branched_data = convert_latent_samples_to_branched_data(
@@ -323,6 +352,8 @@ def get_synthetic_noisy_branched_data(
             )
             branched_data_list.append(branched_data)
 
-        continue_drawing_samples = len(branched_data_list) < num_samples and samples_drawn < max_draws
+        continue_drawing_samples = (
+            len(branched_data_list) < num_samples and samples_drawn < max_draws
+        )
 
     return branched_data_list[:num_samples]

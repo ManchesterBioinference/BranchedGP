@@ -2,14 +2,14 @@
 # jupyter:
 #   anaconda-cloud: {}
 #   jupytext:
-#     cell_metadata_filter: -all
+#     cell_metadata_filter: all
 #     formats: ipynb,py:percent
 #     notebook_metadata_filter: all
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.6.0
+#       jupytext_version: 1.14.5
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -66,7 +66,7 @@ Y.head()
 # %%
 monocle.head()
 
-# %%
+# %% scrolled=true
 # Plot Monocle DDRTree space
 genelist = ["FLT3", "KLF1", "MPO"]
 f, ax = plt.subplots(1, len(genelist), figsize=(10, 5), sharex=True, sharey=True)
@@ -85,6 +85,7 @@ for ig, g in enumerate(genelist):
     )
     ax[ig].set_title(g)
 
+
 # %%
 def PlotGene(label, X, Y, s=3, alpha=1.0, ax=None):
     fig = None
@@ -101,7 +102,8 @@ def PlotGene(label, X, Y, s=3, alpha=1.0, ax=None):
 # Notice the cell assignment uncertainty is higher for cells close to the branching point.
 #
 
-# %%
+
+# %% scrolled=false
 def FitGene(g, ns=20):  # for quick results subsample data
     t = time.time()
     Bsearch = list(np.linspace(0.05, 0.95, 5)) + [
@@ -136,7 +138,7 @@ def FitGene(g, ns=20):  # for quick results subsample data
 
 d, fig, ax = FitGene("MPO")
 
-# %%
+# %% scrolled=true
 d_c, fig_c, ax_c = FitGene("CTSG")
 
 # %%

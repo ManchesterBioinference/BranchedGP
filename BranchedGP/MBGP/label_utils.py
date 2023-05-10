@@ -7,7 +7,9 @@ from .data_generation import BranchedData
 from .gene_expression_api import GeneExpressionModel
 
 
-def get_correct_label_mask(model: GeneExpressionModel, data: BranchedData) -> np.ndarray:
+def get_correct_label_mask(
+    model: GeneExpressionModel, data: BranchedData
+) -> np.ndarray:
     """
     Get a mask on data.Y where True value indicates that the learned state
     is the true state of the cell.
@@ -53,20 +55,23 @@ def get_consistent_assignment_mask(model: GeneExpressionModel) -> np.ndarray:
         branch_cell_states_per_gene = cell_states_per_gene[branch_mask[i, :]]
 
         # consistency means that all the entries are the same (trunk or branch!)
-        consistent_assignment = (
-            (not len(branch_cell_states_per_gene)) or  # all trunk
-            (len(np.unique(branch_cell_states_per_gene)) == 1)  # all the same
-        )
+        consistent_assignment = (not len(branch_cell_states_per_gene)) or (  # all trunk
+            len(np.unique(branch_cell_states_per_gene)) == 1
+        )  # all the same
 
         assignments.append(consistent_assignment)
 
     return np.array(assignments, dtype=bool)
 
 
-def get_incorrect_cell_label_pseudotimes(model: GeneExpressionModel, data: BranchedData) -> np.ndarray:
+def get_incorrect_cell_label_pseudotimes(
+    model: GeneExpressionModel, data: BranchedData
+) -> np.ndarray:
     correct_cell_label_mask = get_correct_label_mask(model, data=data)
     # The above is across all genes. We now find which cells have the correct state for all genes.
-    correct_cell_labels_across_all_genes = np.multiply.reduce(correct_cell_label_mask, axis=1)
+    correct_cell_labels_across_all_genes = np.multiply.reduce(
+        correct_cell_label_mask, axis=1
+    )
 
     incorrect_cell_label_mask = np.logical_not(correct_cell_labels_across_all_genes)
     return data.t[incorrect_cell_label_mask]
@@ -81,4 +86,3 @@ def mean_correct_labels_per_gene(model: GeneExpressionModel, data: BranchedData)
     correct_labels_mask = get_correct_label_mask(model, data=data)
     # count correct labels per gene and then average
     return correct_labels_mask.sum(axis=0).mean()
-

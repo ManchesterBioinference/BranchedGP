@@ -10,7 +10,7 @@ import numpy as np
 from scipy.interpolate import UnivariateSpline
 
 from .assigngp import AssignGP
-from .data_generation import GeneExpressionData, ColumnVector, BranchedData
+from .data_generation import BranchedData, ColumnVector, GeneExpressionData
 
 
 class GeneExpressionModel(abc.ABC):
@@ -31,7 +31,7 @@ class GeneExpressionModel(abc.ABC):
     @property
     @abc.abstractmethod
     def branching_times(self) -> np.ndarray:
-        """ The branching times predicted by the model, shape (K,). """
+        """The branching times predicted by the model, shape (K,)."""
 
     @property
     @abc.abstractmethod
@@ -124,9 +124,9 @@ class ManyBGPs(GeneExpressionModel):
     """
 
     def __init__(self, models: Sequence[AssignGP], data: GeneExpressionData) -> None:
-        assert len(models) == data.num_genes, (
-            f"Expected a BGP per gene, instead got {len(models)} and {data.num_genes} genes"
-        )
+        assert (
+            len(models) == data.num_genes
+        ), f"Expected a BGP per gene, instead got {len(models)} and {data.num_genes} genes"
         self._models = models
         self._data = data
 
@@ -179,7 +179,7 @@ class ManyBGPs(GeneExpressionModel):
                 test_x = np.hstack((t, t * 0 + f))
                 mean, _ = model.predict_y(test_x)
 
-                means[f-1].append(mean.numpy())
+                means[f - 1].append(mean.numpy())
 
         return np.hstack(means[0]), np.hstack(means[1]), np.hstack(means[2])
 
@@ -208,9 +208,9 @@ class SplineBEAM(GeneExpressionModel):
         self._models = self._train_spline_beam_models(data, initial_bps)
 
     def _train_spline_beam_models(
-            self,
-            data: GeneExpressionData,
-            initial_bps: Sequence[float],
+        self,
+        data: GeneExpressionData,
+        initial_bps: Sequence[float],
     ) -> Sequence[SplineModel]:
         models = []
         for i in range(data.num_genes):
@@ -220,20 +220,23 @@ class SplineBEAM(GeneExpressionModel):
                 state=data.state,
                 gene_labels=[f"{i}"],
             )
-            model = self._train_spline_beam(sliced_data, initial_branching_pt=initial_bps[i])
+            model = self._train_spline_beam(
+                sliced_data, initial_branching_pt=initial_bps[i]
+            )
             models.append(model)
 
         return models
 
     @staticmethod
     def _train_spline_beam(
-            data: GeneExpressionData,
-            initial_branching_pt: float,
-            use_all_trunk: bool = True,
+        data: GeneExpressionData,
+        initial_branching_pt: float,
+        use_all_trunk: bool = True,
     ) -> SplineModel:
         t = data.t
-        assert data.num_genes == 1, \
-            f"Expected to fit a spline to a single gene, instead got {data.num_genes}"
+        assert (
+            data.num_genes == 1
+        ), f"Expected to fit a spline to a single gene, instead got {data.num_genes}"
         y = data.Y.flatten()
 
         # create labels
@@ -265,8 +268,8 @@ class SplineBEAM(GeneExpressionModel):
                     y_trunk = y_trunk
                 else:
                     # TODO: what's going on here?
-                    t_trunk = t_trunk[(i - 1)::2]
-                    y_trunk = y_trunk[(i - 1)::2]
+                    t_trunk = t_trunk[(i - 1) :: 2]
+                    y_trunk = y_trunk[(i - 1) :: 2]
 
                 tc = np.hstack([t_trunk, tb])
                 yc = np.hstack([y_trunk, yb])
@@ -307,8 +310,12 @@ class SplineBEAM(GeneExpressionModel):
             branching_time = self.branching_times[gene_idx]
 
             spline_trunk, spline_2, spline_3 = model
-            distance_to_state_2 = np.abs(self._data.Y[:, gene_idx] - spline_2(self._data.t))
-            distance_to_state_3 = np.abs(self._data.Y[:, gene_idx] - spline_3(self._data.t))
+            distance_to_state_2 = np.abs(
+                self._data.Y[:, gene_idx] - spline_2(self._data.t)
+            )
+            distance_to_state_3 = np.abs(
+                self._data.Y[:, gene_idx] - spline_3(self._data.t)
+            )
             closer_to_state_2 = distance_to_state_2 < distance_to_state_3
 
             # TODO: can probably rewrite in numpy

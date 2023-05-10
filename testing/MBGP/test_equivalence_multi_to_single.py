@@ -4,35 +4,33 @@ of a single branching value.
 """
 import gpflow
 import numpy as np
+import pytest
 
 # Branching files
 from BranchedGP.MBGP import VBHelperFunctions
 from BranchedGP.MBGP.assigngp import AssignGP
-import pytest
 
 
-@pytest.mark.parametrize('num_dim', [1, 2])
+@pytest.mark.parametrize("num_dim", [1, 2])
 def test_equivalence(num_dim):
-    t = np.array([ 0. , 0.25, 0.5 , 0.5, 0.9,  0.9])
-    Y = np.array([[0. , 0,      1 , -1,  2. ,  -3 ],     # split at 0.5
-                  [0  , 0,      0,   0,  1,   -1]]).T  # split at 0.9
+    t = np.array([0.0, 0.25, 0.5, 0.5, 0.9, 0.9])
+    Y = np.array(
+        [[0.0, 0, 1, -1, 2.0, -3], [0, 0, 0, 0, 1, -1]]  # split at 0.5
+    ).T  # split at 0.9
     bv_list = [0.1, 0.9]  # list of branching kernel points
 
     XExpanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(t)
 
     # Solve allocation problem
-    phiInitial = np.array([[0.5, 0.5],
-                           [0.5, 0.5],
-                           [0.9, 0.1],
-                           [0.1, 0.9],
-                           [0.9, 0.1],
-                           [0.1, 0.9]])
+    phiInitial = np.array(
+        [[0.5, 0.5], [0.5, 0.5], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9]]
+    )
     phiPrior = np.repeat(np.array([0.2, 0.4, 0.4])[None, :], t.size, axis=0)
     assert np.allclose(phiInitial.sum(1), np.ones(t.size))
     assert np.allclose(phiPrior.sum(1), np.ones(t.size))
     branching_pt = 0.5
     for D in range(1, 3):  # Dimension
-        print('*'*10, 'Dimension', D)
+        print("*" * 10, "Dimension", D)
         if D == 1:
             Yd = Y[:, 0][:, None]
         else:

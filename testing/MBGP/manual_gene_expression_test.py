@@ -1,21 +1,25 @@
-from BranchedGP.MBGP.assigngp import AssignGP
+from typing import List
 
 import matplotlib.pyplot as plt
 
-
+from BranchedGP.MBGP.assigngp import AssignGP
 from BranchedGP.MBGP.data_generation import BranchedData
-from BranchedGP.MBGP.experiment_utils import Result, convert_results_to_df, plot_incorrect_label_histograms
+from BranchedGP.MBGP.experiment_utils import (
+    Result,
+    convert_results_to_df,
+    plot_incorrect_label_histograms,
+)
 from BranchedGP.MBGP.gene_expression_api import MBGP, ManyBGPs, SplineBEAM
 from BranchedGP.MBGP.plotting_helpers import plot_gene_expression_model
 from BranchedGP.MBGP.sampling_helpers import get_synthetic_noisy_branched_data
 from BranchedGP.MBGP.training_helpers import (
+    AssignGPOptimiser,
+    FunkyPrior,
     construct_assigngp_model,
-    AssignGPOptimiser, get_assigngp_with_target_bps, FunkyPrior,
+    get_assigngp_with_target_bps,
 )
-from typing import List
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Simple test script to check that stuff isn't going completely wrong
     NOISE = 0.1
     LENGTHSCALE = 0.5
@@ -51,7 +55,6 @@ if __name__ == '__main__':
         # return ElvijsAmazingOptimiser()
         return NullOptimiser()
 
-
     for i, data in enumerate(synthetic_noisy_data):
         print(f"Processing sample {i}")
 
@@ -65,7 +68,8 @@ if __name__ == '__main__':
                 informative_prior_confidence=HIGH_PRIOR_CONFIDENCE,
                 uninformative_until=UNINFORMATIVE_UNTIL,
             ),
-            initial_branching_points=[0.5] * data.num_genes,  # Don't start at the true locations
+            initial_branching_points=[0.5]
+            * data.num_genes,  # Don't start at the true locations
         )
 
         optimiser = get_optimiser()
@@ -91,7 +95,7 @@ if __name__ == '__main__':
                 Y=data.Y[:, i].reshape(-1, 1),
                 state=data.state,
                 gene_labels=[f"{i}"],
-                branching_points=data.branching_points[i:i + 1],
+                branching_points=data.branching_points[i : i + 1],
             )
 
             bgp = construct_assigngp_model(

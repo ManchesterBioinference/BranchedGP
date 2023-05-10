@@ -29,7 +29,7 @@ class TestNotebooks(unittest.TestCase):
                 )
 
     def test_all_notebooks(self):
-        """ Test all notebooks except blacklist. Blacklisted notebooks take too long."""
+        """Test all notebooks except blacklist. Blacklisted notebooks take too long."""
         print("testing all notebooks")
         blacklist = ["SyntheticData.ipynb"]
         pythonkernel = "python" + str(sys.version_info[0])

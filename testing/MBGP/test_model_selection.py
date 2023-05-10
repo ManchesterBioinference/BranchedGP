@@ -4,11 +4,11 @@ import time
 import numpy as np
 import pytest
 
-from BranchedGP.MBGP.FitBranchingModel import FitModel
 from BranchedGP.MBGP.data_generation import ToyBranchedData
+from BranchedGP.MBGP.FitBranchingModel import FitModel
 
 
-@pytest.mark.parametrize('num_outputs', [1, 4])
+@pytest.mark.parametrize("num_outputs", [1, 4])
 def test_selection(num_outputs):
     # Control parameters
     if num_outputs == 1:
@@ -19,12 +19,15 @@ def test_selection(num_outputs):
         data = ToyBranchedData(B=(0.2, 0.4, 0.5, 0.6), N=30)
     else:
         raise NotImplemented
-    BgridSearch = list(np.unique([0.1, 0.5]))  # make it a unique list, do not include true points
+    BgridSearch = list(
+        np.unique([0.1, 0.5])
+    )  # make it a unique list, do not include true points
     t_start = time.time()
-    fit_model_config = dict(M=0, maxiter=100, priorConfidence=0.65,
-                            kervar=1., kerlen=1., likvar=0.01)
+    fit_model_config = dict(
+        M=0, maxiter=100, priorConfidence=0.65, kervar=1.0, kerlen=1.0, likvar=0.01
+    )
     d = FitModel(BgridSearch, data.t, data.Y, data.state, **fit_model_config)
-    print('Inference elapsed time %.1f' % (time.time()-t_start))
+    print("Inference elapsed time %.1f" % (time.time() - t_start))
     # test results
     for ib, branching_pointsi in enumerate(data.branching_points):
-        assert np.abs(d['Bmode'][ib] - branching_pointsi) < 0.1
+        assert np.abs(d["Bmode"][ib] - branching_pointsi) < 0.1

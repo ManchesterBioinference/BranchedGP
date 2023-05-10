@@ -5,7 +5,7 @@ from BranchedGP.MBGP.plotting_helpers import plot_gene_expression_model
 from BranchedGP.MBGP.sampling_helpers import get_synthetic_noisy_branched_data
 from BranchedGP.MBGP.training_helpers import get_assigngp_with_target_bps
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Simple test script to check that stuff isn't going completely wrong
     NOISE = 0.1
     LENGTHSCALE = 0.5

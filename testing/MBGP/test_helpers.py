@@ -1,12 +1,19 @@
-import pytest
-
 import numpy as np
+import pytest
 
 from BranchedGP.MBGP.assigngp import AssignGP
 from BranchedGP.MBGP.data_generation import ToyBranchedData
-from BranchedGP.MBGP.training_helpers import construct_assigngp_model, SimplePhiConstructor, get_training_outcome
+from BranchedGP.MBGP.plotting_helpers import (
+    plot_detailed_fit,
+    plot_model_snapshot,
+    plot_samples,
+)
+from BranchedGP.MBGP.training_helpers import (
+    SimplePhiConstructor,
+    construct_assigngp_model,
+    get_training_outcome,
+)
 from BranchedGP.MBGP.VBHelperFunctions import GetFunctionIndexListGeneral
-from BranchedGP.MBGP.plotting_helpers import plot_samples, plot_detailed_fit, plot_model_snapshot
 
 
 def test_plot_samples__is_not_smoking(assigngp) -> None:
@@ -17,12 +24,16 @@ def test_plot_samples__is_not_smoking(assigngp) -> None:
     plot_samples(x_expanded, samples=samples.numpy(), BPs=assigngp.BranchingPoints)
 
 
-def test_plot_detailed_fit__is_not_smoking(assigngp: AssignGP, toy_data: ToyBranchedData) -> None:
+def test_plot_detailed_fit__is_not_smoking(
+    assigngp: AssignGP, toy_data: ToyBranchedData
+) -> None:
     outcomes = get_training_outcome(assigngp)
     plot_detailed_fit(outcomes, toy_data)
 
 
-def test_plot_model_snapshot__is_not_smoking(assigngp: AssignGP, toy_data: ToyBranchedData) -> None:
+def test_plot_model_snapshot__is_not_smoking(
+    assigngp: AssignGP, toy_data: ToyBranchedData
+) -> None:
     plot_model_snapshot(assigngp, toy_data)
 
 

@@ -5,19 +5,19 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
-from .VBHelperFunctions import plotBranchModel
 from .assigngp import AssignGP
-from .data_generation import DEFAULT_COLOURS, GeneExpressionData, BranchedData, Colours
+from .data_generation import DEFAULT_COLOURS, BranchedData, Colours, GeneExpressionData
 from .gene_expression_api import GeneExpressionModel
 from .training_helpers import TrainingOutcome, get_training_outcome
+from .VBHelperFunctions import plotBranchModel
 
 
 def plot_samples(
-        X,
-        samples,
-        BPs,
-        fig: Optional[Figure] = None,
-        axa: Optional[Sequence[Axes]] = None,
+    X,
+    samples,
+    BPs,
+    fig: Optional[Figure] = None,
+    axa: Optional[Sequence[Axes]] = None,
 ) -> Tuple[Figure, Sequence[Axes]]:
     """
     X is in the XExpanded format, see MMBGP.VBHelperFunctions.GetFunctionIndexListGeneral,
@@ -48,23 +48,25 @@ def plot_samples(
                 idx = t < b if i == 1 else t >= b
 
                 colour = DEFAULT_COLOURS[i - 1]
-                ax.plot(t[idx], y[idx], 'x', color=colour)
+                ax.plot(t[idx], y[idx], "x", color=colour)
 
         # Add vertical lines for branch points
         v = ax.axis()
-        ax.plot([b, b], v[-2:], '--r')
+        ax.plot([b, b], v[-2:], "--r")
 
     return fig, axa
 
 
 def plot_detailed_fit(
-        outcomes: TrainingOutcome,
-        genes: GeneExpressionData,
-        alpha: float = 0.01,
-        title: bool = True,
-        axa_per_row: int = 4,
+    outcomes: TrainingOutcome,
+    genes: GeneExpressionData,
+    alpha: float = 0.01,
+    title: bool = True,
+    axa_per_row: int = 4,
 ) -> Tuple[Figure, Sequence[Axes]]:
-    fig, axa = genes.plot(max_samples_per_gene=5000, alpha=alpha, axa_per_row=axa_per_row)
+    fig, axa = genes.plot(
+        max_samples_per_gene=5000, alpha=alpha, axa_per_row=axa_per_row
+    )
     if title:
         fig.suptitle(
             f"ELBO: {outcomes.model.training_loss():.2f}, "
@@ -75,10 +77,21 @@ def plot_detailed_fit(
     for ib, ax in enumerate(axa.flatten()):
         try:
             plotBranchModel(
-                outcomes.learned_branching_points[ib], None, None, genes.t, genes.Y,
-                np.vstack((outcomes.predictions.x,) * 3), outcomes.predictions.y_mean, outcomes.predictions.y_var,
-                outcomes.model.logPhi, fPlotVar=False, d=ib, ax=ax,
-                fColorBar=False, fPlotPhi=False, show_legend=False
+                outcomes.learned_branching_points[ib],
+                None,
+                None,
+                genes.t,
+                genes.Y,
+                np.vstack((outcomes.predictions.x,) * 3),
+                outcomes.predictions.y_mean,
+                outcomes.predictions.y_var,
+                outcomes.model.logPhi,
+                fPlotVar=False,
+                d=ib,
+                ax=ax,
+                fColorBar=False,
+                fPlotPhi=False,
+                show_legend=False,
             )
         except IndexError:
             # Work around empty axes in the axa object
@@ -87,27 +100,31 @@ def plot_detailed_fit(
 
 
 def plot_model_snapshot(
-        model: AssignGP,
-        genes: GeneExpressionData,
-        alpha: float = 0.01,
-        title: bool = True,
-        axa_per_row: int = 4,
+    model: AssignGP,
+    genes: GeneExpressionData,
+    alpha: float = 0.01,
+    title: bool = True,
+    axa_per_row: int = 4,
 ) -> Tuple[Figure, Sequence[Axes]]:
     details = get_training_outcome(model)
-    fig, axa = plot_detailed_fit(details, genes, alpha=alpha, title=title, axa_per_row=axa_per_row)
+    fig, axa = plot_detailed_fit(
+        details, genes, alpha=alpha, title=title, axa_per_row=axa_per_row
+    )
     return fig, axa
 
 
 def plot_gene_expression_model(
-        data: BranchedData,  # Includes true branching points
-        model: GeneExpressionModel,
-        axa_per_row: int = 4,
-        alpha: float = 0.01,
-        linewidth: float = 3.,
-        colorarray: Optional[Colours] = None,
+    data: BranchedData,  # Includes true branching points
+    model: GeneExpressionModel,
+    axa_per_row: int = 4,
+    alpha: float = 0.01,
+    linewidth: float = 3.0,
+    colorarray: Optional[Colours] = None,
 ) -> Tuple[Figure, Sequence[Axes]]:
-    """ Plotting code that does not require access to the model but takes as input predictions. """
-    fig, axa = data.plot(max_samples_per_gene=5000, alpha=alpha, axa_per_row=axa_per_row)
+    """Plotting code that does not require access to the model but takes as input predictions."""
+    fig, axa = data.plot(
+        max_samples_per_gene=5000, alpha=alpha, axa_per_row=axa_per_row
+    )
     colorarray = colorarray or DEFAULT_COLOURS
 
     msg = "The model has been trained on different data than we're plotting."
@@ -131,17 +148,25 @@ def plot_gene_expression_model(
             else:
                 idx = np.flatnonzero(t >= learned_branching_pt)
 
-            ax.plot(t[idx], state_predictions[idx, gene_idx], linewidth=linewidth, color=col)
+            ax.plot(
+                t[idx], state_predictions[idx, gene_idx], linewidth=linewidth, color=col
+            )
 
         y_bounds = ax.axis()[-2:]
 
         ax.plot(
-            [learned_branching_pt, learned_branching_pt], y_bounds,
-            '--m', linewidth=linewidth, label='Estimated BP',
+            [learned_branching_pt, learned_branching_pt],
+            y_bounds,
+            "--m",
+            linewidth=linewidth,
+            label="Estimated BP",
         )
         ax.plot(
-            [true_branching_pt, true_branching_pt], y_bounds, '--b',
-            linewidth=linewidth, label='True BP',
+            [true_branching_pt, true_branching_pt],
+            y_bounds,
+            "--b",
+            linewidth=linewidth,
+            label="True BP",
         )
 
     return fig, axa

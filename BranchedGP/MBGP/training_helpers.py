@@ -2,18 +2,18 @@
 import abc
 import dataclasses
 import logging
-from typing import Tuple, Optional, Sequence
-from typing_extensions import Protocol
+from typing import Optional, Sequence, Tuple
 
 import gpflow
 import numpy as np
 import tensorflow as tf
 from gpflow.utilities import tabulate_module_summary
+from typing_extensions import Protocol
 
 from . import VBHelperFunctions
+from .assigngp import AssignGP, BranchKernelParam, get_branching_point_kernel
+from .data_generation import ColumnVector, GeneExpressionData, ToyBranchedData, Vector
 from .FitBranchingModel import GetInitialConditionsAndPrior
-from .assigngp import BranchKernelParam, AssignGP, get_branching_point_kernel
-from .data_generation import GeneExpressionData, ColumnVector, Vector, ToyBranchedData
 
 InitialAndPriorPhi = Tuple[np.ndarray, np.ndarray]
 
@@ -33,18 +33,19 @@ class PhiConstructor(abc.ABC):
 
     @abc.abstractmethod
     def build(self) -> InitialAndPriorPhi:
-        """ Build and return initial and prior Phi matrices. """
+        """Build and return initial and prior Phi matrices."""
 
 
 class SimplePhiConstructor(PhiConstructor):
     """
     TODO
     """
+
     def __init__(
-            self,
-            gene_expression_data: GeneExpressionData,
-            prior_confidence: float,
-            allow_infs: bool = True,
+        self,
+        gene_expression_data: GeneExpressionData,
+        prior_confidence: float,
+        allow_infs: bool = True,
     ) -> None:
         self._state = gene_expression_data.state
         self._prior_confidence = prior_confidence
@@ -57,14 +58,16 @@ class SimplePhiConstructor(PhiConstructor):
             infPriorPhi=self._allow_infs,
         )
 
-        phi_prior = np.c_[np.zeros(phi_prior.shape[0])[:, None], phi_prior]  # prepend 0 for trunk
+        phi_prior = np.c_[
+            np.zeros(phi_prior.shape[0])[:, None], phi_prior
+        ]  # prepend 0 for trunk
         return phi_initial, phi_prior
 
 
 def get_funky_phi(
-        global_branching_state: Vector,
-        uninformative_until: float,
-        informative_prior_confidence: float,
+    global_branching_state: Vector,
+    uninformative_until: float,
+    informative_prior_confidence: float,
 ) -> InitialAndPriorPhi:
     if not 0 <= uninformative_until <= 1:
         raise ValueError(
@@ -102,17 +105,25 @@ def get_funky_phi(
 
             # Set phi_initial to have true state label with a random probability in [0.5, 1]
             # This is the same as SimplePhiConstructor
-            phi_initial[i, true_branch_col] = 0.5 + (np.random.random() / 2.)
-            phi_initial[i, true_branch_col != np.array([0, 1])] = 1 - phi_initial[i, true_branch_col]
+            phi_initial[i, true_branch_col] = 0.5 + (np.random.random() / 2.0)
+            phi_initial[i, true_branch_col != np.array([0, 1])] = (
+                1 - phi_initial[i, true_branch_col]
+            )
 
-    assert np.allclose(phi_prior.sum(1), 1), \
-        f"Phi Prior probability distribution should sum to 1 for each branch. " \
+    assert np.allclose(phi_prior.sum(1), 1), (
+        f"Phi Prior probability distribution should sum to 1 for each branch. "
         f"Instead got: {phi_prior.sum(1)}"
-    assert np.allclose(phi_initial.sum(1), 1), \
-        f"Phi Initial probability distribution should sum to 1 for each branch. " \
+    )
+    assert np.allclose(phi_initial.sum(1), 1), (
+        f"Phi Initial probability distribution should sum to 1 for each branch. "
         f"Instead got: {phi_initial.sum(1)}"
-    assert np.all(~np.isnan(phi_initial)), f"Found NaNs in phi_initial, something has gone badly wrong!"
-    assert np.all(~np.isnan(phi_prior)), f"Found NaNs in phi_prior, something has gone badly wrong!"
+    )
+    assert np.all(
+        ~np.isnan(phi_initial)
+    ), f"Found NaNs in phi_initial, something has gone badly wrong!"
+    assert np.all(
+        ~np.isnan(phi_prior)
+    ), f"Found NaNs in phi_prior, something has gone badly wrong!"
     return phi_initial, phi_prior
 
 
@@ -122,11 +133,11 @@ class FunkyPrior(PhiConstructor):
     """
 
     def __init__(
-            self,
-            gene_expression_data: GeneExpressionData,
-            uninformative_until: float,
-            informative_prior_confidence: float,
-            allow_infs: bool = True,
+        self,
+        gene_expression_data: GeneExpressionData,
+        uninformative_until: float,
+        informative_prior_confidence: float,
+        allow_infs: bool = True,
     ) -> None:
         self._state = gene_expression_data.state
         self._uninformative_until = uninformative_until
@@ -140,14 +151,16 @@ class FunkyPrior(PhiConstructor):
             informative_prior_confidence=self._informative_prior_confidence,
         )
 
-        phi_prior = np.c_[np.zeros(phi_prior.shape[0])[:, None], phi_prior]  # prepend 0 for trunk
+        phi_prior = np.c_[
+            np.zeros(phi_prior.shape[0])[:, None], phi_prior
+        ]  # prepend 0 for trunk
         return phi_initial, phi_prior
 
 
 class AssignGPOptimiser(abc.ABC):
     @abc.abstractmethod
     def train(self, model: AssignGP) -> AssignGP:
-        """ Optimise the `model` hyperparameters and return the trained model. """
+        """Optimise the `model` hyperparameters and return the trained model."""
 
 
 class ScipyOptimiser(AssignGPOptimiser):
@@ -164,13 +177,16 @@ class ScipyOptimiser(AssignGPOptimiser):
         if "maxiter" not in self._kwargs:
             self._kwargs["maxiter"] = maxiter
         else:
-            assert maxiter == kwargs["maxiter"], \
-                f"Two different values of maxiter provided. " \
+            assert maxiter == kwargs["maxiter"], (
+                f"Two different values of maxiter provided. "
                 f"Directly: {maxiter}, in kwargs: {kwargs['maxiter']}"
+            )
 
     def train(self, model: AssignGP) -> AssignGP:
-        LOG.info(f"Starting training. Initial loss: {model.training_loss()}. "
-                 f"Model summary:\n{gpflow.utilities.tabulate_module_summary(model, 'simple')}")
+        LOG.info(
+            f"Starting training. Initial loss: {model.training_loss()}. "
+            f"Model summary:\n{gpflow.utilities.tabulate_module_summary(model, 'simple')}"
+        )
         opt = gpflow.optimizers.Scipy()
         result = opt.minimize(
             model.training_loss,
@@ -180,8 +196,10 @@ class ScipyOptimiser(AssignGPOptimiser):
         )
         LOG.debug(f"Optimisation result: {result}")
 
-        LOG.info(f"Training complete. Final loss: {model.training_loss()}. "
-                 f"Model summary:\n{tabulate_module_summary(model, 'simple')}")
+        LOG.info(
+            f"Training complete. Final loss: {model.training_loss()}. "
+            f"Model summary:\n{tabulate_module_summary(model, 'simple')}"
+        )
 
         return model
 
@@ -206,13 +224,13 @@ def trainable_bps(model: AssignGP) -> AssignGP:
 
 class ElvijsAmazingOptimiser(AssignGPOptimiser):
     def __init__(
-            self,
-            base_optimiser: AssignGPOptimiser = ScipyOptimiser(),
-            # TODO: we may want to sample differently
-            branching_points: Sequence[float] = (0.2, 0.4, 0.6, 0.8),
-            initial_bp: float = _EARLY_BP,
+        self,
+        base_optimiser: AssignGPOptimiser = ScipyOptimiser(),
+        # TODO: we may want to sample differently
+        branching_points: Sequence[float] = (0.2, 0.4, 0.6, 0.8),
+        initial_bp: float = _EARLY_BP,
     ) -> None:
-        """ TODO """
+        """TODO"""
         self._base_optimiser = base_optimiser
         self._bps = branching_points
         self._initial_bp = initial_bp
@@ -239,12 +257,13 @@ class ElvijsAmazingOptimiser(AssignGPOptimiser):
 
 
 class ElvijsRandomisingOptimiser(AssignGPOptimiser):
-    """ TODO """
+    """TODO"""
+
     def __init__(
-            self,
-            base_optimiser: AssignGPOptimiser = ScipyOptimiser(),
-            num_samples: int = 5_000,
-            initial_bp: float = 1e-4,
+        self,
+        base_optimiser: AssignGPOptimiser = ScipyOptimiser(),
+        num_samples: int = 5_000,
+        initial_bp: float = 1e-4,
     ):
         self._num_samples = num_samples
         self._base_optimiser = base_optimiser
@@ -268,7 +287,9 @@ class ElvijsRandomisingOptimiser(AssignGPOptimiser):
             best_bps = _model.kernel.Bv
 
             for _ in tf.range(num_samples):
-                sampled_bp = tf.random.uniform(shape=(n_outputs,), dtype=gpflow.default_float())
+                sampled_bp = tf.random.uniform(
+                    shape=(n_outputs,), dtype=gpflow.default_float()
+                )
 
                 _model.kernel.Bv.assign(sampled_bp)
                 loss = _model.training_loss()
@@ -307,10 +328,10 @@ class CompositeOptimiser(AssignGPOptimiser):
 
 
 def construct_assigngp_model(
-        gene_expression: GeneExpressionData,
-        phi_constructor: PhiConstructor,
-        initial_branching_points: Sequence[float],
-        kern: Optional[BranchKernelParam] = None,
+    gene_expression: GeneExpressionData,
+    phi_constructor: PhiConstructor,
+    initial_branching_points: Sequence[float],
+    kern: Optional[BranchKernelParam] = None,
 ) -> AssignGP:
     """
     Construct an MMBGP model consistent with the provided gene expression data.
@@ -323,27 +344,37 @@ def construct_assigngp_model(
     mean and variance, hyperparameter values, posterior on branching time
     """
     phi_initial, phi_prior = phi_constructor.build()
-    x_expanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(gene_expression.t)
+    x_expanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(
+        gene_expression.t
+    )
 
     if not kern:
         kern = get_branching_point_kernel(branching_points=initial_branching_points)
     elif kern:
         # TODO: add a good error message
-        np.testing.assert_array_equal(kern.Bv.numpy(), np.array(initial_branching_points))
+        np.testing.assert_array_equal(
+            kern.Bv.numpy(), np.array(initial_branching_points)
+        )
 
     model = AssignGP(
-        gene_expression.t, x_expanded, gene_expression.Y, indices,
-        kern=kern, phiInitial=phi_initial, phiPrior=phi_prior, multi=True,
+        gene_expression.t,
+        x_expanded,
+        gene_expression.Y,
+        indices,
+        kern=kern,
+        phiInitial=phi_initial,
+        phiPrior=phi_prior,
+        multi=True,
     )
     return model
 
 
 def construct_and_fit_assigngp_model(
-        gene_expression: GeneExpressionData,
-        phi_constructor: PhiConstructor,
-        initial_branching_points: Sequence[float],
-        optimiser: AssignGPOptimiser,
-        kern: Optional[BranchKernelParam] = None,
+    gene_expression: GeneExpressionData,
+    phi_constructor: PhiConstructor,
+    initial_branching_points: Sequence[float],
+    optimiser: AssignGPOptimiser,
+    kern: Optional[BranchKernelParam] = None,
 ) -> AssignGP:
     """
     Fit an MMBGP model to the provided gene expression data.
@@ -378,6 +409,7 @@ class GaussianPredictions:
     * mean prediction for f, g and h at x - in this specific order,
     * variance prediction for f, g, and h at x - in this specific order.
     """
+
     x: ColumnVector
     y_mean: Tuple[ColumnVector, ColumnVector, ColumnVector]
     y_var: Tuple[ColumnVector, ColumnVector, ColumnVector]
@@ -397,9 +429,13 @@ def get_predictions(model: AssignGP) -> GaussianPredictions:
 
     for f in range(1, 4):
         # TODO: comment
-        grid_on_unit_interval_as_column = grid_on_unit_interval.reshape(_DEFAULT_NUM_PREDICTIONS, 1)
+        grid_on_unit_interval_as_column = grid_on_unit_interval.reshape(
+            _DEFAULT_NUM_PREDICTIONS, 1
+        )
         # TODO: what's going on here, surely we can simplify?
-        test_x = np.hstack((grid_on_unit_interval_as_column, grid_on_unit_interval_as_column * 0 + f))
+        test_x = np.hstack(
+            (grid_on_unit_interval_as_column, grid_on_unit_interval_as_column * 0 + f)
+        )
 
         mean, variance = model.predict_y(test_x)
 
@@ -421,8 +457,10 @@ def get_training_outcome(trained_model: AssignGP) -> TrainingOutcome:
     )
 
 
-def get_assigngp_with_target_bps(bps: Sequence[float], lengthscale: float, noise_variance: float) -> AssignGP:
-    """ A simple wrapper that tweaks some key model construction parameters. """
+def get_assigngp_with_target_bps(
+    bps: Sequence[float], lengthscale: float, noise_variance: float
+) -> AssignGP:
+    """A simple wrapper that tweaks some key model construction parameters."""
     data = ToyBranchedData(bps, N=100)  # not used; need data to construct a model
     m = construct_assigngp_model(
         gene_expression=data,

@@ -1,10 +1,11 @@
 # coding: utf-8
 import numpy as np
 import tensorflow as tf
-from . import assigngp
 from gpflow import settings
+from gpflow.decors import autoflow, params_as_tensors
 from gpflow.params import DataHolder
-from gpflow.decors import params_as_tensors, autoflow
+
+from . import assigngp
 
 # TODO: migrate to gpflow 2
 
@@ -30,12 +31,32 @@ class AssignGPSparse(assigngp.AssignGP):
 
     """
 
-    def __init__(self, t, XExpanded, Y, indices, ZExpanded, fDebug=False, phiInitial=None, phiPrior=None):
-        print('Inside __init__ of AssignGP_dense_sparse')
-        assigngp.AssignGP.__init__(self, t, XExpanded, Y, indices, fDebug=fDebug,
-                                         phiInitial=phiInitial, phiPrior=phiPrior)
+    def __init__(
+        self,
+        t,
+        XExpanded,
+        Y,
+        indices,
+        ZExpanded,
+        fDebug=False,
+        phiInitial=None,
+        phiPrior=None,
+    ):
+        print("Inside __init__ of AssignGP_dense_sparse")
+        assigngp.AssignGP.__init__(
+            self,
+            t,
+            XExpanded,
+            Y,
+            indices,
+            fDebug=fDebug,
+            phiInitial=phiInitial,
+            phiPrior=phiPrior,
+        )
         # Do not treat inducing points as parameters because they should always be fixed.
-        self.ZExpanded = DataHolder(ZExpanded)  # inducing points for sparse GP. Same as XExpanded
+        self.ZExpanded = DataHolder(
+            ZExpanded
+        )  # inducing points for sparse GP. Same as XExpanded
         assert ZExpanded.shape[1] == XExpanded.shape[1]
 
     @params_as_tensors
@@ -54,16 +75,18 @@ class AssignGPSparse(assigngp.AssignGP):
         sigma2 = self.likelihood.variance
         sigma = tf.sqrt(self.likelihood.variance)
 
-        a1 = -0.5 * N * self.D * tf.log(2. * np.pi *sigma2) # -(N/2)log(2*pi*sigma2)
-        a3 = - 0.5 * tf.reduce_sum(tf.square(self.Y)) / sigma2 # -( 1 /(2*sigma2) ) Y^TY
+        a1 = -0.5 * N * self.D * tf.log(2.0 * np.pi * sigma2)  # -(N/2)log(2*pi*sigma2)
+        a3 = -0.5 * tf.reduce_sum(tf.square(self.Y)) / sigma2  # -( 1 /(2*sigma2) ) Y^TY
 
-        a2, a4, a5, a6 = 0., 0., 0., 0.
-
+        a2, a4, a5, a6 = 0.0, 0.0, 0.0, 0.0
 
         for dim in range(0, self.D):
             self.BranchingPointIndex = dim  # branching kernel slice
 
-            Kuu_d = self.kern.K(self.ZExpanded) + tf.eye(M, dtype=settings.tf_float) * settings.numerics.jitter_level
+            Kuu_d = (
+                self.kern.K(self.ZExpanded)
+                + tf.eye(M, dtype=settings.tf_float) * settings.numerics.jitter_level
+            )
             Kuf_d = self.kern.K(self.ZExpanded, self.X)
 
             Kdiag_d = self.kern.Kdiag(self.X)
@@ -76,20 +99,28 @@ class AssignGPSparse(assigngp.AssignGP):
             LiKuf = tf.matrix_triangular_solve(L, Kuf_d)
             W = LiKuf * tf.sqrt(A_d) / sigma
             P = tf.matmul(W, tf.transpose(W)) + tf.eye(M, dtype=settings.tf_float)
-            traceTerm = -0.5 * tf.reduce_sum(Kdiag_d * A_d) / sigma2 + 0.5 * tf.reduce_sum(tf.square(W))
+            traceTerm = -0.5 * tf.reduce_sum(
+                Kdiag_d * A_d
+            ) / sigma2 + 0.5 * tf.reduce_sum(tf.square(W))
             R = tf.cholesky(P)
             tmp = tf.matmul(LiKuf, tf.matmul(tf.transpose(Phi_d), Y_d))
             c = tf.matrix_triangular_solve(R, tmp, lower=True) / sigma2
 
             a2 += -0.5 * tf.reduce_sum(tf.log(tf.square(tf.diag_part(R))))
-            a4 += + 0.5*tf.reduce_sum(tf.square(c))
-            a5 += - self.build_KL(Phi_d, dim=dim)
+            a4 += +0.5 * tf.reduce_sum(tf.square(c))
+            a5 += -self.build_KL(Phi_d, dim=dim)
             a6 += traceTerm
 
-            if(self.fDebug):
-            # trace term should be 0 for Z=X (full data)
-                traceTerm = tf.Print(traceTerm, [traceTerm], message='traceTerm=', name='traceTerm', summarize=10)
-            #print('££££££££££££££££££££££££££££££££££££££££3 I am here £££££££££££££££££££££££££££££££££££££££££££££')
+            if self.fDebug:
+                # trace term should be 0 for Z=X (full data)
+                traceTerm = tf.Print(
+                    traceTerm,
+                    [traceTerm],
+                    message="traceTerm=",
+                    name="traceTerm",
+                    summarize=10,
+                )
+            # print('££££££££££££££££££££££££££££££££££££££££3 I am here £££££££££££££££££££££££££££££££££££££££££££££')
 
         ll = a1 + a2 + a3 + a4 + a5 + a6
         return ll
