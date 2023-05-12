@@ -82,7 +82,7 @@ Therein we demonstrate how to fit the model and visualise its fit.
 A full list of key notebooks follows (ordered roughly according to how useful we expect them to be; 
 higher is more useful).
 
-| File <br> name | Description |
+| File name | Description |
 | --- | --- |
 | synthetic_noise_free                              | Application of MBGP to synthetic noise-free data. |
 | experiments-figure-1-simple-fits                  | Application of MBGP to sythetic noisy data. |
