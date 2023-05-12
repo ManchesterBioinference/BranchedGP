@@ -301,8 +301,8 @@ class ToyBranchedData(BranchedData):
         for ib, b in enumerate(B):
             idx2 = np.logical_and(t > b, state == 2)
             idx3 = np.logical_and(t > b, state == 3)
-            Y[idx2, ib] = t[idx2] ** 2 - b**2
-            Y[idx3, ib] = -t[idx3] ** 2 + b**2
+            Y[idx2, ib] = t[idx2] ** 2 - b ** 2
+            Y[idx3, ib] = -t[idx3] ** 2 + b ** 2
 
         super().__init__(
             t=t, Y=Y, branching_points=B, state=state, gene_labels=gene_labels
@@ -321,8 +321,8 @@ class ToyGeneExpressionData(GeneExpressionData):
         for ib, b in enumerate(B):
             idx2 = np.logical_and(t > b, state == 2)
             idx3 = np.logical_and(t > b, state == 3)
-            Y[idx2, ib] = t[idx2] ** 2 - b**2
-            Y[idx3, ib] = -t[idx3] ** 2 + b**2
+            Y[idx2, ib] = t[idx2] ** 2 - b ** 2
+            Y[idx3, ib] = -t[idx3] ** 2 + b ** 2
 
         super().__init__(t=t, Y=Y, state=state, gene_labels=None)
 
