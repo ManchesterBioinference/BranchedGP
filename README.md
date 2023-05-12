@@ -9,11 +9,12 @@ The package contains two main models:
   ["BGP: Branched Gaussian processes for identifying gene-specific branching dynamics in single cell data",
   Alexis Boukouvalas, James Hensman, Magnus Rattray, bioRxiv, 2017.](http://www.biorxiv.org/content/early/2017/08/01/166868).
   - This is now published in [Genome Biology](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-018-1440-2).
-    [![CI](https://github.com/ManchesterBioinference/BranchedGP/workflows/CI/badge.svg)](https://github.com/ManchesterBioinference/BranchedGP/workflows/CI)
 * `BranchedGP.MBGP.assigngp.AssignGP` is an implementation of the MBGP model described in
   ["Modelling sequential branching dynamics with a multivariate branching Gaussian process", Elvijs Sarkans, Sumon Ahmed, Magnus Rattray, Alexis Boukouvalas, OpenReview, 2022](https://openreview.net/forum?id=9KoBOlstTq)
   - This is now accepted in [Transactions on Machine Learning Research](https://openreview.net/group?id=TMLR)
   
+[![CI](https://github.com/ManchesterBioinference/BranchedGP/workflows/CI/badge.svg)](https://github.com/ManchesterBioinference/BranchedGP/workflows/CI)
+
 ## BGP 
 
 ### Example
