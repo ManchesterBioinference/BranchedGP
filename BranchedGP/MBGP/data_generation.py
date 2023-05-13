@@ -218,11 +218,11 @@ class BranchedData(GeneExpressionData):
                 f"instead got {len(self.branching_points)} branching points and {self.Y.shape[1]} genes."
             )
 
-    def plot(
+    def plot(  # type: ignore  # TODO: unify the interface with super() to satisfy MyPy
         self,
         fig: Optional[Figure] = None,
         axa: Optional[AxesMatrix] = None,
-        colours: Optional[Colours] = None,
+        colours: Colours = DEFAULT_COLOURS,
         alpha: float = 0.4,
         marker_size_in_points: int = 40,
         true_bp_location_line: str = "--b",
@@ -239,7 +239,6 @@ class BranchedData(GeneExpressionData):
 
         If no axa are provided, create them.
         """
-        colours = colours or DEFAULT_COLOURS
         if axa is None or fig is None:
             num_subplots = min([max_num_genes, self.num_genes])
             fig, axa = self._get_axa_grid(
@@ -362,7 +361,7 @@ class ToyWigglyBranchedData(BranchedData):
         N = num_data_points
         num_output_dims = len(branching_points)
         t = np.linspace(0, 1, N)
-        baseline_wiggles = np.sin(t * wiggle_frequency) * wiggle_amplitude
+        baseline_wiggles = np.sin(t * wiggle_frequency) * wiggle_amplitude  # type: ignore
         # The transposes ensure baseline wiggles are applied along the correct axis
         Y = (np.ones((N, num_output_dims)).T * baseline_wiggles).T
 
@@ -375,8 +374,8 @@ class ToyWigglyBranchedData(BranchedData):
             idx2 = np.logical_and(t > b, state == 2)
             idx3 = np.logical_and(t > b, state == 3)
 
-            Y[idx2, ib] = baseline_wiggles[idx2] - t[: sum(idx2)] * separation_amplitude
-            Y[idx3, ib] = baseline_wiggles[idx3] + t[: sum(idx3)] * separation_amplitude
+            Y[idx2, ib] = baseline_wiggles[idx2] - t[: sum(idx2)] * separation_amplitude  # type: ignore
+            Y[idx3, ib] = baseline_wiggles[idx3] + t[: sum(idx3)] * separation_amplitude  # type: ignore
 
         super().__init__(
             t=t, Y=Y, state=state, gene_labels=None, branching_points=branching_points

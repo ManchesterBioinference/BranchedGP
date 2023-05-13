@@ -105,7 +105,7 @@ def test_equivalence() -> None:
     trained_model1 = construct_and_fit_assigngp_model(
         data,
         phi_constructor=SimplePhiConstructor(data, prior_confidence=0.65),
-        initial_branching_points=initial_bps,
+        initial_branching_points=initial_bps,  # type: ignore  # numpy can be consumed as a sequence
         optimiser=ScipyOptimiser(),
     )
 

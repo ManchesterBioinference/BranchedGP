@@ -1,12 +1,11 @@
 import logging
-from collections import deque
 from typing import List, Mapping, Sequence
 
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 
 from .assigngp import AssignGP
-from .data_generation import BranchedData, GeneExpressionData
+from .data_generation import BranchedData
 from .VBHelperFunctions import GetFunctionIndexListGeneral
 
 LOG = logging.getLogger("sampling")
@@ -89,7 +88,7 @@ def sample_prior_as_branched_data(
         t=x_new,
         Y=y,
         state=x_expanded[state_mask, 1],
-        branching_points=model.BranchingPoints,
+        branching_points=model.BranchingPoints,    # type: ignore  # ndarray can be consumed as a sequence
         gene_labels=None,
     )
 
@@ -192,7 +191,7 @@ def filter_single_crossing(samples: np.ndarray, t: np.ndarray) -> np.ndarray:
         genes_with_good_samples = []
 
         for d in range(D):
-            f, g, h = samples[s, 0::3, d], samples[s, 1::3, d], samples[s, 2::3, d]
+            _, g, h = samples[s, 0::3, d], samples[s, 1::3, d], samples[s, 2::3, d]
             # We now want to look at the sign of (g - h).
             # If it changes more than once, then we know the branches cross more than once.
             # However, we want to be robust to noise, so we will fit a smooth spline to g and h
@@ -246,7 +245,7 @@ def filter_single_crossing_per_dimension(
 
     for s in range(S):
         for d in range(D):
-            f, g, h = samples[s, 0::3, d], samples[s, 1::3, d], samples[s, 2::3, d]
+            _, g, h = samples[s, 0::3, d], samples[s, 1::3, d], samples[s, 2::3, d]
             # We now want to look at the sign of (g - h).
             # If it changes more than once, then we know the branches cross more than once.
             # However, we want to be robust to noise, so we will fit a smooth spline to g and h
@@ -316,7 +315,7 @@ def get_synthetic_noisy_branched_data(
 
     num_samples_in_a_batch = 10
 
-    branched_data_list = []
+    branched_data_list: List[BranchedData] = []
 
     samples_drawn = 0
     continue_drawing_samples = (
@@ -347,7 +346,7 @@ def get_synthetic_noisy_branched_data(
             branched_data = convert_latent_samples_to_branched_data(
                 sample,
                 x_expanded=x_expanded,
-                branching_points=model.BranchingPoints,
+                branching_points=model.BranchingPoints,  # type: ignore  # ndarray can be consumed as a sequence
                 noise=model.likelihood.variance.numpy(),
             )
             branched_data_list.append(branched_data)

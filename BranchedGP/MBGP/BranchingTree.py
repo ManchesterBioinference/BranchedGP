@@ -313,7 +313,7 @@ class BinaryBranchingTree:
 
                     if self.fDebug:
                         print("Path to branch point " + str(bid))
-                    assert self.findPath(branchpath, bid) == True
+                    assert self.findPath(branchpath, bid) is True
                     # include all subsequent branch points since they are not visible anyway and will make
                     # matrix well-conditioned
                     node = self._findNode(self.root, bid)  # find the node
@@ -464,5 +464,5 @@ class BinaryBranchingTree:
             domainF[fi - 1, :] = [lb, ub]
         # check no nans left
         dflat = np.ravel(domainF)
-        assert np.any(np.isnan(dflat)) == False
+        assert np.any(np.isnan(dflat)) is False
         return domainF

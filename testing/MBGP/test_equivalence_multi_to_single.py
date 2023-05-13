@@ -17,7 +17,7 @@ def test_equivalence(num_dim):
     Y = np.array(
         [[0.0, 0, 1, -1, 2.0, -3], [0, 0, 0, 0, 1, -1]]  # split at 0.5
     ).T  # split at 0.9
-    bv_list = [0.1, 0.9]  # list of branching kernel points
+    # bv_list = [0.1, 0.9]  # list of branching kernel points
 
     XExpanded, indices, _ = VBHelperFunctions.GetFunctionIndexListGeneral(t)
 
@@ -28,7 +28,7 @@ def test_equivalence(num_dim):
     phiPrior = np.repeat(np.array([0.2, 0.4, 0.4])[None, :], t.size, axis=0)
     assert np.allclose(phiInitial.sum(1), np.ones(t.size))
     assert np.allclose(phiPrior.sum(1), np.ones(t.size))
-    branching_pt = 0.5
+    # branching_pt = 0.5
     for D in range(1, 3):  # Dimension
         print("*" * 10, "Dimension", D)
         if D == 1:

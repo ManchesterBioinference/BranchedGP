@@ -36,7 +36,7 @@ def plot_samples(
 
     M = 3  # number of functions
     for d in range(num_outputs):
-        ax = axa[d]
+        ax = axa[d]  # type: ignore  # TODO: tell MyPy this is actually fine
         b = BPs[d]
 
         for s in range(num_samples):
@@ -54,7 +54,7 @@ def plot_samples(
         v = ax.axis()
         ax.plot([b, b], v[-2:], "--r")
 
-    return fig, axa
+    return fig, axa  # type: ignore  # TODO: tell MyPy this is actually a sequence
 
 
 def plot_detailed_fit(
@@ -71,20 +71,21 @@ def plot_detailed_fit(
         fig.suptitle(
             f"ELBO: {outcomes.model.training_loss():.2f}, "
             f"lengthscale: {outcomes.model.kernel.kern.lengthscales.numpy():.2f}, "
-            f"variance: {outcomes.model.kernel.kern.variance.numpy() + outcomes.model.likelihood.variance.numpy():.2f}, "
+            f"variance: "
+            f"{outcomes.model.kernel.kern.variance.numpy() + outcomes.model.likelihood.variance.numpy():.2f}, "
         )
 
     for ib, ax in enumerate(axa.flatten()):
         try:
             plotBranchModel(
                 outcomes.learned_branching_points[ib],
-                None,
+                None,  # type: ignore  # TODO: this is actually fine, but need to convince MyPy
                 None,
                 genes.t,
                 genes.Y,
                 np.vstack((outcomes.predictions.x,) * 3),
-                outcomes.predictions.y_mean,
-                outcomes.predictions.y_var,
+                outcomes.predictions.y_mean,  # type: ignore  # TODO: this is actually fine, but need to convince MyPy
+                outcomes.predictions.y_var,  # type: ignore  # TODO: this is actually fine, but need to convince MyPy
                 outcomes.model.logPhi,
                 fPlotVar=False,
                 d=ib,
@@ -96,7 +97,7 @@ def plot_detailed_fit(
         except IndexError:
             # Work around empty axes in the axa object
             pass
-    return fig, axa
+    return fig, axa  # type: ignore  # TODO: tell MyPy this is actually a sequence
 
 
 def plot_model_snapshot(
@@ -169,4 +170,4 @@ def plot_gene_expression_model(
             label="True BP",
         )
 
-    return fig, axa
+    return fig, axa  # type: ignore  # TODO: tell MyPy this is actually a sequence

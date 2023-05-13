@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -150,7 +150,7 @@ def plotBranchModel(
     labels=None,
     fPlotPhi: bool = True,
     fPlotVar: bool = False,
-    ax: Optional[Sequence[plt.Axes]] = None,
+    ax: Optional[plt.Axes] = None,
     fColorBar: bool = True,
     colorarray: Optional[Colours] = None,
     d: int = 0,
@@ -162,9 +162,10 @@ def plotBranchModel(
 
     if ax is None:
         fig = plt.figure(figsize=figsizeIn)
-        ax = fig.gca()
+        ax: plt.Axes = fig.gca()  # type: ignore
     else:
         fig = plt.gcf()
+    assert isinstance(ax, plt.Axes)  # help out MyPy
 
     for f in range(3):
         ttest = ttestl[f].flatten()
@@ -227,7 +228,7 @@ def predictBranchingModel(m, Bi=None, full_cov=False):
         else:
             mu, var = m.predict_f(Xtest)
         # print('mu', mu)
-        idx = np.isnan(mu)
+        # idx = np.isnan(mu)
         # print('munan', mu[idx], var[idx], ttest[idx])
         assert np.all(np.isfinite(mu)), "All elements should be finite but are " + str(
             mu

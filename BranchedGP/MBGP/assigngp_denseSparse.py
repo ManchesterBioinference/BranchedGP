@@ -1,9 +1,9 @@
 # coding: utf-8
 import numpy as np
 import tensorflow as tf
-from gpflow import settings
-from gpflow.decors import autoflow, params_as_tensors
-from gpflow.params import DataHolder
+from gpflow import settings  # type: ignore  # noqa
+from gpflow.decors import autoflow, params_as_tensors  # type: ignore  # noqa
+from gpflow.params import DataHolder  # type: ignore  # noqa
 
 from . import assigngp
 
@@ -22,7 +22,7 @@ class AssignGPSparse(assigngp.AssignGP):
     and let Z be an (unknown) binary matrix with a single 1 in each row. The
     likelihood is
 
-       y ~ MVN( Z f, \sigma^2 I)
+       y ~ MVN( Z f, \\sigma^2 I)
 
     That is, each element of y is a noisy realization of one (unknown) element
     of f. We use variational Bayes to infer the labels using a sparse prior

@@ -120,10 +120,10 @@ def get_funky_phi(
     )
     assert np.all(
         ~np.isnan(phi_initial)
-    ), f"Found NaNs in phi_initial, something has gone badly wrong!"
+    ), "Found NaNs in phi_initial, something has gone badly wrong!"
     assert np.all(
         ~np.isnan(phi_prior)
-    ), f"Found NaNs in phi_prior, something has gone badly wrong!"
+    ), "Found NaNs in phi_prior, something has gone badly wrong!"
     return phi_initial, phi_prior
 
 
@@ -444,8 +444,8 @@ def get_predictions(model: AssignGP) -> GaussianPredictions:
 
     return GaussianPredictions(
         x=grid_on_unit_interval,
-        y_mean=tuple(means),
-        y_var=tuple(variances),
+        y_mean=tuple(means),  # type: ignore  # TODO: tell MyPy this is actually fine
+        y_var=tuple(variances),  # type: ignore  # TODO: tell MyPy this is actually fine
     )
 
 

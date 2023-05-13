@@ -4,13 +4,13 @@ This module defines the main interfaces for branching time and cell label predic
 Just a wrapper for comparing different types of models.
 """
 import abc
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, List
 
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 
 from .assigngp import AssignGP
-from .data_generation import BranchedData, ColumnVector, GeneExpressionData
+from .data_generation import ColumnVector, GeneExpressionData
 
 
 class GeneExpressionModel(abc.ABC):
@@ -91,7 +91,7 @@ class MBGP(GeneExpressionModel):
                     inferred_label = 1  # trunk
                 else:
                     inferred_label_idx = np.argmax(phi[sample_idx])  # 0, 1 or 2
-                    inferred_label = inferred_label_idx + 1
+                    inferred_label = inferred_label_idx + 1  # type: ignore  # TODO: figure out how to convince MyPy
 
                 state_labels[sample_idx, gene_idx] = inferred_label
 
@@ -107,7 +107,7 @@ class MBGP(GeneExpressionModel):
 
             means.append(mean.numpy())
 
-        return means
+        return means  # type: ignore  # TODO: rewrite to convince MyPy this is ok
 
 
 class ManyBGPs(GeneExpressionModel):
@@ -162,14 +162,14 @@ class ManyBGPs(GeneExpressionModel):
                     inferred_label = 1  # trunk
                 else:
                     inferred_label_idx = np.argmax(phi[sample_idx])  # 0, 1 or 2
-                    inferred_label = inferred_label_idx + 1
+                    inferred_label = inferred_label_idx + 1  # type: ignore  # TODO: figure out how to convince MyPy
 
                 state_labels[sample_idx, gene_idx] = inferred_label
 
         return state_labels
 
     def predictions(self, t: ColumnVector) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        means = [[], [], []]  # state 1, 2, 3 respectively
+        means: Tuple[List[float], List[float], List[float]] = ([], [], [])  # state 1, 2, 3 respectively
 
         for gene_idx in range(self._data.num_genes):
             model = self._models[gene_idx]
@@ -277,7 +277,7 @@ class SplineBEAM(GeneExpressionModel):
             f = UnivariateSpline(tc, yc, s=20)
             splines.append(f)
 
-        return splines
+        return splines  # type: ignore  # TODO: convince MyPy we're returning the right amount of splines
 
     @property
     def data(self) -> GeneExpressionData:
@@ -327,7 +327,8 @@ class SplineBEAM(GeneExpressionModel):
         return state_labels
 
     def predictions(self, t: ColumnVector) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        predictions_along_genes = [[], [], []]  # state 1, 2, 3 respectively
+        predictions_along_genes: Tuple[List[float], List[float], List[float]] = ([], [], [])
+        # state 1, 2, 3 respectively
 
         for gene_idx, model in enumerate(self._models):
             spline_trunk, spline_2, spline_3 = model

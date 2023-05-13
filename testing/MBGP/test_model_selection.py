@@ -18,7 +18,7 @@ def test_selection(num_outputs):
     elif num_outputs == 4:
         data = ToyBranchedData(B=(0.2, 0.4, 0.5, 0.6), N=30)
     else:
-        raise NotImplemented
+        raise NotImplementedError
     BgridSearch = list(
         np.unique([0.1, 0.5])
     )  # make it a unique list, do not include true points

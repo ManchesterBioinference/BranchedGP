@@ -1,5 +1,6 @@
 import logging
 import sys
+from typing import Optional
 
 import gpflow
 import numpy as np
@@ -42,7 +43,7 @@ def FitModel(
     fPredict=True,
     fixHyperparameters=False,
     optimisation_method="L-BFGS-B",
-    kern: BranchKernelParam = None,
+    kern: Optional[BranchKernelParam] = None,
 ):
     """
     Fit BGP model
@@ -111,7 +112,7 @@ def FitModel(
         # print('Training_loss',m.training_loss())
         # return
     else:
-        raise NotImplemented
+        raise NotImplementedError
         # ZExpanded = np.ones((M, 2))
         # ZExpanded[:, 0] = np.linspace(0, 1, M, endpoint=False)
         # ZExpanded[:, 1] = np.array([i for j in range(M) for i in range(1, 4)])[:M]
@@ -153,13 +154,14 @@ def FitModel(
         Phi_l.append(Phi)
         if fPredict:
             ttestl, mul, varl = VBHelperFunctions.predictBranchingModel(trained_model)
-            ttestl_l.append(ttestl), mul_l.append(mul), varl_l.append(varl)
+            ttestl_l.append(ttestl), mul_l.append(mul), varl_l.append(varl)  # type: ignore
         else:
-            ttestl_l.append([]), mul_l.append([]), varl_l.append([])
+            ttestl_l.append([]), mul_l.append([]), varl_l.append([])  # type: ignore
+            # TODO: help MyPy understand the above is fine
 
         # Train the Univariate model
-        logPhi = trained_model.logPhi.numpy()
-        bPoints = trained_model.kernel.Bv.numpy()
+        # logPhi = trained_model.logPhi.numpy()
+        # bPoints = trained_model.kernel.Bv.numpy()
         # for (iGeneB, geneB) in enumerate(bPoints):
         #     print('%d %f'%(iGeneB, geneB))
         #     # fitSingleGene(bPoints[iGeneB], GPt, GPy[:, iGeneB], logPhi, globalBranching, priorConfidence,

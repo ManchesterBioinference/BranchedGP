@@ -206,7 +206,7 @@ class AssignGP(
     and let Z be an (unknown) binary matrix with a single 1 in each row. The
     likelihood is
 
-       y ~ MVN( Z f, \sigma^2 I)
+       y ~ MVN( Z f, \\sigma^2 I)
 
     That is, each element of y is a noisy realization of one (unknown) element
     of f. We use variational Bayes to infer the labels using a sparse prior
@@ -268,7 +268,7 @@ class AssignGP(
         fDebug=False,
         multi=False,
         sparse=True,
-        kern: BranchKernelParam = None,
+        kern: Optional[BranchKernelParam] = None,
     ):
         # assert len(indices) == t.size, 'indices must be size N'
         assert len(t.shape) == 1, "pseudotime should be 1D"
@@ -298,7 +298,7 @@ class AssignGP(
         default_branching_points = _DEFAULT_BRANCH_POINT * np.ones(shape=(num_outputs,))
         kern = kern or get_branching_point_kernel(
             base_kernel=gpflow.kernels.SquaredExponential(),
-            branching_points=default_branching_points,
+            branching_points=default_branching_points,  # type: ignore  # ndarray can be consumed as a sequence
         )
         # self.kern.kernels[1].variance = 1e-6  # controls the discontinuity magnitude, the gap at the branching point
         # self.kern.kernels[1].variance.set_trainable(False)  # jitter for numerics
@@ -433,7 +433,7 @@ class AssignGP(
             return self._build_likelihood_single_b()
 
     def predict_f(self, Xnew, full_cov=False, full_output_cov: bool = False):
-        assert not full_output_cov, f"Not supported"
+        assert not full_output_cov, "Not supported"
         if self.multi:
             return self._build_predict_multi_b(Xnew, full_cov)
         else:
@@ -741,7 +741,7 @@ class AssignGP(
     def predict_f_samples(
         self,
         Xnew: InputData,
-        num_samples: int = 1,
+        num_samples: Optional[int] = 1,
         full_cov: bool = True,
         full_output_cov: bool = False,
     ) -> tf.Tensor:
@@ -817,7 +817,8 @@ class AssignGP(
         Ks = []
         for output_dim in range(D):
             # Get the covariances for each gene. These reflect the correct branching location.
-            K = self.kernel.K(x_expanded, dim=output_dim)  # [N, N]
+            K = self.kernel.K(x_expanded, dim=output_dim)  # type: ignore
+            # [N, N]; `dim` arg exists on BranchKernelParam
             K = K[None, ...]  # [1, N, N]
             Ks.append(K)
 
@@ -857,7 +858,7 @@ def get_branching_point_kernel(
     base_kernel = base_kernel or gpflow.kernels.SquaredExponential()
 
     transform = transform or tfp.bijectors.Sigmoid()
-    branching_point_locations = (
+    branching_point_locations: np.ndarray = (
         np.array(branching_points).flatten().astype(gpflow.default_float())
     )
     bp_param = gpflow.Parameter(
