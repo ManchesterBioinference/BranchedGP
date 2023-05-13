@@ -1,6 +1,6 @@
 """ This module contains experiment utils for comparing the main model classes. """
 from dataclasses import dataclass
-from typing import Sequence, List, Tuple
+from typing import List, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,9 +38,15 @@ def convert_results_to_df(res: Sequence[Result]) -> pd.DataFrame:
     for i, r in enumerate(res):
         dres = dict(
             sample_id=i,
-            mbgp_bp_rmse=rmse(np.array(r.data.branching_points), r.mbgp.branching_times),
-            bgp_bp_rmse=rmse(np.array(r.data.branching_points), r.many_bgps.branching_times),
-            beam_bp_rmse=rmse(np.array(r.data.branching_points), r.beam.branching_times),
+            mbgp_bp_rmse=rmse(
+                np.array(r.data.branching_points), r.mbgp.branching_times
+            ),
+            bgp_bp_rmse=rmse(
+                np.array(r.data.branching_points), r.many_bgps.branching_times
+            ),
+            beam_bp_rmse=rmse(
+                np.array(r.data.branching_points), r.beam.branching_times
+            ),
             bgp_inconsistent_assignments=count_inconsistent_assignments(r.many_bgps),
             beam_inconsistent_assignments=count_inconsistent_assignments(r.beam),
             mean_mbgp_correct_labels=mean_correct_labels_per_gene(r.mbgp, data=r.data),

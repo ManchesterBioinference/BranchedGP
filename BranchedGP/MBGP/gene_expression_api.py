@@ -4,7 +4,7 @@ This module defines the main interfaces for branching time and cell label predic
 Just a wrapper for comparing different types of models.
 """
 import abc
-from typing import Sequence, Tuple, List
+from typing import List, Sequence, Tuple
 
 import numpy as np
 from scipy.interpolate import UnivariateSpline
@@ -169,7 +169,11 @@ class ManyBGPs(GeneExpressionModel):
         return state_labels
 
     def predictions(self, t: ColumnVector) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        means: Tuple[List[float], List[float], List[float]] = ([], [], [])  # state 1, 2, 3 respectively
+        means: Tuple[List[float], List[float], List[float]] = (
+            [],
+            [],
+            [],
+        )  # state 1, 2, 3 respectively
 
         for gene_idx in range(self._data.num_genes):
             model = self._models[gene_idx]
@@ -327,7 +331,11 @@ class SplineBEAM(GeneExpressionModel):
         return state_labels
 
     def predictions(self, t: ColumnVector) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        predictions_along_genes: Tuple[List[float], List[float], List[float]] = ([], [], [])
+        predictions_along_genes: Tuple[List[float], List[float], List[float]] = (
+            [],
+            [],
+            [],
+        )
         # state 1, 2, 3 respectively
 
         for gene_idx, model in enumerate(self._models):

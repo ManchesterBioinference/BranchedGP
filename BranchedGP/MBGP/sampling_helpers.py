@@ -88,7 +88,7 @@ def sample_prior_as_branched_data(
         t=x_new,
         Y=y,
         state=x_expanded[state_mask, 1],
-        branching_points=model.BranchingPoints,    # type: ignore  # ndarray can be consumed as a sequence
+        branching_points=model.BranchingPoints,  # type: ignore  # ndarray can be consumed as a sequence
         gene_labels=None,
     )
 
