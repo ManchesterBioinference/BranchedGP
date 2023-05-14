@@ -10,7 +10,7 @@ MAINTAINER_EMAIL = "alexis.boukouvalas@gmail.com"
 DOWNLOAD_URL = 'https://github.com/ManchesterBioinference/BranchedGP'
 LICENSE = 'MIT'
 
-VERSION = '2.0'
+VERSION = '2.1'
 
 setup(
     name=NAME,
