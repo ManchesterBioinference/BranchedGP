@@ -382,7 +382,7 @@ class BinaryBranchingTree:
             self._GetAllNestedBranchPts(node.right, bid, listBranch)
 
     def GetFunctionIndexList(self, Xin, fReturnXtrue=False):
-        """ Function to return index list  and input array X repeated as many time as each possible function """
+        """Function to return index list  and input array X repeated as many time as each possible function"""
         # limited to one dimensional X for now!
         assert Xin.shape[0] == np.size(Xin)
         df = self.GetFunctionDomains()

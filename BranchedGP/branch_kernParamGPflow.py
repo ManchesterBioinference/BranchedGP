@@ -35,7 +35,7 @@ def PlotSample(X, samples, B=None, lw=5.0, fs=20, figsizeIn=(5, 5)):
 
 
 def SampleKernel(kern, X, D=1, tol=1e-6, retChol=False):
-    """ Sample GP, D is number of independent output dimensions """
+    """Sample GP, D is number of independent output dimensions"""
     K = kern.K(X, X)  # NxM
     L = np.linalg.cholesky(K + np.eye(K.shape[0]) * tol)
     samples = L.dot(np.random.randn(L.shape[0], D))
@@ -46,7 +46,7 @@ def SampleKernel(kern, X, D=1, tol=1e-6, retChol=False):
 
 
 def GetFunctionIndexSample(Xin):
-    """ Function to return index list  and input array X repeated as many time as each possible function """
+    """Function to return index list  and input array X repeated as many time as each possible function"""
     # limited to one dimensional X for now!
     N = Xin.shape[0]
     assert Xin.shape[0] == np.size(Xin)
@@ -78,7 +78,7 @@ class BranchKernelParam(Kernel):
         return SampleKernel(self, XTree, tol=tol), XTree
 
     def SampleKernelFromTree(self, XTree, b, tol=1e-6):
-        """ Sample kernel with assignments already done. """
+        """Sample kernel with assignments already done."""
         self.Bv = np.ones((1, 1)) * b
         assert np.all(
             XTree[XTree[:, 0] <= b, 1] == 1
@@ -205,7 +205,7 @@ class BranchKernelParam(Kernel):
 
 
 class IndKern(Kernel):
-    """ an independent output kernel """
+    """an independent output kernel"""
 
     def __init__(self, base_kern):
         super().__init__()

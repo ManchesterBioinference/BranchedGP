@@ -2,14 +2,14 @@
 # jupyter:
 #   anaconda-cloud: {}
 #   jupytext:
-#     cell_metadata_filter: -all
+#     cell_metadata_filter: all
 #     formats: ipynb,py:percent
 #     notebook_metadata_filter: all
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.6.0
+#       jupytext_version: 1.14.5
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -74,10 +74,10 @@ KbranchParam = bk.BranchKernelParam(gpflow.kernels.RBF(1), fm, b=Bvalues)
 KbranchParam.kern.lengthscales = 2
 KbranchParam.kern.variance = 1
 
-# %% [markdown]
+# %% [markdown] scrolled=true
 # Sample the kernel
 
-# %%
+# %% scrolled=true
 samples = bk.SampleKernel(KbranchParam, XForKernel)
 
 # %% [markdown]
@@ -86,7 +86,7 @@ samples = bk.SampleKernel(KbranchParam, XForKernel)
 # %%
 bk.PlotSample(XForKernel, samples)
 
-# %% [markdown]
+# %% [markdown] collapsed=true
 # You can rerun the same code as many times as you want and get different sample paths
 
 # %% [markdown]

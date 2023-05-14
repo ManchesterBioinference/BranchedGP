@@ -2,14 +2,14 @@
 # jupyter:
 #   anaconda-cloud: {}
 #   jupytext:
-#     cell_metadata_filter: -all
+#     cell_metadata_filter: all
 #     formats: ipynb,py:percent
 #     notebook_metadata_filter: all
 #     text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.6.0
+#       jupytext_version: 1.14.5
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -79,7 +79,7 @@ for i in range(G):
         ax[i].set_xticklabels([])
 f.suptitle("Branching genes, location=1.1 indicates no branching")
 
-# %% [markdown]
+# %% [markdown] scrolled=true
 # # Run the BGP model
 # Run script `runsyntheticData.py` to obtain a pickle file with results.
 # This script can take ~10 to 20 minutes depending on your hardware.
@@ -89,13 +89,13 @@ f.suptitle("Branching genes, location=1.1 indicates no branching")
 # # Plot BGP posterior fit
 # Plot posterior fit.
 
-# %%
+# %% scrolled=true
 r = pickle.load(open("syntheticdata/syntheticDataRun.p", "rb"))
 
 # %%
 r.keys()
 
-# %%
+# %% scrolled=true
 # plot fit for a gene
 g = 0
 GPy = Y.iloc[:, g][:, None]

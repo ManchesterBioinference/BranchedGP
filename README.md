@@ -1,25 +1,30 @@
 # BranchedGP
 
-BranchedGP is a package for building Branching Gaussian process models in python, using [TensorFlow](github.com/tensorflow) and [GPFlow](https://github.com/GPflow/GPflow).
+BranchedGP is a package for building Branching Gaussian process models in python, 
+using [TensorFlow](github.com/tensorflow) and [GPFlow](https://github.com/GPflow/GPflow).
 You can install it via `pip install BranchedGP`.
 
-The model is described in the paper
-
-["BGP: Branched Gaussian processes for identifying gene-specific branching dynamics in single cell data",
-Alexis Boukouvalas, James Hensman, Magnus Rattray, bioRxiv, 2017.](http://www.biorxiv.org/content/early/2017/08/01/166868).
-
-This is now published in [Genome Biology](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-018-1440-2).
+The package contains two main models:
+* `BranchedGP.assigngp_dense.AssignGP` is an implementation of the BGP model described in
+  ["BGP: Branched Gaussian processes for identifying gene-specific branching dynamics in single cell data",
+  Alexis Boukouvalas, James Hensman, Magnus Rattray, bioRxiv, 2017.](http://www.biorxiv.org/content/early/2017/08/01/166868).
+  - This is now published in [Genome Biology](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-018-1440-2).
+* `BranchedGP.MBGP.assigngp.AssignGP` is an implementation of the MBGP model described in
+  ["Modelling sequential branching dynamics with a multivariate branching Gaussian process", Elvijs Sarkans, Sumon Ahmed, Magnus Rattray, Alexis Boukouvalas, OpenReview, 2022](https://openreview.net/forum?id=9KoBOlstTq)
+  - This is now accepted in [Transactions on Machine Learning Research](https://openreview.net/group?id=TMLR)
+  
 [![CI](https://github.com/ManchesterBioinference/BranchedGP/workflows/CI/badge.svg)](https://github.com/ManchesterBioinference/BranchedGP/workflows/CI)
-[![codecov](https://codecov.io/gh/ManchesterBioinference/BranchedGP/branch/master/graph/badge.svg)](https://codecov.io/gh/ManchesterBioinference/BranchedGP)
 
-# Example
+## BGP 
+
+### Example
 An example of what the model can provide is shown below.
    1. The posterior cell assignment is shown in top subpanel: each cell is assigned a probability of belonging to a  branch.
    1. In the bottom subpanel the posterior branching time is shown: the probability of branching at a particular pseudotime.
 <img src="images/VAMP5_BGPAssignmentProbability.png" width="400" height="400" align="middle"/>
 
 
-# Quick start
+### Quick start
 For a quick introduction see the `notebooks/Hematopoiesis.ipynb` notebook.
 Therein we demonstrate how to fit the model and compute
 the log Bayes factor for two genes.
@@ -36,12 +41,13 @@ This notebook should take a total of 6 minutes to run.
 | SamplingFromTheModel| Sampling from the BGP model. |
 
 
-# Comparison to monocle-BEAM
+### Comparison to monocle-BEAM
 
 In the paper we compare the BGP model to the BEAM method proposed
 in monocle 2. In ```monocle/runMonocle.R``` the R script for performing
 Monocle and BEAM on the hematopoiesis data is included.
-# List of python library files
+
+### List of python library files
 | File <br> name | Description |
 | --- | --- |
 | FitBranchingModel.py | Main file for user to call BGP fit, see function FitModel |
@@ -53,15 +59,51 @@ Monocle and BEAM on the hematopoiesis data is included.
 | VBHelperFunctions.py | Plotting code. |
 
 
+## MBGP
+
+MBGP is an extension of the BGP model, which addresses the shortcoming of
+BGP assigning observations to latent functions independently for each output dimension (gene). 
+This leads to inconsistent assignments across outputs
+and reduces the accuracy of branching time inference.
+MBGP instead performs joint branch assignment inference across all output dimensions.
+This ensures that branch assignments are consistent and
+leverages more data for branching time inference.
+
+### Example
+See below for an example model fit to synthetic noisy data representing 4 genes.
+<img src="notebooks/MBGP/synthetic-data-4-gene-fit.png" width="600" height="600" align="middle"/>
+
+
+### Quick start
+For a quick introduction see the `notebooks/MBGP/synthetic_noise_free.ipynb` and
+`notebooks/MBGP/experiments-figure-1-simple-fits.ipynb` notebooks.
+Therein we demonstrate how to fit the model and visualise its fit.
+
+A full list of key notebooks follows (ordered roughly according to how useful we expect them to be; 
+higher is more useful).
+
+| File name | Description |
+| --- | --- |
+| synthetic_noise_free                              | Application of MBGP to synthetic noise-free data. |
+| experiments-figure-1-simple-fits                  | Application of MBGP to sythetic noisy data. |
+| rediscover_early_branching                        | Exploration of fitting MBGP and BGP to synthetic noisy data. Performs sanity checks, compares priors and computes inconsistent assignments by BGP. Takes a while to run. |
+| rediscover_early_branching2                       | Exploration of fitting MBGP and BGP to synthetic noisy data. Compares various priors and computes inconsistent assignments by BGP. Takes a while to run. |
+| experiments-figure-2-correct-cell-histogram       | Evaluation of MBGP vs BGP label assignment to synthetic noisy data (no branching point learning). Strong prior. Takes a long time to run. |
+| experiments-figure-3-bgp-label-inconsistency      | Evaluation of MBGP vs BGP fits to synthetic noisy data (branching points are learned). Strong prior. Takes a long time to run. |
+| new_experiments-figure-2-correct-cell-histogram   | An alternative re-derivation of the `experiments-figure-2-correct-cell-histogram.ipynb` notebook. |
+| new_experiments-figure-3-bgp-label-inconsistency  | An alternative re-derivation of the `experiments-figure-3-bgp-label-inconsistency.ipynb` notebook. |
+| synthetic_Y_without_crossing                      | Explores the generation of synthetic noisy data that avoids latent branches crossing after the initial branching point. |
+
 # Development setup
 
-This project requires Python3.7 or earlier (TensorFlow 1 requirement).
 Create a virtual environment, activate it and run `make install`.
 
 ## Common tasks
 
 * Tests: `make test`
 * Install dependencies (into an active virtual environment): `make install`
+  - If you're running on Apple silicon, you may want to take a look at the
+    `setup_tensorflow_on_apple_silicon.sh` script.
 * Format code: `make format`
 * Run a jupyter notebook server: `make jupyter_server`
 

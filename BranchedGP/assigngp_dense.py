@@ -75,7 +75,7 @@ class AssignGP(
             assert KConst is None, "KConst only for debugging"
 
     def UpdateBranchingPoint(self, b, phiInitial, prior=None):
-        """ Function to update branching point and optionally reset initial conditions for variational phi"""
+        """Function to update branching point and optionally reset initial conditions for variational phi"""
         assert isinstance(b, np.ndarray)
         assert b.size == 1, "Must have scalar branching point"
         self.b = b.astype(gpflow.default_float())  # remember branching value
@@ -128,7 +128,7 @@ class AssignGP(
         self.logPhi.assign(phiInitial_invSoftmax)
 
     def GetPhi(self):
-        """ Get Phi matrix, collapsed for each possible entry """
+        """Get Phi matrix, collapsed for each possible entry"""
         assert self.b == self.kernel.kernels[0].Bv, "Need to call UpdateBranchingPoint"
         phiExpanded = self.GetPhiExpanded().numpy()
         l = [phiExpanded[i, self.indices[i]] for i in range(len(self.indices))]
@@ -140,7 +140,7 @@ class AssignGP(
         return phi
 
     def GetPhiExpanded(self):
-        """ Shortcut function to get Phi matrix out."""
+        """Shortcut function to get Phi matrix out."""
         return tf.nn.softmax(self.logPhi)
 
     def objectiveFun(self):

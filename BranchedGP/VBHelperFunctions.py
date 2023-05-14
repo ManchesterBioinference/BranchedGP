@@ -97,7 +97,7 @@ def plotBranchModel(
     fColorBar=True,
     colorarray=["darkolivegreen", "peru", "mediumvioletred"],
 ):
-    """ Plotting code that does not require access to the model but takes as input predictions. """
+    """Plotting code that does not require access to the model but takes as input predictions."""
     if ax is None:
         fig = plt.figure(figsize=figsizeIn)
         ax = fig.gca()
@@ -139,7 +139,7 @@ def plotBranchModel(
 
 
 def predictBranchingModel(m, full_cov=False):
-    """ return prediction of branching model """
+    """return prediction of branching model"""
     pt = m.t
     B = m.kernel.kernels[0].Bv.flatten()
     l = np.min(pt)
@@ -168,7 +168,7 @@ def predictBranchingModel(m, full_cov=False):
 
 
 def GetFunctionIndexListGeneral(Xin):
-    """ Function to return index list  and input array X repeated as many time as each possible function """
+    """Function to return index list  and input array X repeated as many time as each possible function"""
     # limited to one dimensional X for now!
     assert Xin.shape[0] == np.size(Xin)
     indicesBranch = []
@@ -195,7 +195,7 @@ def GetFunctionIndexListGeneral(Xin):
 
 
 def SetXExpandedBranchingPoint(XExpanded, B):
-    """ Return XExpanded by removing unavailable branches """
+    """Return XExpanded by removing unavailable branches"""
     # before branching pt, only function 1
     X1 = XExpanded[
         np.logical_and(XExpanded[:, 0] <= B, XExpanded[:, 1] == 1).flatten(), :
